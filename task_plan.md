@@ -53,10 +53,10 @@ Phase 3: Data Layer
 - **Status:** complete
 
 ### Phase 6: Deep Links & Push
-- [ ] DeepLinkHandler + URL schemes
-- [ ] Push notification handler
-- [ ] Commit + push
-- **Status:** pending
+- [x] DeepLinkHandler + URL schemes
+- [x] Push notification handler
+- [x] Commit + push
+- **Status:** complete
 
 ### Phase 7: Integration & Polish
 - [ ] Cross-module wiring
