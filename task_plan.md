@@ -47,10 +47,10 @@ Phase 3: Data Layer
 - **Status:** complete
 
 ### Phase 5: Settings Feature
-- [ ] SettingsView + ViewModel
-- [ ] Dark mode + icon picker logic
-- [ ] Commit + push
-- **Status:** pending
+- [x] SettingsView + ViewModel
+- [x] Dark mode + icon picker logic
+- [x] Commit + push
+- **Status:** complete
 
 ### Phase 6: Deep Links & Push
 - [ ] DeepLinkHandler + URL schemes
