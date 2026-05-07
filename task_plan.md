@@ -40,6 +40,12 @@ Phase 3: Data Layer
 - [x] Commit + push
 - **Status:** complete
 
+### Phase 4: Home Screen Feature
+- [x] HomeScreen ViewModel + Views
+- [x] TaskItemView component
+- [x] Commit + push
+- **Status:** complete
+
 ### Phase 5: Settings Feature
 - [ ] SettingsView + ViewModel
 - [ ] Dark mode + icon picker logic

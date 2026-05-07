@@ -16,6 +16,8 @@ protocol TaskRepository {
     func getAllTasks() async throws -> [Task]
     func getCompletedTasks() async throws -> [Task]
     func getPendingTasks() async throws -> [Task]
+    func getOverdueTasks() async throws -> [Task]
+    func searchTasks(query: String) async throws -> [Task]
 }
 
 @available(iOS 17.0, *)
@@ -29,6 +31,7 @@ final class TaskRepositoryImpl: TaskRepository {
     func createTask(_ task: Task) async throws {
         try await Task.sleep(nanoseconds: 1_000_000) // Small delay for demonstration
         modelContext.insert(task)
+        try await saveContext()
     }
     
     func getTask(id: UUID) async throws -> Task? {
@@ -41,7 +44,7 @@ final class TaskRepositoryImpl: TaskRepository {
     
     func updateTask(_ task: Task) async throws {
         try await Task.sleep(nanoseconds: 1_000_000) // Small delay for demonstration
-        // SwiftData handles updates automatically with the same object reference
+        try await saveContext()
     }
     
     func deleteTask(id: UUID) async throws {
@@ -50,11 +53,12 @@ final class TaskRepositoryImpl: TaskRepository {
             throw RepositoryError.taskNotFound
         }
         modelContext.delete(task)
+        try await saveContext()
     }
     
     func getAllTasks() async throws -> [Task] {
         try await modelContext.fetch(
-            FetchDescriptor<Task>()
+            FetchDescriptor<Task>(sortBy: [SortDescriptor(\Task.createdAt, order: .reverse)])
         )
     }
     
@@ -62,7 +66,7 @@ final class TaskRepositoryImpl: TaskRepository {
         try await modelContext.fetch(
             FetchDescriptor<Task, Bool>(predicate: #Predicate<Task> { task in
                 task.isCompleted == true
-            })
+            }, sortBy: [SortDescriptor(\Task.updatedAt, order: .reverse)])
         )
     }
     
@@ -70,8 +74,30 @@ final class TaskRepositoryImpl: TaskRepository {
         try await modelContext.fetch(
             FetchDescriptor<Task, Bool>(predicate: #Predicate<Task> { task in
                 task.isCompleted == false
-            })
+            }, sortBy: [SortDescriptor(\Task.updatedAt, order: .reverse)])
         )
+    }
+    
+    func getOverdueTasks() async throws -> [Task] {
+        try await modelContext.fetch(
+            FetchDescriptor<Task, Date>(predicate: #Predicate<Task> { task in
+                task.isCompleted == false && task.dueDate != nil && task.dueDate! < Date()
+            }, sortBy: [SortDescriptor(\Task.dueDate, order: .ascending)])
+        )
+    }
+    
+    func searchTasks(query: String) async throws -> [Task] {
+        try await modelContext.fetch(
+            FetchDescriptor<Task, String>(predicate: #Predicate<Task> { task in
+                task.title.localizedCaseInsensitiveContains(query) || 
+                (task.description?.localizedCaseInsensitiveContains(query) ?? false)
+            }, sortBy: [SortDescriptor(\Task.updatedAt, order: .reverse)])
+        )
+    }
+    
+    // Helper to save context
+    private func saveContext() async throws {
+        try await modelContext.save()
     }
 }
 

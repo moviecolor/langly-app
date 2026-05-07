@@ -38,4 +38,28 @@ final class DataPersistenceManager {
         // Implementation for handling schema migrations
         // This would be more complex in a real application
     }
+    
+    // Clear all data (for testing purposes)
+    func clearAllData() {
+        do {
+            let context = makeContext()
+            let tasks = try context.fetch(FetchDescriptor<Task>())
+            let categories = try context.fetch(FetchDescriptor<Category>())
+            let themes = try context.fetch(FetchDescriptor<Theme>())
+            
+            for task in tasks {
+                context.delete(task)
+            }
+            for category in categories {
+                context.delete(category)
+            }
+            for theme in themes {
+                context.delete(theme)
+            }
+            
+            try saveContext(context)
+        } catch {
+            print("Failed to clear data: \(error)")
+        }
+    }
 }

@@ -1,13 +1,16 @@
 import Foundation
 import SwiftData
+import Combine
 
 @MainActor
 class TaskListViewModel: ObservableObject {
     @Published var tasks: [Task] = []
     @Published var isLoading = false
+    @Published var error: String?
     
     private let modelContext: ModelContext
     private let modelContainer: ModelContainer
+    private var cancellables = Set<AnyCancellable>()
     
     init(modelContainer: ModelContainer) {
         self.modelContainer = modelContainer
@@ -18,11 +21,13 @@ class TaskListViewModel: ObservableObject {
     private func loadTasks() {
         do {
             isLoading = true
+            error = nil
             let descriptor = FetchDescriptor<Task>(sortBy: [SortDescriptor(\Task.createdAt, order: .reverse)])
             tasks = try modelContext.fetch(descriptor)
             isLoading = false
         } catch {
             print("Failed to load tasks: \(error)")
+            error = error.localizedDescription
             isLoading = false
         }
     }
@@ -58,14 +63,6 @@ class TaskListViewModel: ObservableObject {
         saveTask(task)
     }
     
-    private func saveTask(_ task: Task) {
-        do {
-            try modelContext.save()
-        } catch {
-            print("Failed to save task: \(error)")
-        }
-    }
-    
     func clearCompletedTasks() {
         let completedTasks = tasks.filter { $0.isCompleted }
         for task in completedTasks {
@@ -73,5 +70,38 @@ class TaskListViewModel: ObservableObject {
         }
         tasks.removeAll { $0.isCompleted }
         try? modelContext.save()
+    }
+    
+    func searchTasks(query: String) {
+        Task {
+            do {
+                isLoading = true
+                error = nil
+                let descriptor = FetchDescriptor<Task>(
+                    predicate: #Predicate<Task> { task in
+                        task.title.localizedCaseInsensitiveContains(query) || 
+                        (task.description?.localizedCaseInsensitiveContains(query) ?? false)
+                    },
+                    sortBy: [SortDescriptor(\Task.updatedAt, order: .reverse)]
+                )
+                tasks = try modelContext.fetch(descriptor)
+                isLoading = false
+            } catch {
+                print("Failed to search tasks: \(error)")
+                error = error.localizedDescription
+                isLoading = false
+            }
+        }
+    }
+    
+    private func saveTask(_ task: Task) {
+        Task {
+            do {
+                try modelContext.save()
+            } catch {
+                print("Failed to save task: \(error)")
+                error = error.localizedDescription
+            }
+        }
     }
 }

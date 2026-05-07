@@ -14,6 +14,7 @@ protocol ThemeRepository {
     func updateTheme(_ theme: Theme) async throws
     func deleteTheme(id: UUID) async throws
     func getAllThemes() async throws -> [Theme]
+    func getThemeByName(name: String) async throws -> Theme?
 }
 
 @available(iOS 17.0, *)
@@ -27,6 +28,7 @@ final class ThemeRepositoryImpl: ThemeRepository {
     func createTheme(_ theme: Theme) async throws {
         try await Task.sleep(nanoseconds: 1_000_000) // Small delay for demonstration
         modelContext.insert(theme)
+        try await saveContext()
     }
     
     func getTheme(id: UUID) async throws -> Theme? {
@@ -39,7 +41,7 @@ final class ThemeRepositoryImpl: ThemeRepository {
     
     func updateTheme(_ theme: Theme) async throws {
         try await Task.sleep(nanoseconds: 1_000_000) // Small delay for demonstration
-        // SwiftData handles updates automatically with the same object reference
+        try await saveContext()
     }
     
     func deleteTheme(id: UUID) async throws {
@@ -48,11 +50,25 @@ final class ThemeRepositoryImpl: ThemeRepository {
             throw RepositoryError.themeNotFound
         }
         modelContext.delete(theme)
+        try await saveContext()
     }
     
     func getAllThemes() async throws -> [Theme] {
         try await modelContext.fetch(
-            FetchDescriptor<Theme>()
+            FetchDescriptor<Theme>(sortBy: [SortDescriptor(\Theme.name, order: .ascending)])
         )
+    }
+    
+    func getThemeByName(name: String) async throws -> Theme? {
+        try await modelContext.fetch(
+            FetchDescriptor<Theme, String>(predicate: #Predicate<Theme> { theme in
+                theme.name == name
+            })
+        ).first
+    }
+    
+    // Helper to save context
+    private func saveContext() async throws {
+        try await modelContext.save()
     }
 }

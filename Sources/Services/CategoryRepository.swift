@@ -14,6 +14,7 @@ protocol CategoryRepository {
     func updateCategory(_ category: Category) async throws
     func deleteCategory(id: UUID) async throws
     func getAllCategories() async throws -> [Category]
+    func getCategoryByName(name: String) async throws -> Category?
 }
 
 @available(iOS 17.0, *)
@@ -27,6 +28,7 @@ final class CategoryRepositoryImpl: CategoryRepository {
     func createCategory(_ category: Category) async throws {
         try await Task.sleep(nanoseconds: 1_000_000) // Small delay for demonstration
         modelContext.insert(category)
+        try await saveContext()
     }
     
     func getCategory(id: UUID) async throws -> Category? {
@@ -39,7 +41,7 @@ final class CategoryRepositoryImpl: CategoryRepository {
     
     func updateCategory(_ category: Category) async throws {
         try await Task.sleep(nanoseconds: 1_000_000) // Small delay for demonstration
-        // SwiftData handles updates automatically with the same object reference
+        try await saveContext()
     }
     
     func deleteCategory(id: UUID) async throws {
@@ -48,11 +50,25 @@ final class CategoryRepositoryImpl: CategoryRepository {
             throw RepositoryError.categoryNotFound
         }
         modelContext.delete(category)
+        try await saveContext()
     }
     
     func getAllCategories() async throws -> [Category] {
         try await modelContext.fetch(
-            FetchDescriptor<Category>()
+            FetchDescriptor<Category>(sortBy: [SortDescriptor(\Category.name, order: .ascending)])
         )
+    }
+    
+    func getCategoryByName(name: String) async throws -> Category? {
+        try await modelContext.fetch(
+            FetchDescriptor<Category, String>(predicate: #Predicate<Category> { category in
+                category.name == name
+            })
+        ).first
+    }
+    
+    // Helper to save context
+    private func saveContext() async throws {
+        try await modelContext.save()
     }
 }
