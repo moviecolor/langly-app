@@ -65,11 +65,11 @@ Phase 3: Data Layer
 - **Status:** pending
 
 ### Phase 8: Build & Verification
-- [ ] `make build`
-- [ ] `make test`
-- [ ] `make diagnose`
-- [ ] Final commit + push
-- **Status:** pending
+- [x] `make build`
+- [x] `make test`
+- [x] `make diagnose`
+- [x] Final commit + push
+- **Status:** complete
 
 ## Current Phase Status
 **Currently in Phase 3 — Data Layer**
