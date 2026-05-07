@@ -9,7 +9,8 @@ import SwiftUI
 
 @available(iOS 17.0, *)
 struct TaskListView: View {
-    @ObservedObject var viewModel: HomeScreenViewModel
+    @ObservedObject var viewModel: TaskListViewModel
+    @State private var showSettings = false
     
     var body: some View {
         List {
@@ -27,11 +28,24 @@ struct TaskListView: View {
             .listRowSeparator(.hidden)
         }
         .listStyle(PlainListStyle())
+        .navigationTitle("Tasks")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showSettings = true
+                }) {
+                    Image(systemName: "gear")
+                }
+            }
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView(viewModel: ServiceContainer.shared.makeSettingsViewModel())
+        }
     }
 }
 
 struct TaskListView_Previews: PreviewProvider {
     static var previews: some View {
-        TaskListView(viewModel: HomeScreenViewModel(taskRepository: TaskRepositoryImpl(modelContext: ModelContext(modelContainer: ModelContainer(for: Task.self, Category.self, Theme.self)))))
+        TaskListView(viewModel: TaskListViewModel(modelContainer: ModelContainer(for: Task.self, Category.self, Theme.self)))
     }
 }

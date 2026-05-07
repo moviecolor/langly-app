@@ -31,10 +31,18 @@ final class ServiceContainer {
         return ThemeRepositoryImpl(modelContext: dataPersistenceManager.makeContext())
     }()
     
+    lazy var settingsService: SettingsService = {
+        return SettingsServiceImpl(modelContext: dataPersistenceManager.makeContext())
+    }()
+    
     // MARK: - ViewModels
     func makeTaskListViewModel() -> TaskListViewModel {
         return TaskListViewModel(
             modelContainer: dataPersistenceManager.modelContainer
         )
+    }
+    
+    func makeSettingsViewModel() -> SettingsViewModel {
+        return SettingsViewModel(settingsService: settingsService)
     }
 }

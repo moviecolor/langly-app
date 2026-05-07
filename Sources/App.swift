@@ -5,13 +5,20 @@ import SwiftData
 struct Langly: App {
     var body: some Scene {
         WindowGroup {
-            TaskListView(viewModel: TaskListViewModel(modelContainer: modelContainer))
+            NavigationStack {
+                TaskListView(viewModel: TaskListViewModel(modelContainer: modelContainer))
+                    .navigationDestination(for: String.self) { setting in
+                        if setting == "settings" {
+                            SettingsView(viewModel: ServiceContainer.shared.makeSettingsViewModel())
+                        }
+                    }
+            }
         }
     }
     
     private var modelContainer: ModelContainer {
         do {
-            return try ModelContainer(for: Task.self)
+            return try ModelContainer(for: Task.self, Category.self, Theme.self, Settings.self)
         } catch {
             fatalError("Failed to create model container: \(error)")
         }
