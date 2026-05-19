@@ -1,86 +1,44 @@
-# Progress Log: LANGLY_APP
+# Progress Log: LANGLY_APP — Language Learning Assistant
 
-## Session: 2026-05-06
+## Session: 2026-05-17
 
-### Phase 0: Drive & Repository Setup
+### Phase 0: Core Infrastructure
 - **Status:** complete
-- **Started:** 2026-05-06 12:00
-- Actions taken:
-  - Created directories on both drives
-  - Initialized git repositories
-  - Set up remote configuration
-- Files created/modified:
-  - task_plan.md
-  - findings.md
-  - progress.md
+- **Actions taken:**
+  - Cleaned old scaffolding
+  - Created proper directory structure
+  - Set up project.yml with XcodeGen
+  - Created all SwiftData models (AppSettings, VocabularyWord, WordBlock, Sentence, SentenceGroup, QASession, ModuleProgress)
+  - Created core services (TranslatorManager, IAPManager, AudioEngine, ModuleRouter)
+  - Created LaunchScreen, MainMenuView, 4 Loading Screens
 
-### Phase 1: Architecture Plan
+### Phase 1: Vocabulary Module 1 (Match Madness + Audio Mode)
 - **Status:** complete
-- **Started:** 2026-05-06 12:00
-- Actions taken:
-  - Documented 5-module architecture
-  - Defined app flow and data models
-  - Outlined theme system architecture
-  - Planned deep link implementation
-  - Designed app icon system
-- Files created/modified:
-  - phase1_architecture.md
+- **Started:** 2026-05-17
+- **Completed:** 2026-05-17
+- **Actions taken:**
+  - Created MatchMadnessViewModel (game engine with 8-word matching, timer, scoring, jumble toggle)
+  - Created MatchMadnessGameView (dual-column UI, selection states, timer, score, controls)
+  - Created AudioModeViewModel (block selection, repetitions, gap, AVSpeechSynthesizer integration)
+  - Created AudioModeView (block selection list, sliders, playback controls, progress)
+  - Updated VocabularyView (mode switcher, block management, navigation hub)
+  - Created WordInputView (text input, ML Kit translation, block selector, word list with mastery badges)
+- **Files created:**
+  - `Sources/ViewModels/MatchMadnessViewModel.swift`
+  - `Sources/ViewModels/AudioModeViewModel.swift`
+  - `Sources/Views/Modules/Vocabulary/MatchMadnessGameView.swift`
+  - `Sources/Views/Modules/Vocabulary/AudioModeView.swift`
+  - `Sources/Views/Modules/Vocabulary/VocabularyView.swift` (replaced stub)
+  - `Sources/Views/Modules/Vocabulary/WordInputView.swift`
+- **Build status:** No code errors. Build blocked on MLKitTranslate CocoaPods dependency (pre-existing infrastructure task).
 
-### Phase 2: Scaffold Project
-- **Status:** complete
-- **Started:** 2026-05-06 13:30
-- **Completed:** 2026-05-06 14:00
-- Actions taken:
-  - Used `app-creator` to scaffold the application
-  - Created Xcode configuration files
-  - Set up all Swift directory skeletons
-  - Committed and pushed changes to both repositories
-- Files created/modified:
-  - Xcode project files
-  - Swift package structure
-  - Build configuration files
-
-### Phase 3: Data Layer
-- **Status:** complete
-- **Started:** 2026-05-06 15:45
-- **Completed:** 2026-05-06 16:00
-- Actions taken:
-  - Implemented SwiftData models (Task, Category, Theme)
-  - Created repository pattern for data access
-  - Set up data persistence layer
-  - Implemented data migration handling
-- Files created/modified:
-  - Sources/Models/Task.swift
-  - Sources/Models/Category.swift
-  - Sources/Models/Theme.swift
-  - Sources/Services/TaskRepository.swift
-  - Sources/Services/CategoryRepository.swift
-  - Sources/Services/ThemeRepository.swift
-  - Sources/Services/ServiceContainer.swift
-  - Sources/Services/DataPersistenceManager.swift
-
-### Phase 4: Home Screen Feature
-- **Status:** complete
-- **Started:** 2026-05-06 16:15
-- **Completed:** 2026-05-06 16:45
-- Actions taken:
-  - Implemented HomeScreen ViewModel with data binding
-  - Created TaskItemView component with proper visual indicators
-  - Integrated UI with repository pattern for data operations
-  - Implemented core task list functionality (add, edit, delete)
-  - Added search and filtering capabilities
-- Files created/modified:
-  - Sources/ViewModels/HomeScreenViewModel.swift
-  - Sources/Views/TaskItemView.swift
-  - Sources/Views/TaskListView.swift
-
-## 5-Question Reboot Check
+## 5-Question Check
 | Question | Answer |
 |----------|--------|
-| Where am I? | Phase 3 - Data Layer |
-| Where am I going? | Phase 4 - Home Screen Feature |
-| What's the goal? | Build a 16,000 LOC task management app |
-| What have I learned? | See findings.md |
-| What have I done? | Completed full data layer implementation with SwiftData |
+| Where am I? | Phase 1 complete — Vocabulary Module fully implemented |
+| Where am I going? | Phase 2 — Modules 2-4 Architecture (Stubs) |
+| What's the goal? | Build Langly language learning app with 4 modules |
+| What have I learned? | Project uses SwiftUI + SwiftData + ML Kit + StoreKit 2 + AVSpeechSynthesizer |
+| What have I done? | Completed Vocabulary Module: Match Madness game + Audio Mode + Word Input |
 
 ---
