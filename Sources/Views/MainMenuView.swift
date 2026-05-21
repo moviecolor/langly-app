@@ -63,6 +63,16 @@ enum AppTab: Int, CaseIterable {
         case .qa: return Color(hex: 0xCCFF00)
         }
     }
+
+    /// Image asset name for this module's loading screen.
+    var loadingImageName: String {
+        switch self {
+        case .vocabulary: return "VocabularyLoading"
+        case .commonSentences: return "CommonSentencesLoading"
+        case .pronunciation: return "PronunciationLoading"
+        case .qa: return "QALoading"
+        }
+    }
 }
 
 /// Main menu view with fixed top icon bar and module content below.
@@ -70,20 +80,52 @@ struct MainMenuView: View {
     @State private var selectedTab: AppTab = .vocabulary
     @EnvironmentObject var iapManager: IAPManager
 
+    // Loading overlay state — shown while checking IAP / awaiting 1.5s delay.
+    @State private var showLoadingOverlay = false
+    @State private var loadingTab: AppTab? = nil
+
     var body: some View {
-        VStack(spacing: 0) {
-            // Fixed top icon bar — aligned across the top, safe area aware.
-            moduleIconBar
-                .padding(.top, UIApplication.shared.connectedScenes
-                    .compactMap { $0 as? UIWindowScene }
-                    .first?.windows.first?.safeAreaInsets.top ?? 20)
+        ZStack {
+            // Background + icon bar + module content.
+            VStack(spacing: 0) {
+                // Fixed top icon bar — aligned across the top, safe area aware.
+                moduleIconBar
+                    .padding(.top, UIApplication.shared.connectedScenes
+                        .compactMap { $0 as? UIWindowScene }
+                        .first?.windows.first?.safeAreaInsets.top ?? 20)
 
-            Divider()
-                .background(Color.appDivider)
+                Divider()
+                    .background(Color.appDivider)
 
-            // Module content area — fills remaining space.
-            moduleContent
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Module content area — fills remaining space.
+                moduleContent
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .background(Color.appBackground)
+
+            // Full-screen loading overlay for locked modules.
+            if showLoadingOverlay, let tab = loadingTab {
+                ZStack {
+                    Color.appBackground.ignoresSafeArea()
+
+                    // The module's branded loading image.
+                    Image(tab.loadingImageName)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .clipped()
+
+                    VStack {
+                        Spacer()
+                        ProgressView()
+                            .tint(tab.accentColor)
+                            .padding(.bottom, 40)
+                    }
+                    .opacity(showLoadingOverlay ? 1 : 0)
+                }
+                .ignoresSafeArea()
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+            }
         }
         .background(Color.appBackground)
         .ignoresSafeArea()
@@ -95,9 +137,7 @@ struct MainMenuView: View {
         HStack(spacing: 0) {
             ForEach(AppTab.allCases, id: \.self) { tab in
                 Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        selectedTab = tab
-                    }
+                    showModuleTab(tab)
                 } label: {
                     VStack(spacing: 4) {
                         // Simple SF Symbol icon on white circle background.
@@ -139,39 +179,105 @@ struct MainMenuView: View {
         switch selectedTab {
         case .vocabulary:
             NavigationStack {
-                VocabularyLoading()
+                VocabularyLoading(isLocked: false)
+                    .environmentObject(iapManager)
             }
             .background(Color.appBackground)
         case .commonSentences:
-            NavigationStack {
-                CommonSentencesLoading()
-            }
-            .background(Color.appBackground)
-            .environment(\.moduleDismissal, ModuleDismissalAction {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    selectedTab = .vocabulary
+            if iapManager.isCommonSentencesUnlocked {
+                NavigationStack {
+                    CommonSentencesView()
                 }
-            })
+                .background(Color.appBackground)
+            } else {
+                // Module locked — show stub.
+                ZStack {
+                    Color.appBackground.ignoresSafeArea()
+                    Text("Common Sentences")
+                        .font(.title)
+                        .foregroundColor(.secondary)
+                }
+            }
         case .pronunciation:
-            NavigationStack {
-                PronunciationLoading()
-            }
-            .background(Color.appBackground)
-            .environment(\.moduleDismissal, ModuleDismissalAction {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    selectedTab = .vocabulary
+            if iapManager.isPronunciationUnlocked {
+                NavigationStack {
+                    PronunciationView()
                 }
-            })
+                .background(Color.appBackground)
+            } else {
+                ZStack {
+                    Color.appBackground.ignoresSafeArea()
+                    Text("Pronunciation")
+                        .font(.title)
+                        .foregroundColor(.secondary)
+                }
+            }
         case .qa:
-            NavigationStack {
-                QALoading()
-            }
-            .background(Color.appBackground)
-            .environment(\.moduleDismissal, ModuleDismissalAction {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    selectedTab = .vocabulary
+            if iapManager.isQAUnlocked {
+                NavigationStack {
+                    QAView()
                 }
-            })
+                .background(Color.appBackground)
+            } else {
+                ZStack {
+                    Color.appBackground.ignoresSafeArea()
+                    Text("Q&A")
+                        .font(.title)
+                        .foregroundColor(.secondary)
+                }
+            }
+        }
+    }
+
+    // MARK: - Module Selection Logic
+
+    /// Handle module icon tap: show loading overlay, check IAP, then show or dismiss.
+    private func showModuleTab(_ tab: AppTab) {
+        // Vocabulary is always unlocked.
+        guard tab != .vocabulary else {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                selectedTab = tab
+            }
+            return
+        }
+
+        // Load the module if unlocked.
+        let isUnlocked: Bool
+        switch tab {
+        case .commonSentences:
+            isUnlocked = iapManager.isCommonSentencesUnlocked
+        case .pronunciation:
+            isUnlocked = iapManager.isPronunciationUnlocked
+        case .qa:
+            isUnlocked = iapManager.isQAUnlocked
+        case .vocabulary:
+            isUnlocked = true
+        }
+
+        if isUnlocked {
+            loadingTab = tab
+            showLoadingOverlay = true
+            Task {
+                try? await Task.sleep(for: .seconds(0.8))
+                await MainActor.run {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selectedTab = tab
+                        showLoadingOverlay = false
+                    }
+                }
+            }
+        } else {
+            // Locked: show loading image for 1.5s then fade out (dismiss back to current tab).
+            loadingTab = tab
+            showLoadingOverlay = true
+            Task {
+                try? await Task.sleep(for: .seconds(1.5))
+                await MainActor.run {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showLoadingOverlay = false
+                    }
+                }
+            }
         }
     }
 }

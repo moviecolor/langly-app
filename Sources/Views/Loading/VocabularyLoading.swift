@@ -3,9 +3,11 @@ import SwiftUI
 /// Loading screen for the Vocabulary module.
 /// Uses the custom loading page image (V_001.png) — full screen, 1.5s display.
 struct VocabularyLoading: View {
+    /// When true (module locked), show branding only — no navigation.
     @State private var isVisible = false
     @State private var shouldNavigate = false
-    @EnvironmentObject var iapManager: IAPManager
+    
+    var isLocked: Bool
 
     var body: some View {
         ZStack {
@@ -35,6 +37,7 @@ struct VocabularyLoading: View {
             VocabularyView()
         }
         .task {
+            guard !isLocked else { return }
             isVisible = true
             try? await Task.sleep(for: .seconds(1.5))
             shouldNavigate = true
@@ -44,7 +47,7 @@ struct VocabularyLoading: View {
 
 #Preview {
     NavigationStack {
-        VocabularyLoading()
+        VocabularyLoading(isLocked: false)
             .environmentObject(IAPManager())
     }
 }

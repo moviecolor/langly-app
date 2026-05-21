@@ -42,6 +42,9 @@ struct WordInputView: View {
     /// Success feedback state — shows a brief "Saved!" toast.
     @State private var showSaveFeedback: Bool = false
 
+    /// Error feedback state — shows a brief save error message.
+    @State private var showSaveError: Bool = false
+
     enum TranslationStatus {
         case idle
         case translating
@@ -116,6 +119,11 @@ struct WordInputView: View {
             } message: {
                 Text("Please select a block first before saving a word.")
             }
+            .alert("Save Failed", isPresented: $showSaveError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Could not save the word. Please try again.")
+            }
         }
     }
 
@@ -180,11 +188,6 @@ struct WordInputView: View {
             Toggle("", isOn: $useManualTranslation)
                 .labelsHidden()
                 .tint(Color(hex: 0xFF6B35))
-                .onChange(of: useManualTranslation) { _, newValue in
-                    // Clear translated word when switching modes to avoid stale data.
-                    translatedWord = ""
-                    translationStatus = .idle
-                }
         }
         .padding()
         .background(
@@ -629,6 +632,15 @@ struct WordInputView: View {
 
         modelContext.insert(newWord)
         block.vocabularyWords.append(newWord)
+
+        // Explicitly save the context so SwiftData persists the new word.
+        do {
+            try modelContext.save()
+        } catch {
+            print("[WordInputView] Failed to save word: \(error)")
+            showSaveError = true
+            return
+        }
 
         // Haptic feedback for successful save.
         let generator = UINotificationFeedbackGenerator()
