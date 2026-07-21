@@ -44,6 +44,7 @@
 		DC0AD273E6FDB953A20846DC /* WordInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5238987AA452299EE4138531 /* WordInputView.swift */; };
 		DC2A96FB54247F5B41335533 /* QASession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18054931FCBC80FA8741517E /* QASession.swift */; };
 		E6E542C8A62C0017CC759E92 /* SentenceGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C84C48CFF31E74797F2F0E6 /* SentenceGroup.swift */; };
+		ED779AC20361716547FC45D9 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 326015037F92F8261AB86608 /* LaunchScreen.storyboard */; };
 		F0C7D3AA9A4E8175A22BEA00 /* TranslatorManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7F362E7C3958361F6026F33 /* TranslatorManager.swift */; };
 		FD10A1E27FB71F1A2BFEF68A /* CommonSentencesLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54BFEC02F0B9F282098FDBB0 /* CommonSentencesLoading.swift */; };
 /* End PBXBuildFile section */
@@ -67,6 +68,7 @@
 		24A91F6E30BEBECFAEFCFBCA /* MatchMadnessViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchMadnessViewModel.swift; sourceTree = "<group>"; };
 		29BE61844C5CCA99682FC1E9 /* LanglyTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LanglyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2C84C48CFF31E74797F2F0E6 /* SentenceGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceGroup.swift; sourceTree = "<group>"; };
+		326015037F92F8261AB86608 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		36E1EAA12FBF6BB983F1E25C /* ModuleProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModuleProgress.swift; sourceTree = "<group>"; };
 		3B849A76DFD767A210BF86D6 /* SwiftData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftData.framework; path = System/Library/Frameworks/SwiftData.framework; sourceTree = SDKROOT; };
 		41356FB095EA0754EE832FC1 /* QAView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QAView.swift; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 				BB6266D8436CE25FD2FA4AD7 /* App.swift */,
 				439FAB672909C8387A13EBCA /* Assets.xcassets */,
 				8A9DA0F68EDE64ABB1C2E16D /* Info.plist */,
+				326015037F92F8261AB86608 /* LaunchScreen.storyboard */,
 				BA6514E4B8403BF618E691A5 /* Extensions */,
 				9E499F95BC88F3F9F6513351 /* Models */,
 				354F63B9F3E1FC66084312A8 /* Services */,
@@ -373,6 +376,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				43F0EDA18DF8312004910FE6 /* Assets.xcassets in Resources */,
+				ED779AC20361716547FC45D9 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

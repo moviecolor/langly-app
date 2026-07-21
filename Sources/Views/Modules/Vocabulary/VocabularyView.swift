@@ -23,9 +23,6 @@ struct VocabularyView: View {
                     // Block summary.
                     blockSummary
 
-                    // Add Word Block button.
-                    addBlockButton
-
                     // Word Match Madness button.
                     if vocabularyWords.count >= 2 {
                         FeatureCardButton(
@@ -66,6 +63,9 @@ struct VocabularyView: View {
                         )
                     }
 
+                    // Add Word Block button.
+                    addBlockButton
+
                     // Block cards.
                     if wordBlocks.isEmpty {
                         emptyState
@@ -73,6 +73,9 @@ struct VocabularyView: View {
                         ForEach(wordBlocks) { block in
                             blockCard(block)
                         }
+
+                        // Ghost block suggestion.
+                        ghostBlockCard
                     }
                 }
                 .padding()
@@ -247,6 +250,29 @@ struct VocabularyView: View {
                 }
             }
             .frame(height: 6)
+
+            // English words list — compact tag layout.
+            if !block.vocabularyWords.isEmpty {
+                let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
+                LazyVGrid(columns: columns, spacing: 6) {
+                    ForEach(block.vocabularyWords) { word in
+                        Text(word.nativeWord)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.primary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 5)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(hex: 0x00D4AA).opacity(0.1))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color(hex: 0x00D4AA).opacity(0.2), lineWidth: 0.5)
+                            )
+                    }
+                }
+            }
         }
         .padding(14)
         .background(
@@ -257,6 +283,41 @@ struct VocabularyView: View {
                         .stroke(Color(hex: 0x00D4AA).opacity(0.2), lineWidth: 1)
                 )
         )
+    }
+
+    // MARK: - Ghost Block Card
+
+    /// Empty block card suggesting the user add new words.
+    private var ghostBlockCard: some View {
+        Button {
+            showNewBlockAlert = true
+        } label: {
+            VStack(alignment: .center, spacing: 8) {
+                Image(systemName: "plus.circle.dashed")
+                    .font(.system(size: 28))
+                    .foregroundStyle(Color(hex: 0x00D4AA).opacity(0.5))
+
+                Text("Add a New Block")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.secondary)
+
+                Text("Create another block to organize\nyour growing vocabulary")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary.opacity(0.6))
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 24)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color(hex: 0x00D4AA).opacity(0.25), style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.appSurface.opacity(0.5))
+                    )
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 

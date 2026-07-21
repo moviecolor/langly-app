@@ -56,6 +56,13 @@ targets:
     info:
       path: Sources/Info.plist
       owner: Langly
+      properties:
+        LSRequiresIPhoneOS: true
+        UILaunchStoryboardName: LaunchScreen
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIRequiredDeviceCapabilities:
+          - arm64
 
   LanglyTests:
     type: bundle.unit-test
