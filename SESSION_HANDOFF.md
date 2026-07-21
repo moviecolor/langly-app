@@ -1,8 +1,8 @@
 # Langly — Session Handoff Document
 
-> **Generated:** 2026-05-21
+> **Generated:** 2026-07-21
 > **Purpose:** Complete record of this development session for the next session/developer to pick up immediately.
-> **Previous Handoff:** SESSION_HANDOFF.md (2026-05-19)
+> **Previous Handoff:** SESSION_HANDOFF.md (2026-05-21)
 
 ---
 
@@ -32,22 +32,46 @@ Langly is an **iOS language learning app** focused on teaching **English → Bra
 | **Bundle ID** | `com.langly.app` |
 | **Available Simulators** | iPhone 16, iPhone 16 Plus, iPhone 16 Pro, iPhone 16 Pro Max, iPhone 16e, iPhone 17, iPhone Air (OS 18.3.1 and 26.3.1) |
 
-### Build Commands
+### Build & Launch Commands (copy-paste ready)
+
+**CRITICAL: Simulator.app must be open first, or nothing works.**
+
 ```bash
+# ── Step 1: Open Simulator.app (REQUIRED — skip this and nothing renders) ──
+open -a Simulator
+sleep 5
+
+# ── Step 2: Set Xcode environment ──
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
 
-# Build on iPhone 16 simulator
+# ── Step 3: Boot the simulator if not already ──
+xcrun simctl boot "iPhone 16" 2>/dev/null  # safe to run even if already booted
+
+# ── Step 4: Build ──
+cd /Volumes/16TB_LARGE_NVME/OpenCODE_Projects/LANGLY_PROJECT
 xcodebuild -project Langly.xcodeproj -scheme Langly \
   -configuration Debug \
   -sdk iphonesimulator \
   -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.3.1' build
 
-# Launch on simulator
+# ── Step 5: Install + Launch ──
+xcrun simctl install booted \
+  ~/Library/Developer/Xcode/DerivedData/Langly-abruondohltdhffpihhscxuyjola/Build/Products/Debug-iphonesimulator/Langly.app
+sleep 2
 xcrun simctl launch booted com.langly.app
-
-# Start a specific simulator
-xcrun simctl boot "iPhone 16"
 ```
+
+**One-liner (if Simulator.app is already open):**
+```bash
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer && \
+cd /Volumes/16TB_LARGE_NVME/OpenCODE_Projects/LANGLY_PROJECT && \
+xcodebuild -project Langly.xcodeproj -scheme Langly -configuration Debug \
+  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.3.1' build 2>&1 | tail -3 && \
+xcrun simctl install booted ~/Library/Developer/Xcode/DerivedData/Langly-abruondohltdhffpihhscxuyjola/Build/Products/Debug-iphonesimulator/Langly.app && \
+sleep 2 && xcrun simctl launch booted com.langly.app
+```
+
+**DerivedData path:** `~/Library/Developer/Xcode/DerivedData/Langly-abruondohltdhffpihhscxuyjola/`
 
 ---
 
@@ -247,22 +271,30 @@ These need full implementation if the paid features are to be delivered.
 
 ```
 Branch: master
-Latest commit: 58fcaba (HEAD)
-Message: fix: module button navigation and manual word entry
-Files changed: 3 (+167, -46 lines)
-Status: ALL CLEAN — no uncommitted changes
+Latest commit: 918e562 (HEAD)
+Message: docs: add session handoff document for 2026-05-21
+Status: SESSION_HANDOFF.md updated with build commands (2026-07-21)
 ```
 
 ---
 
 ## 7. NEXT SESSION — IMMEDIATE TASKS
 
-### Task 1: Build and Run
+### Task 1: Build and Run (CRITICAL ORDER)
 ```bash
+# Step 1: MUST open Simulator.app first — or the app won't render
+open -a Simulator
+sleep 5
+
+# Step 2: Build + install + launch
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
-cd /Volumes/16TB_LARGE_NVME/OpenCODE_Projects/LANGLY_PROJECT/
+cd /Volumes/16TB_LARGE_NVME/OpenCODE_Projects/LANGLY_PROJECT
 xcodebuild -project Langly.xcodeproj -scheme Langly -configuration Debug \
-  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.3.1' build
+  -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.3.1' build 2>&1 | tail -3
+xcrun simctl install booted \
+  ~/Library/Developer/Xcode/DerivedData/Langly-abruondohltdhffpihhscxuyjola/Build/Products/Debug-iphonesimulator/Langly.app
+sleep 2
+xcrun simctl launch booted com.langly.app
 ```
 
 ### Task 2: Manual Test Checklist
@@ -332,4 +364,4 @@ Run through these flows in the app:
 
 ---
 
-*End of Session Handoff. Date: 2026-05-21. Build confirmed green in commit `58fcaba`. Next session starts with manual testing.*
+*End of Session Handoff. Date: 2026-07-21. Build confirmed green. App launched on simulator. Ready for layout review + changes.*
