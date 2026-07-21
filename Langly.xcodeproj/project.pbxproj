@@ -12,6 +12,7 @@
 		0BB3891C386F4C03FC9DBC8E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F673967E0381D2D5DD089D6E /* ContentView.swift */; };
 		0C02DF7BDF68A83B2B8111B4 /* LaunchScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A28DEA42745ECDE0DB5909BB /* LaunchScreen.swift */; };
 		1A93A9C2B675277C5A884B8C /* IAPManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E56240FD5A33729E4C17F9 /* IAPManager.swift */; };
+		1CF07B5ECFE71124EE8DCF4C /* FeatureCardButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42F6D07CE371BEE99CB0786 /* FeatureCardButton.swift */; };
 		1F8791AA2EC77D3D03DEC157 /* MatchMadnessViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A91F6E30BEBECFAEFCFBCA /* MatchMadnessViewModel.swift */; };
 		259C3EDB577BD285663DDCCD /* ModuleRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1141101092FA92F9F5D8D79 /* ModuleRouter.swift */; };
 		306C515B3A49826D7A76C4B8 /* CommonSentencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1629131DAAF52FDCA5649F94 /* CommonSentencesView.swift */; };
@@ -37,6 +38,7 @@
 		BB20E9C0F6C7000A7EC2C5B1 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00444555E4566DED0F2BA5AE /* AVFoundation.framework */; };
 		C54C8F5034E7440E46DD3BE7 /* MatchMadnessGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF4D569F860F49BA2C2C0EE8 /* MatchMadnessGameView.swift */; };
 		CB4ED061B51A854EDADCB21A /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3BD0B85ED1C17A0BE546E8C /* AppSettings.swift */; };
+		CE18EE5F9CD8D67387006AC7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C717E4A6A0D6748E9F0CAF /* SettingsView.swift */; };
 		D5D08CAB17610143441D811D /* VocabularyLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 682B271BE95A919EABC79059 /* VocabularyLoading.swift */; };
 		D9CCF7F6920187614EE4DAE1 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6266D8436CE25FD2FA4AD7 /* App.swift */; };
 		DC0AD273E6FDB953A20846DC /* WordInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5238987AA452299EE4138531 /* WordInputView.swift */; };
@@ -74,6 +76,7 @@
 		4F5847E1DC235F619B8EF61D /* WordBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordBlock.swift; sourceTree = "<group>"; };
 		5238987AA452299EE4138531 /* WordInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordInputView.swift; sourceTree = "<group>"; };
 		54BFEC02F0B9F282098FDBB0 /* CommonSentencesLoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonSentencesLoading.swift; sourceTree = "<group>"; };
+		57C717E4A6A0D6748E9F0CAF /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		5CEC76CDB0527B02C2510C55 /* VocabularyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyView.swift; sourceTree = "<group>"; };
 		5F1F43F10ABD2D8C7C16D98B /* MockTranslator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockTranslator.swift; sourceTree = "<group>"; };
 		635D5901E225852FC925F025 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
@@ -92,6 +95,7 @@
 		C3E56240FD5A33729E4C17F9 /* IAPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IAPManager.swift; sourceTree = "<group>"; };
 		CF4D569F860F49BA2C2C0EE8 /* MatchMadnessGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchMadnessGameView.swift; sourceTree = "<group>"; };
 		D3BD0B85ED1C17A0BE546E8C /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		D42F6D07CE371BEE99CB0786 /* FeatureCardButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureCardButton.swift; sourceTree = "<group>"; };
 		E2ADB102DA374C2B2443AA1A /* PronunciationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PronunciationView.swift; sourceTree = "<group>"; };
 		E847B531E5760CD48BD64D2F /* QALoading.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QALoading.swift; sourceTree = "<group>"; };
 		EB5B801530FB9715BDFD7752 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
@@ -154,6 +158,8 @@
 			children = (
 				F673967E0381D2D5DD089D6E /* ContentView.swift */,
 				F1E2CD1C0E98C840694C9886 /* MainMenuView.swift */,
+				57C717E4A6A0D6748E9F0CAF /* SettingsView.swift */,
+				CF8B7E8936B0FE25B4F2C67C /* Components */,
 				A61F05AC34E9F22EBA96F5E8 /* Loading */,
 				38A770398DAA0DABAF8B81BA /* Modules */,
 			);
@@ -273,6 +279,14 @@
 			path = Extensions;
 			sourceTree = "<group>";
 		};
+		CF8B7E8936B0FE25B4F2C67C /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				D42F6D07CE371BEE99CB0786 /* FeatureCardButton.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
 		E68DE94B166898AE4E716920 /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
@@ -378,6 +392,7 @@
 				FD10A1E27FB71F1A2BFEF68A /* CommonSentencesLoading.swift in Sources */,
 				306C515B3A49826D7A76C4B8 /* CommonSentencesView.swift in Sources */,
 				0BB3891C386F4C03FC9DBC8E /* ContentView.swift in Sources */,
+				1CF07B5ECFE71124EE8DCF4C /* FeatureCardButton.swift in Sources */,
 				1A93A9C2B675277C5A884B8C /* IAPManager.swift in Sources */,
 				0C02DF7BDF68A83B2B8111B4 /* LaunchScreen.swift in Sources */,
 				901969D58CEA5A3217176760 /* MainMenuView.swift in Sources */,
@@ -393,6 +408,7 @@
 				686C6CAEBE7569A380D1C345 /* QAView.swift in Sources */,
 				70F34BB4AE932EA921EFAB96 /* Sentence.swift in Sources */,
 				E6E542C8A62C0017CC759E92 /* SentenceGroup.swift in Sources */,
+				CE18EE5F9CD8D67387006AC7 /* SettingsView.swift in Sources */,
 				926417D4AB08DBC968A47921 /* TranslationSessionProvider.swift in Sources */,
 				F0C7D3AA9A4E8175A22BEA00 /* TranslatorManager.swift in Sources */,
 				D5D08CAB17610143441D811D /* VocabularyLoading.swift in Sources */,
@@ -480,7 +496,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -614,7 +630,7 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = YES;
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_STRICT_CONCURRENCY = complete;

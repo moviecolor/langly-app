@@ -55,7 +55,7 @@ struct AudioModeView: View {
         }
         .navigationTitle("Audio Mode")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
+        .task {
             viewModel.loadBlocks(wordBlocks)
         }
     }
@@ -125,73 +125,31 @@ struct AudioModeView: View {
         HStack(spacing: 16) {
             switch viewModel.playbackState {
             case .stopped:
-                Button {
+                playbackActionButton(label: "Play", icon: "play.fill",
+                                     background: Color(hex: 0x00D4AA)) {
                     viewModel.startPlayback()
-                } label: {
-                    Label("Play", systemImage: "play.fill")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color(hex: 0x00D4AA))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .buttonStyle(.plain)
                 .disabled(viewModel.selectedBlockIDs.isEmpty)
 
             case .playing:
-                Button {
+                playbackActionButton(label: "Pause", icon: "pause.fill",
+                                     background: Color(hex: 0xFF6B35)) {
                     viewModel.pausePlayback()
-                } label: {
-                    Label("Pause", systemImage: "pause.fill")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color(hex: 0xFF6B35))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .buttonStyle(.plain)
-
-                Button {
+                playbackActionButton(label: "Stop", icon: "stop.fill",
+                                     background: Color.red.opacity(0.8)) {
                     viewModel.stopPlayback()
-                } label: {
-                    Label("Stop", systemImage: "stop.fill")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color.red.opacity(0.8))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .buttonStyle(.plain)
 
             case .paused:
-                Button {
+                playbackActionButton(label: "Resume", icon: "play.fill",
+                                     background: Color(hex: 0x00D4AA)) {
                     viewModel.resumePlayback()
-                } label: {
-                    Label("Resume", systemImage: "play.fill")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color(hex: 0x00D4AA))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .buttonStyle(.plain)
-
-                Button {
+                playbackActionButton(label: "Stop", icon: "stop.fill",
+                                     background: Color.red.opacity(0.8)) {
                     viewModel.stopPlayback()
-                } label: {
-                    Label("Stop", systemImage: "stop.fill")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color.red.opacity(0.8))
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -203,7 +161,7 @@ struct AudioModeView: View {
             // Repetitions slider.
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Repetitions")
+                    Text("Repeat Each Word")
                         .font(.subheadline.bold())
                         .foregroundColor(.secondary)
 
@@ -217,9 +175,9 @@ struct AudioModeView: View {
                 Slider(
                     value: Binding(
                         get: { Double(viewModel.repetitions) },
-                        set: { viewModel.repetitions = max(1, min(9, Int($0))) }
+                        set: { viewModel.repetitions = max(1, min(10, Int($0))) }
                     ),
-                    in: 1...9,
+                    in: 1...10,
                     step: 1
                 )
                 .tint(Color(hex: 0xFF6B35))
@@ -228,7 +186,7 @@ struct AudioModeView: View {
             // Gap slider.
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Gap Between Words")
+                    Text("Silence Gap")
                         .font(.subheadline.bold())
                         .foregroundColor(.secondary)
 
@@ -241,10 +199,20 @@ struct AudioModeView: View {
 
                 Slider(
                     value: $viewModel.gapSeconds,
-                    in: 0.5...3.0,
+                    in: 0.5...5.0,
                     step: 0.25
                 )
                 .tint(Color(hex: 0x00D4AA))
+            }
+
+            // Loop info.
+            HStack {
+                Image(systemName: "arrow.triangle.2.circlepath")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: 0x00D4AA))
+                Text("Loops automatically — press Stop to end")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
         }
         .padding()
@@ -297,6 +265,20 @@ struct AudioModeView: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.appSurface.opacity(0.6))
         )
+    }
+
+    /// Shared playback action button to eliminate duplicated button code.
+    private func playbackActionButton(label: String, icon: String, background: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(label, systemImage: icon)
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(background)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
     }
 
     /// Individual block selection row.

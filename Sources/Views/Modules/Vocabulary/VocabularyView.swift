@@ -1,104 +1,69 @@
 import SwiftUI
 import SwiftData
 
-/// Vocabulary module main view — hub for word bank, Match Madness, and Audio Mode.
-enum VocabularyMode: String, CaseIterable, Identifiable {
-    case wordBank = "Word Bank"
-    case matchMadness = "Match Madness"
-    case audioMode = "Audio Mode"
-
-    var id: String { rawValue }
-
-    var icon: String {
-        switch self {
-        case .wordBank: return "book.fill"
-        case .matchMadness: return "gamecontroller.fill"
-        case .audioMode: return "speaker.wave.3.fill"
-        }
-    }
-}
-
+/// Vocabulary module — 3 buttons: Add Word Block, Word Match Madness, Audio Mode.
 struct VocabularyView: View {
     @EnvironmentObject var iapManager: IAPManager
     @Environment(\.modelContext) private var modelContext
     @Query private var wordBlocks: [WordBlock]
     @Query private var vocabularyWords: [VocabularyWord]
 
-    @State private var selectedMode: VocabularyMode = .wordBank
+    @State private var selectedMode: VocabularyMode?
     @State private var showWordInput = false
     @State private var showNewBlockAlert = false
     @State private var newBlockName: String = ""
-
-    // Scaled metrics for small screen support.
-    @ScaledMetric(relativeTo: .body) var summaryIconSize: CGFloat = 22
-    @ScaledMetric(relativeTo: .body) var summaryValueSize: CGFloat = 18
-    @ScaledMetric(relativeTo: .body) var summaryLabelSize: CGFloat = 11
-    @ScaledMetric(relativeTo: .body) var blockCardPadding: CGFloat = 14
-    @ScaledMetric(relativeTo: .body) var blockNameSize: CGFloat = 16
+    @State private var mixAllBlocks: Bool = false
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.appBackground.ignoresSafeArea()
+        ZStack {
+            Color.appBackground.ignoresSafeArea()
 
-                Group {
-                    switch selectedMode {
-                    case .wordBank:
-                        wordBankView
-                    case .matchMadness:
-                        MatchMadnessGameView()
-                    case .audioMode:
-                        AudioModeView()
-                    }
-                }
-            }
-            .navigationTitle("Vocabulary")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    modePicker
-                }
-
-                if selectedMode == .wordBank {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        addBlockButton
-                    }
-                }
-            }
-            .toolbarBackground(Color.appBackground, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .sheet(isPresented: $showWordInput) {
-                WordInputView()
-            }
-            .alert("New Word Block", isPresented: $showNewBlockAlert) {
-                TextField("Block name", text: $newBlockName)
-                    .textInputAutocapitalization(.words)
-
-                Button("Cancel", role: .cancel) {
-                    newBlockName = ""
-                }
-                Button("Create") {
-                    createNewBlock()
-                }
-            } message: {
-                Text("Enter a name for the new word block (max 10 blocks).")
-            }
-        }
-        .background(Color.appBackground.ignoresSafeArea())
-    }
-
-    // MARK: - Word Bank View
-
-    private var wordBankView: some View {
-        GeometryReader { geo in
             ScrollView {
                 VStack(spacing: 16) {
-                    // Block summary — scaled for small screens.
+                    // Block summary.
                     blockSummary
 
-                    // Inline "Add Words" button — always visible when blocks exist.
+                    // Add Word Block button.
+                    addBlockButton
+
+                    // Word Match Madness button.
+                    if vocabularyWords.count >= 2 {
+                        FeatureCardButton(
+                            icon: "gamecontroller.fill",
+                            iconGradientColors: [Color(hex: 0xFF6B35), Color(hex: 0xFF8F5E)],
+                            title: "Word Match Madness",
+                            subtitle: "Match English and Portuguese pairs before time runs out",
+                            accentColors: [Color(hex: 0xFF6B35).opacity(0.4), Color(hex: 0x00D4AA).opacity(0.3)],
+                            action: { selectedMode = .matchMadness }
+                        )
+                    }
+
+                    // Mix All Blocks button.
+                    if wordBlocks.count > 1 {
+                        FeatureCardButton(
+                            icon: "shuffle",
+                            iconGradientColors: [Color(hex: 0x9B59B6), Color(hex: 0x8E44AD)],
+                            title: "Mix All Blocks",
+                            subtitle: "Combine words from all blocks into one game",
+                            accentColors: [Color(hex: 0x9B59B6).opacity(0.4), Color(hex: 0x00D4AA).opacity(0.3)],
+                            accessory: .toggle(isOn: mixAllBlocks, activeColor: Color(hex: 0x9B59B6)),
+                            action: {
+                                mixAllBlocks.toggle()
+                                if mixAllBlocks { selectedMode = .matchMadness }
+                            }
+                        )
+                    }
+
+                    // Audio Mode button.
                     if !wordBlocks.isEmpty {
-                        addWordButtonInline
+                        FeatureCardButton(
+                            icon: "speaker.wave.3.fill",
+                            iconGradientColors: [Color(hex: 0x3498DB), Color(hex: 0x2980B9)],
+                            title: "Audio Mode",
+                            subtitle: "Listen on repeat, memorize, and speak out loud. Set repeats and gap in settings.",
+                            accentColors: [Color(hex: 0x3498DB).opacity(0.4), Color(hex: 0x00D4AA).opacity(0.3)],
+                            action: { selectedMode = .audioMode }
+                        )
                     }
 
                     // Block cards.
@@ -111,57 +76,121 @@ struct VocabularyView: View {
                     }
                 }
                 .padding()
-                .frame(minHeight: geo.size.height)
             }
-            .scrollContentBackground(.hidden)
-            .background(Color.appBackground)
         }
+        .navigationTitle("Vocabulary")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showWordInput = true
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundColor(Color(hex: 0x00D4AA))
+                }
+            }
+        }
+        .background(Color.appBackground.ignoresSafeArea())
+        .navigationDestination(item: $selectedMode) { mode in
+            switch mode {
+            case .matchMadness:
+                MatchMadnessGameView(mixAllBlocks: mixAllBlocks)
+            case .audioMode:
+                AudioModeView()
+            case .wordBank:
+                EmptyView()
+            }
+        }
+        .sheet(isPresented: $showWordInput) {
+            WordInputView()
+        }
+        .alert("New Word Block", isPresented: $showNewBlockAlert) {
+            TextField("Block name", text: $newBlockName)
+                .textInputAutocapitalization(.words)
+            Button("Cancel", role: .cancel) { newBlockName = "" }
+            Button("Create") {
+                guard !newBlockName.isEmpty, wordBlocks.count < 10 else { return }
+                let block = WordBlock(blockName: newBlockName, vocabularyWords: [], isActive: true)
+                modelContext.insert(block)
+                try? modelContext.save()
+                newBlockName = ""
+            }
+        } message: {
+            Text("Enter a name for the new word block (max 10 blocks).")
+        }
+    }
+
+    // MARK: - Add Block Button
+
+    private var addBlockButton: some View {
+        Button {
+            showNewBlockAlert = true
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(hex: 0x00D4AA).opacity(0.15))
+                        .frame(width: 40, height: 40)
+
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundColor(Color(hex: 0x00D4AA))
+                }
+
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Add Word Block")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.primary)
+
+                    Text("Create a new block to organize your vocabulary")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "plus.circle")
+                    .font(.system(size: 20))
+                    .foregroundColor(Color(hex: 0x00D4AA))
+            }
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color.appSurface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color(hex: 0x00D4AA).opacity(0.3), lineWidth: 1.5)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Block Summary
 
     private var blockSummary: some View {
         HStack(spacing: 12) {
-            summaryCard(
-                icon: "square.stack.3d.down.right.fill",
-                label: "Blocks",
-                value: "\(wordBlocks.count)/10"
-            )
-
-            summaryCard(
-                icon: "character.book.closed.fill",
-                label: "Words",
-                value: "\(vocabularyWords.count)"
-            )
-
-            summaryCard(
-                icon: "checkmark.circle.fill",
-                label: "Mastered",
-                value: "\(vocabularyWords.filter { $0.masteryLevel == .mastered }.count)"
-            )
+            summaryCard(icon: "square.stack.3d.down.right.fill", label: "Blocks", value: "\(wordBlocks.count)/10")
+            summaryCard(icon: "character.book.closed.fill", label: "Words", value: "\(vocabularyWords.count)")
+            summaryCard(icon: "checkmark.circle.fill", label: "Mastered", value: "\(vocabularyWords.filter { $0.masteryLevel == .mastered }.count)")
         }
     }
 
     private func summaryCard(icon: String, label: String, value: String) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.system(size: summaryIconSize))
+                .font(.system(size: 18))
                 .foregroundStyle(Color(hex: 0x00D4AA))
-
             Text(value)
-                .font(.system(size: summaryValueSize, weight: .bold))
+                .font(.system(size: 16, weight: .bold))
                 .foregroundStyle(Color(hex: 0xFF6B35))
-
             Text(label)
-                .font(.system(size: summaryLabelSize))
+                .font(.system(size: 10))
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.appSurface)
-        )
+        .background(RoundedRectangle(cornerRadius: 10).fill(Color.appSurface))
     }
 
     // MARK: - Empty State
@@ -171,38 +200,15 @@ struct VocabularyView: View {
             Image(systemName: "book")
                 .font(.system(size: 40))
                 .foregroundColor(.secondary.opacity(0.5))
-
             Text("No word blocks yet")
                 .font(.system(size: 16, weight: .bold))
-
-            Text("Tap + to create your first block,\nthen tap \"Add Words\" to start building your vocabulary.")
+            Text("Tap \"Add Word Block\" to create your first block,\nthen add words to start learning.")
                 .font(.system(size: 13))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 30)
-    }
-
-    // MARK: - Inline Add Words Button
-
-    private var addWordButtonInline: some View {
-        Button {
-            showWordInput = true
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 16))
-                Text("Add Words")
-                    .font(.system(size: 14, weight: .semibold))
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(Color(hex: 0x00D4AA))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Block Card
@@ -213,161 +219,53 @@ struct VocabularyView: View {
         let progress = Double(activeWords) / Double(maxWords)
 
         return VStack(alignment: .leading, spacing: 10) {
-            // Header.
             HStack {
                 HStack(spacing: 6) {
                     Image(systemName: block.isActive ? "checkmark.circle.fill" : "circle")
                         .foregroundStyle(block.isActive ? Color(hex: 0x00D4AA) : .secondary)
                         .font(.system(size: 14))
-
                     Text(block.blockName)
-                        .font(.system(size: blockNameSize, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                 }
 
                 Spacer()
 
-                // Active toggle.
-                Toggle("", isOn: Binding(
-                    get: { block.isActive },
-                    set: { block.isActive = $0 }
-                ))
-                .labelsHidden()
-                .tint(Color(hex: 0x00D4AA))
-                .toggleStyle(.switch)
-                .scaleEffect(0.8)
+                Text("\(activeWords)/\(maxWords) words")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
             }
 
             // Progress bar.
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text("\(activeWords)/\(maxWords) words")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-
-                    Spacer()
-
-                    Text("\(Int(progress * 100))%")
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(.secondary)
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(height: 6)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(hex: 0x00D4AA))
+                        .frame(width: geo.size.width * progress, height: 6)
                 }
-
-                ProgressView(value: progress)
-                    .tint(activeWords >= maxWords ? Color(hex: 0x00D4AA) : Color(hex: 0xFF6B35))
-                    .scaleEffect(y: 0.8)
             }
-
-            // Mastery breakdown.
-            HStack(spacing: 10) {
-                masteryBadge(count: block.vocabularyWords.filter { $0.masteryLevel == .mastered }.count, label: "Mastered", color: Color(hex: 0x00D4AA))
-                masteryBadge(count: block.vocabularyWords.filter { $0.masteryLevel == .learning }.count, label: "Learning", color: Color(hex: 0xFF6B35))
-                masteryBadge(count: block.vocabularyWords.filter { $0.masteryLevel == .unlearned }.count, label: "New", color: .secondary)
-            }
-
-            // Inline "Add Words" button on each block.
-            if activeWords < maxWords {
-                Button {
-                    showWordInput = true
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 12))
-                        Text("Add Word to \(block.blockName)")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundColor(Color(hex: 0x00D4AA))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color(hex: 0x00D4AA).opacity(0.3), lineWidth: 1)
-                    )
-                }
-                .buttonStyle(.plain)
-            }
-
-            // Delete button.
-            HStack {
-                Spacer()
-                Button("Delete Block", role: .destructive) {
-                    deleteBlock(block)
-                }
-                .font(.system(size: 11))
-            }
+            .frame(height: 6)
         }
-        .padding(blockCardPadding)
+        .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 14)
                 .fill(Color.appSurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(hex: 0x00D4AA).opacity(0.2), lineWidth: 1)
+                )
         )
-    }
-
-    private func masteryBadge(count: Int, label: String, color: Color) -> some View {
-        HStack(spacing: 3) {
-            Circle()
-                .fill(color)
-                .frame(width: 7, height: 7)
-
-            Text("\(count) \(label)")
-                .font(.system(size: 10))
-                .foregroundColor(.secondary)
-        }
-    }
-
-    // MARK: - Toolbar Items
-
-    private var modePicker: some View {
-        Menu {
-            Picker("Mode", selection: $selectedMode) {
-                ForEach(VocabularyMode.allCases) { mode in
-                    Label(mode.rawValue, systemImage: mode.icon)
-                        .tag(mode)
-                }
-            }
-            .pickerStyle(.inline)
-        } label: {
-            Image(systemName: selectedMode.icon)
-                .font(.title3)
-                .foregroundStyle(Color(hex: 0x00D4AA))
-        }
-    }
-
-    private var addBlockButton: some View {
-        Button {
-            if wordBlocks.count < 10 {
-                showNewBlockAlert = true
-            }
-        } label: {
-            Image(systemName: "plus.square.fill")
-                .font(.title3)
-                .foregroundStyle(Color(hex: 0xFF6B35))
-        }
-        .disabled(wordBlocks.count >= 10)
-    }
-
-    // MARK: - Actions
-
-    private func createNewBlock() {
-        guard !newBlockName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        guard wordBlocks.count < 10 else { return }
-
-        let newBlock = WordBlock(
-            blockName: newBlockName.trimmingCharacters(in: .whitespacesAndNewlines),
-            vocabularyWords: [],
-            isActive: true
-        )
-        modelContext.insert(newBlock)
-        newBlockName = ""
-    }
-
-    private func deleteBlock(_ block: WordBlock) {
-        modelContext.delete(block)
     }
 }
 
-// MARK: - Preview
+// MARK: - Vocabulary Mode
 
-#Preview {
-    VocabularyView()
-        .environmentObject(IAPManager())
-        .modelContainer(for: [WordBlock.self, VocabularyWord.self], inMemory: true)
+enum VocabularyMode: String, Identifiable {
+    case wordBank = "Word Bank"
+    case matchMadness = "Match Madness"
+    case audioMode = "Audio Mode"
+
+    var id: String { rawValue }
 }

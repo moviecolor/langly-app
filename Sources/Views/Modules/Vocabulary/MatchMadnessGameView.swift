@@ -7,8 +7,11 @@ struct MatchMadnessGameView: View {
     @StateObject private var viewModel = MatchMadnessViewModel()
     @Environment(\.modelContext) private var modelContext
     @Query private var wordBlocks: [WordBlock]
+    let mixAllBlocks: Bool
 
-    init() {}
+    init(mixAllBlocks: Bool = false) {
+        self.mixAllBlocks = mixAllBlocks
+    }
 
     /// Whether the game complete overlay is showing.
     @State private var showCompleteOverlay: Bool = false
@@ -47,8 +50,13 @@ struct MatchMadnessGameView: View {
         }
         .navigationTitle("Match Madness")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            viewModel.loadWords(from: wordBlocks)
+        .task {
+            if mixAllBlocks {
+                viewModel.loadAllBlocks(from: wordBlocks)
+            } else {
+                viewModel.loadWords(from: wordBlocks)
+            }
+            viewModel.startGame()
         }
         .onChange(of: viewModel.gameState) { _, newState in
             if newState == .complete {
@@ -137,7 +145,7 @@ struct MatchMadnessGameView: View {
                 viewModel.selectRightWord(word)
             }
         } label: {
-            Text(word.nativeWord)
+            Text(column == .left ? word.nativeWord : word.translatedWord)
                 .font(.callout)
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
@@ -171,6 +179,38 @@ struct MatchMadnessGameView: View {
 
     private var bottomControls: some View {
         VStack(spacing: 16) {
+            // Block toggles section — shows all blocks with ON/OFF switches.
+            if wordBlocks.count > 1 {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Word Blocks")
+                        .font(.subheadline.bold())
+                        .foregroundColor(.secondary)
+
+                    ForEach(wordBlocks.filter { $0.isActive }) { block in
+                        HStack {
+                            Image(systemName: viewModel.activeBlockNames.contains(block.blockName)
+                                  ? "checkmark.circle.fill" : "circle")
+                                .foregroundColor(viewModel.activeBlockNames.contains(block.blockName)
+                                                 ? Color(hex: 0x00D4AA) : .secondary)
+
+                            Text(block.blockName)
+                                .font(.subheadline)
+
+                            Spacer()
+
+                            Text("\(block.vocabularyWords.count) words")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            viewModel.toggleBlock(block.blockName, blocks: wordBlocks)
+                        }
+                    }
+                }
+                .padding(.horizontal, 4)
+            }
+
             // Jumble toggle.
             HStack {
                 Text("Jumble Columns")
@@ -192,86 +232,33 @@ struct MatchMadnessGameView: View {
             HStack(spacing: 16) {
                 switch viewModel.gameState {
                 case .idle:
-                    Button {
-                        viewModel.startGame()
-                    } label: {
-                        Label("Start", systemImage: "play.fill")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color(hex: 0x00D4AA))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .buttonStyle(.plain)
+                    EmptyView()
 
                 case .playing:
-                    Button {
+                    gameActionButton(label: "Pause", icon: "pause.fill",
+                                     background: Color(hex: 0xFF6B35)) {
                         viewModel.pauseGame()
-                    } label: {
-                        Label("Pause", systemImage: "pause.fill")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color(hex: 0xFF6B35))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    .buttonStyle(.plain)
-
-                    Button {
+                    gameActionButton(label: "Stop", icon: "stop.fill",
+                                     background: Color.red.opacity(0.8)) {
                         viewModel.stopGame()
-                    } label: {
-                        Label("Stop", systemImage: "stop.fill")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.red.opacity(0.8))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    .buttonStyle(.plain)
 
                 case .paused:
-                    Button {
+                    gameActionButton(label: "Resume", icon: "play.fill",
+                                     background: Color(hex: 0x00D4AA)) {
                         viewModel.resumeGame()
-                    } label: {
-                        Label("Resume", systemImage: "play.fill")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color(hex: 0x00D4AA))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    .buttonStyle(.plain)
-
-                    Button {
+                    gameActionButton(label: "Stop", icon: "stop.fill",
+                                     background: Color.red.opacity(0.8)) {
                         viewModel.stopGame()
-                    } label: {
-                        Label("Stop", systemImage: "stop.fill")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.red.opacity(0.8))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    .buttonStyle(.plain)
 
                 case .complete:
-                    Button {
+                    gameActionButton(label: "Play Again", icon: "arrow.clockwise",
+                                     background: Color(hex: 0x00D4AA)) {
                         viewModel.restartGame()
-                    } label: {
-                        Label("Play Again", systemImage: "arrow.clockwise")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color(hex: 0x00D4AA))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    .buttonStyle(.plain)
                 }
             }
         }
@@ -353,6 +340,20 @@ struct MatchMadnessGameView: View {
     }
 
     // MARK: - Helpers
+
+    /// Shared game action button to eliminate duplicated button code.
+    private func gameActionButton(label: String, icon: String, background: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Label(label, systemImage: icon)
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(background)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .buttonStyle(.plain)
+    }
 
     /// Formats seconds into MM:SS.
     private func formatTime(_ seconds: Int) -> String {

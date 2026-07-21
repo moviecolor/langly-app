@@ -50,6 +50,12 @@ final class MatchMadnessViewModel: ObservableObject {
     /// Whether jumble mode is enabled (either language can appear in either column).
     @Published var isJumbleEnabled: Bool = false
 
+    /// Currently selected block name for the game.
+    @Published var selectedBlockName: String?
+
+    /// Set of active block names included in the current game.
+    @Published var activeBlockNames: Set<String> = []
+
     /// Whether a wrong-match animation should play.
     @Published var showWrongMatch: Bool = false
 
@@ -64,8 +70,8 @@ final class MatchMadnessViewModel: ObservableObject {
     /// All available vocabulary words from active blocks.
     private var allWords: [VocabularyWord] = []
 
-    /// Words that have already been matched and removed from the pool.
-    private var matchedWords: Set<String> = []
+    /// Reserve pool of words not yet on the board.
+    private var reserveWords: [MatchWord] = []
 
     /// Timer for the countdown.
     private var timer: Timer?
@@ -76,10 +82,57 @@ final class MatchMadnessViewModel: ObservableObject {
     // MARK: - Public API
 
     /// Loads words from the provided WordBlocks and initializes the game board.
-    func loadWords(from blocks: [WordBlock]) {
+    func loadWords(from blocks: [WordBlock], blockName: String? = nil) {
+        let targetBlock: WordBlock?
+        if let blockName = blockName {
+            targetBlock = blocks.first { $0.blockName == blockName && $0.isActive }
+        } else {
+            // Default to first active block.
+            targetBlock = blocks.first { $0.isActive }
+        }
+        allWords = targetBlock?.vocabularyWords
+            .filter { !$0.translatedWord.isEmpty } ?? []
+        selectedBlockName = targetBlock?.blockName
+        if let name = targetBlock?.blockName {
+            activeBlockNames = [name]
+        }
+    }
+
+    /// Loads words from ALL active blocks (mix mode).
+    func loadAllBlocks(from blocks: [WordBlock]) {
         let activeBlocks = blocks.filter { $0.isActive }
         allWords = activeBlocks.flatMap { $0.vocabularyWords }
             .filter { !$0.translatedWord.isEmpty }
+        selectedBlockName = "All Blocks"
+        activeBlockNames = Set(activeBlocks.map { $0.blockName })
+    }
+
+    /// Toggles a block on or off and rebuilds the word pool from all active blocks.
+    func toggleBlock(_ blockName: String, blocks: [WordBlock]) {
+        if activeBlockNames.contains(blockName) {
+            activeBlockNames.remove(blockName)
+        } else {
+            activeBlockNames.insert(blockName)
+        }
+
+        // Rebuild allWords from currently active blocks.
+        let activeBlocks = blocks.filter { activeBlockNames.contains($0.blockName) && $0.isActive }
+        allWords = activeBlocks.flatMap { $0.vocabularyWords }
+            .filter { !$0.translatedWord.isEmpty }
+
+        if activeBlockNames.isEmpty {
+            selectedBlockName = nil
+        } else if activeBlockNames.count == blocks.filter({ $0.isActive }).count {
+            selectedBlockName = "All Blocks"
+        } else {
+            selectedBlockName = activeBlockNames.sorted().joined(separator: ", ")
+        }
+
+        // If game is playing or paused, restart with the new word set.
+        if gameState == .playing || gameState == .paused {
+            stopGame()
+            startGame()
+        }
     }
 
     /// Starts a new game session.
@@ -91,7 +144,6 @@ final class MatchMadnessViewModel: ObservableObject {
         totalMatches = 0
         wrongAttempts = 0
         timeRemaining = Self.gameDurationSeconds
-        matchedWords.removeAll()
         selectedLeft = nil
         selectedRight = nil
         showWrongMatch = false
@@ -173,30 +225,46 @@ final class MatchMadnessViewModel: ObservableObject {
         }
     }
 
+    /// Switches to a different block and restarts the game.
+    func switchBlock(to blockName: String?, from blocks: [WordBlock]) {
+        if let blockName = blockName {
+            loadWords(from: blocks, blockName: blockName)
+        } else {
+            loadAllBlocks(from: blocks)
+        }
+        if gameState == .playing || gameState == .paused || gameState == .complete {
+            startGame()
+        }
+    }
+
     // MARK: - Private
 
-    /// Deals new words into both columns from the available pool.
-    private func dealNewWords() {
-        let availableWords = allWords.filter { !matchedWords.contains($0.nativeWord.lowercased()) }
+    static let maxBoardWords = 8
 
-        guard !availableWords.isEmpty else {
-            // All words matched — end the game.
+    /// Deals words into both columns. Shows up to 8, rest go to reserve.
+    private func dealNewWords() {
+        let shuffled = allWords.shuffled()
+
+        guard !shuffled.isEmpty else {
             endGame()
             return
         }
 
-        // Select up to 8 words for this round.
-        let count = min(8, availableWords.count)
-        let shuffled = availableWords.shuffled()
-        let roundWords = Array(shuffled.prefix(count))
+        let boardCount = min(Self.maxBoardWords, shuffled.count)
+        let boardWords = Array(shuffled.prefix(boardCount))
+        let reservePool = Array(shuffled.dropFirst(boardCount))
 
-        // Mark these words as "in play" to avoid duplicates.
-        for word in roundWords {
-            matchedWords.insert(word.nativeWord.lowercased())
+        // Create MatchWord instances for the board.
+        let matchWords = boardWords.map {
+            MatchWord(
+                nativeWord: $0.nativeWord,
+                translatedWord: $0.translatedWord,
+                blockIndex: $0.wordBlockIndex
+            )
         }
 
-        // Create MatchWord instances.
-        let matchWords = roundWords.map {
+        // Create MatchWord instances for the reserve.
+        reserveWords = reservePool.map {
             MatchWord(
                 nativeWord: $0.nativeWord,
                 translatedWord: $0.translatedWord,
@@ -205,50 +273,97 @@ final class MatchMadnessViewModel: ObservableObject {
         }
 
         if isJumbleEnabled {
-            // In jumble mode, randomly assign native or translated to each column.
             leftColumn = matchWords.shuffled().map { word in
                 Bool.random()
                     ? MatchWord(nativeWord: word.nativeWord, translatedWord: word.translatedWord, blockIndex: word.blockIndex)
                     : MatchWord(nativeWord: word.translatedWord, translatedWord: word.nativeWord, blockIndex: word.blockIndex)
             }
-            rightColumn = matchWords.shuffled().map { word in
-                Bool.random()
-                    ? MatchWord(nativeWord: word.translatedWord, translatedWord: word.nativeWord, blockIndex: word.blockIndex)
-                    : MatchWord(nativeWord: word.nativeWord, translatedWord: word.translatedWord, blockIndex: word.blockIndex)
-            }
         } else {
-            // Normal mode: left = native, right = translated.
             leftColumn = matchWords.shuffled()
-            rightColumn = matchWords.shuffled()
         }
+
+        // Right column: shuffled so no translation sits directly across from its pair.
+        rightColumn = shuffledRight(for: leftColumn, from: matchWords)
 
         selectedLeft = nil
         selectedRight = nil
     }
 
+    /// Shuffles words for the right column so no index has matching blockIndex with left.
+    private func shuffledRight(for left: [MatchWord], from words: [MatchWord]) -> [MatchWord] {
+        var right = words.shuffled()
+        var attempts = 0
+        while attempts < 100 {
+            var conflict = false
+            for i in 0..<min(left.count, right.count) {
+                if left[i].blockIndex == right[i].blockIndex {
+                    conflict = true
+                    break
+                }
+            }
+            if !conflict { break }
+            // Swap two random positions to break the conflict.
+            if right.count >= 2 {
+                let a = Int.random(in: 0..<right.count)
+                var b = Int.random(in: 0..<right.count)
+                while b == a { b = Int.random(in: 0..<right.count) }
+                right.swapAt(a, b)
+            }
+            attempts += 1
+        }
+        return right
+    }
+
+    /// Adds one word from the reserve to the board (if room, max 8).
+    private func addReserveWord() {
+        guard leftColumn.count < Self.maxBoardWords else { return }
+        guard let nextWord = reserveWords.first else { return }
+        reserveWords.removeFirst()
+
+        // Insert at random position in left column.
+        let leftPos = leftColumn.isEmpty ? 0 : Int.random(in: 0...leftColumn.count)
+        leftColumn.insert(nextWord, at: leftPos)
+
+        // Insert into right column at a position that doesn't align with same blockIndex.
+        var rightPos = rightColumn.isEmpty ? 0 : Int.random(in: 0...rightColumn.count)
+        var attempts = 0
+        while attempts < 30 {
+            let safePos = min(rightPos, rightColumn.count)
+            // Check if inserting here would put same blockIndex across from the left word.
+            let conflict = safePos < rightColumn.count && leftPos < leftColumn.count
+                && leftColumn[leftPos].blockIndex == rightColumn[safePos].blockIndex
+            if !conflict { break }
+            rightPos = rightColumn.isEmpty ? 0 : Int.random(in: 0...rightColumn.count)
+            attempts += 1
+        }
+        rightColumn.insert(nextWord, at: min(rightPos, rightColumn.count))
+    }
+
     /// Checks whether the selected left and right words form a valid match.
     private func checkMatch(left: MatchWord, right: MatchWord) {
-        let isMatch = left.nativeWord.lowercased() == right.translatedWord.lowercased()
-            || left.translatedWord.lowercased() == right.nativeWord.lowercased()
+        // Match by blockIndex — same vocabulary word selected from both columns.
+        let isMatch = left.blockIndex == right.blockIndex
 
         if isMatch {
-            // Correct match!
+            // Correct match! Score = 1 per pair.
             score += 1
             totalMatches += 1
 
-            // Remove matched words from columns.
+            // Remove matched words from both columns.
             leftColumn.removeAll { $0.id == left.id }
             rightColumn.removeAll { $0.id == right.id }
 
             selectedLeft = nil
             selectedRight = nil
 
-            // Deal replacements if there are still words available.
-            let availableCount = allWords.filter { !matchedWords.contains($0.nativeWord.lowercased()) }.count
-            if availableCount > 0 {
-                dealReplacements()
-            } else if leftColumn.isEmpty && rightColumn.isEmpty {
-                // All words matched — end game.
+            // If reserve has words, replace the matched pair.
+            if !reserveWords.isEmpty {
+                addReserveWord()
+                addReserveWord()
+            }
+
+            // Game complete when board is empty.
+            if leftColumn.isEmpty && rightColumn.isEmpty {
                 endGame()
             }
         } else {
@@ -256,56 +371,12 @@ final class MatchMadnessViewModel: ObservableObject {
             wrongAttempts += 1
             showWrongMatch = true
 
-            // Brief delay to show the wrong-match feedback.
             Task {
                 try? await Task.sleep(for: .milliseconds(500))
                 selectedLeft = nil
                 selectedRight = nil
                 showWrongMatch = false
             }
-        }
-    }
-
-    /// Deals replacement words for matched pairs.
-    private func dealReplacements() {
-        let availableWords = allWords.filter { !matchedWords.contains($0.nativeWord.lowercased()) }
-
-        guard !availableWords.isEmpty else { return }
-
-        // Determine how many slots need filling.
-        let slotsNeeded = 8 - leftColumn.count
-        let count = min(slotsNeeded, availableWords.count)
-        let newWords = Array(availableWords.shuffled().prefix(count))
-
-        for word in newWords {
-            matchedWords.insert(word.nativeWord.lowercased())
-        }
-
-        let matchWords = newWords.map {
-            MatchWord(
-                nativeWord: $0.nativeWord,
-                translatedWord: $0.translatedWord,
-                blockIndex: $0.wordBlockIndex
-            )
-        }
-
-        if isJumbleEnabled {
-            for word in matchWords {
-                if Bool.random() {
-                    leftColumn.append(word)
-                    rightColumn.append(
-                        MatchWord(nativeWord: word.translatedWord, translatedWord: word.nativeWord, blockIndex: word.blockIndex)
-                    )
-                } else {
-                    leftColumn.append(
-                        MatchWord(nativeWord: word.translatedWord, translatedWord: word.nativeWord, blockIndex: word.blockIndex)
-                    )
-                    rightColumn.append(word)
-                }
-            }
-        } else {
-            leftColumn.append(contentsOf: matchWords.shuffled())
-            rightColumn.append(contentsOf: matchWords.shuffled())
         }
     }
 

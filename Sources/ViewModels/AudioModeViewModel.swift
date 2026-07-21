@@ -18,60 +18,33 @@ struct AudioWord: Identifiable, Equatable {
     let blockName: String
 }
 
-/// ViewModel for the Audio Mode — continuous word playback with TTS.
-/// Plays English word once, then target-language word N times, with configurable gaps.
+/// ViewModel for Audio Mode — plays each word pair N times, loops until stopped.
 @MainActor
 final class AudioModeViewModel: NSObject, ObservableObject {
     // MARK: - Published State
 
-    /// Current playback state.
     @Published var playbackState: AudioPlaybackState = .stopped
-
-    /// The word currently being spoken.
     @Published var currentWord: AudioWord?
-
-    /// Which utterance is currently playing ("native" or "translated").
     @Published var currentUtteranceType: String = ""
-
-    /// Progress: current word index out of total words in the queue.
     @Published var progressIndex: Int = 0
-
-    /// Total number of words in the current playback queue.
     @Published var totalWordsInQueue: Int = 0
-
-    /// Selected block IDs for playback.
     @Published var selectedBlockIDs: Set<UUID> = []
-
-    /// Number of repetitions for the translated word (1–9).
-    @Published var repetitions: Int = 1
-
-    /// Gap in seconds between words.
-    @Published var gapSeconds: Double = 1.0
+    @Published var repetitions: Int = 4
+    @Published var gapSeconds: Double = 1.5
 
     // MARK: - Properties
 
-    /// The speech synthesizer for TTS playback.
     private let synthesizer = AVSpeechSynthesizer()
-
-    /// All available word blocks.
     private var allBlocks: [WordBlock] = []
-
-    /// The flattened playback queue of AudioWords.
     private var playbackQueue: [AudioWord] = []
-
-    /// Current index in the playback queue.
     private var queueIndex: Int = 0
-
-    /// Whether playback was manually stopped (vs. naturally finishing).
     private var wasManuallyStopped: Bool = false
 
-    /// Whether to loop the entire queue.
-    private var loopEnabled: Bool = true
+    /// How many times the current word pair has been spoken in this round.
+    private var currentWordRepetition: Int = 0
 
-    /// Pending utterance sequence for the current word pair.
+    /// Pending utterance sequence for current word: [(text, language, label)]
     private var pendingUtterances: [(text: String, language: String, label: String)] = []
-
-    /// Current index within the pending utterance sequence.
     private var utteranceIndex: Int = 0
 
     // MARK: - Initialization
@@ -83,12 +56,10 @@ final class AudioModeViewModel: NSObject, ObservableObject {
 
     // MARK: - Public API
 
-    /// Loads all word blocks from the query.
     func loadBlocks(_ blocks: [WordBlock]) {
         allBlocks = blocks
     }
 
-    /// Toggles selection of a word block.
     func toggleBlockSelection(_ blockID: UUID) {
         if selectedBlockIDs.contains(blockID) {
             selectedBlockIDs.remove(blockID)
@@ -97,33 +68,28 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         }
     }
 
-    /// Selects all active blocks.
     func selectAllActiveBlocks() {
         selectedBlockIDs = Set(allBlocks.filter { $0.isActive }.map { $0.id })
     }
 
-    /// Clears all block selections.
     func clearSelection() {
         selectedBlockIDs.removeAll()
     }
 
-    /// Starts audio playback of the selected blocks.
     func startPlayback() {
-        // Build the playback queue from selected blocks.
         playbackQueue = buildPlaybackQueue()
         guard !playbackQueue.isEmpty else { return }
 
         wasManuallyStopped = false
         queueIndex = 0
+        currentWordRepetition = 0
         totalWordsInQueue = playbackQueue.count
-        progressIndex = 0
+        progressIndex = 1
         playbackState = .playing
 
-        // Start speaking the first word pair.
         speakCurrentWordPair()
     }
 
-    /// Stops playback immediately.
     func stopPlayback() {
         wasManuallyStopped = true
         synthesizer.stopSpeaking(at: .immediate)
@@ -132,7 +98,6 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         currentUtteranceType = ""
     }
 
-    /// Pauses playback.
     func pausePlayback() {
         if synthesizer.isSpeaking {
             synthesizer.pauseSpeaking(at: .word)
@@ -140,7 +105,6 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         playbackState = .paused
     }
 
-    /// Resumes from a paused state.
     func resumePlayback() {
         synthesizer.continueSpeaking()
         playbackState = .playing
@@ -149,35 +113,31 @@ final class AudioModeViewModel: NSObject, ObservableObject {
 
     // MARK: - Private
 
-    /// Builds the playback queue from the currently selected blocks.
     private func buildPlaybackQueue() -> [AudioWord] {
         var queue: [AudioWord] = []
-
         let selectedBlocks = allBlocks.filter { selectedBlockIDs.contains($0.id) }
-
         for block in selectedBlocks {
             for word in block.vocabularyWords where !word.translatedWord.isEmpty {
-                queue.append(
-                    AudioWord(
-                        nativeWord: word.nativeWord,
-                        translatedWord: word.translatedWord,
-                        blockIndex: word.wordBlockIndex,
-                        blockName: block.blockName
-                    )
-                )
+                queue.append(AudioWord(
+                    nativeWord: word.nativeWord,
+                    translatedWord: word.translatedWord,
+                    blockIndex: word.wordBlockIndex,
+                    blockName: block.blockName
+                ))
             }
         }
-
-        // Shuffle the queue for variety.
         return queue.shuffled()
     }
 
-    /// Speaks the current word pair: native once, then translated N times.
+    /// Plays the current word pair: native once, then translated once.
+    /// After all utterances, repeats if under the repetition count.
     private func speakCurrentWordPair() {
         guard !wasManuallyStopped, queueIndex < playbackQueue.count else {
-            if loopEnabled && !wasManuallyStopped && !playbackQueue.isEmpty {
+            // Queue exhausted — loop back to start.
+            if !wasManuallyStopped && !playbackQueue.isEmpty {
                 queueIndex = 0
-                progressIndex = 0
+                currentWordRepetition = 0
+                progressIndex = 1
                 speakCurrentWordPair()
             } else {
                 playbackState = .stopped
@@ -191,29 +151,32 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         currentWord = word
         progressIndex = queueIndex + 1
 
-        // Build utterance sequence: native once, then translated N times.
-        pendingUtterances = []
-
-        // Native language word (English).
-        pendingUtterances.append((word.nativeWord, "en-US", "native"))
-
-        // Target language word (Portuguese) repeated N times.
-        for i in 0..<repetitions {
-            let label = repetitions > 1 ? "translated (\(i + 1)/\(repetitions))" : "translated"
-            pendingUtterances.append((word.translatedWord, "pt-BR", label))
-        }
+        // Build utterance sequence: native once, then translated once.
+        pendingUtterances = [
+            (word.nativeWord, "en-US", "English"),
+            (word.translatedWord, "pt-BR", "Portuguese")
+        ]
 
         utteranceIndex = 0
         speakNextUtterance()
     }
 
-    /// Speaks the next utterance in the current word's sequence.
     private func speakNextUtterance() {
         guard !wasManuallyStopped, utteranceIndex < pendingUtterances.count else {
-            // All utterances for this word are done — advance to next word.
+            // Done with this utterance sequence for the current word.
+            currentWordRepetition += 1
+
             if !wasManuallyStopped {
-                queueIndex += 1
-                speakCurrentWordPair()
+                if currentWordRepetition < repetitions {
+                    // Repeat the same word pair.
+                    currentWordRepetition += 1
+                    speakCurrentWordPair()
+                } else {
+                    // Move to next word.
+                    currentWordRepetition = 0
+                    queueIndex += 1
+                    speakCurrentWordPair()
+                }
             } else {
                 playbackState = .stopped
                 currentWord = nil
@@ -233,9 +196,7 @@ final class AudioModeViewModel: NSObject, ObservableObject {
             speechUtterance.voice = voice
         }
 
-        // Add gap delay after this utterance.
         speechUtterance.postUtteranceDelay = gapSeconds
-
         synthesizer.speak(speechUtterance)
     }
 }
