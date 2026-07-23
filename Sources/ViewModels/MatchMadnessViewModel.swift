@@ -285,19 +285,19 @@ final class MatchMadnessViewModel: ObservableObject {
         }
 
         if isJumbleEnabled {
-            // JUMBLE MODE: all words in BOTH columns. For each word, randomly
-            // decide which column shows which language. This ensures:
-            // - Same number of words in both columns (no split)
-            // - Each column shows a mix of English and Portuguese
-            // - For any word, the two columns show DIFFERENT languages
-            let leftShowsNative = matchWords.shuffled().map { _ in Bool.random() }
+            // JUMBLE MODE: all words in both columns. Each word is randomly
+            // either "normal" (English left, Portuguese right) or "flipped"
+            // (Portuguese left, English right). Both columns get the SAME
+            // flip decision so they always show DIFFERENT languages.
+            let shouldFlip = matchWords.map { _ in Bool.random() }
 
-            leftColumn = zip(matchWords, leftShowsNative).map { word, native in
-                native ? word : forceFlip(word)
-            }
-            rightColumn = zip(matchWords, leftShowsNative).map { word, native in
-                native ? forceFlip(word) : word
-            }
+            leftColumn = zip(matchWords, shouldFlip).map { word, flip in
+                flip ? forceFlip(word) : word
+            }.shuffled()
+
+            rightColumn = zip(matchWords, shouldFlip).map { word, flip in
+                flip ? forceFlip(word) : word
+            }.shuffled()
         } else {
             // NORMAL MODE: all words in both columns (native on left, translated on right).
             leftColumn = matchWords.shuffled()
@@ -340,17 +340,15 @@ final class MatchMadnessViewModel: ObservableObject {
         guard !reserveWords.isEmpty else { return }
 
         if isJumbleEnabled {
-            // JUMBLE MODE: pop ONE word, add to both columns with opposite flips.
+            // JUMBLE MODE: pop ONE word, add to both columns with the SAME flip.
             let word = reserveWords.removeFirst()
-            let flipLeft = Bool.random()
-
-            // Insert into left column.
-            let leftWord = flipLeft ? forceFlip(word) : word
+            let flip = Bool.random()
+            let leftWord = flip ? forceFlip(word) : word
+            let rightWord = flip ? forceFlip(word) : word
             let leftPos = leftColumn.isEmpty ? 0 : Int.random(in: 0...leftColumn.count)
             leftColumn.insert(leftWord, at: leftPos)
 
-            // Insert into right column with OPPOSITE flip.
-            let rightWord = flipLeft ? word : forceFlip(word)
+            // Insert into right column (same flip, different position).
             var rightPos = rightColumn.isEmpty ? 0 : Int.random(in: 0...rightColumn.count)
             var attempts = 0
             while attempts < 30 {
