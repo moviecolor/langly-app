@@ -13,6 +13,7 @@ struct VocabularyView: View {
     @State private var showNewBlockAlert = false
     @State private var newBlockName: String = ""
     @State private var mixAllBlocks: Bool = false
+    @State private var selectedBlockForInput: UUID?
 
     var body: some View {
         ZStack {
@@ -86,6 +87,7 @@ struct VocabularyView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
+                    selectedBlockForInput = nil
                     showWordInput = true
                 } label: {
                     Image(systemName: "plus.circle.fill")
@@ -105,7 +107,7 @@ struct VocabularyView: View {
             }
         }
         .sheet(isPresented: $showWordInput) {
-            WordInputView()
+            WordInputView(preselectedBlockID: selectedBlockForInput)
         }
         .alert("New Word Block", isPresented: $showNewBlockAlert) {
             TextField("Block name", text: $newBlockName)
@@ -221,68 +223,89 @@ struct VocabularyView: View {
         let maxWords = 15
         let progress = Double(activeWords) / Double(maxWords)
 
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                HStack(spacing: 6) {
-                    Image(systemName: block.isActive ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(block.isActive ? Color(hex: 0x00D4AA) : .secondary)
-                        .font(.system(size: 14))
-                    Text(block.blockName)
-                        .font(.system(size: 15, weight: .semibold))
-                }
-
-                Spacer()
-
-                Text("\(activeWords)/\(maxWords) words")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-            }
-
-            // Progress bar.
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(height: 6)
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color(hex: 0x00D4AA))
-                        .frame(width: geo.size.width * progress, height: 6)
-                }
-            }
-            .frame(height: 6)
-
-            // English words list — compact tag layout.
-            if !block.vocabularyWords.isEmpty {
-                let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
-                LazyVGrid(columns: columns, spacing: 6) {
-                    ForEach(block.vocabularyWords) { word in
-                        Text(word.nativeWord)
-                            .font(.system(size: 13, weight: .medium))
+        return Button {
+            selectedBlockForInput = block.id
+            showWordInput = true
+        } label: {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    HStack(spacing: 6) {
+                        Image(systemName: block.isActive ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(block.isActive ? Color(hex: 0x00D4AA) : .secondary)
+                            .font(.system(size: 14))
+                        Text(block.blockName)
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.primary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 5)
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color(hex: 0x00D4AA).opacity(0.1))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color(hex: 0x00D4AA).opacity(0.2), lineWidth: 0.5)
-                            )
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("\(activeWords)/\(maxWords) words")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                        Text("Tap to add words")
+                            .font(.system(size: 10))
+                            .foregroundColor(Color(hex: 0x00D4AA))
                     }
                 }
+
+                // Progress bar.
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.gray.opacity(0.2))
+                            .frame(height: 6)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color(hex: 0x00D4AA))
+                            .frame(width: geo.size.width * progress, height: 6)
+                    }
+                }
+                .frame(height: 6)
+
+                // English words list — compact tag layout.
+                if !block.vocabularyWords.isEmpty {
+                    let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
+                    LazyVGrid(columns: columns, spacing: 6) {
+                        ForEach(block.vocabularyWords) { word in
+                            Text(word.nativeWord)
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.primary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 5)
+                                .frame(maxWidth: .infinity)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color(hex: 0x00D4AA).opacity(0.1))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(Color(hex: 0x00D4AA).opacity(0.2), lineWidth: 0.5)
+                                )
+                        }
+                    }
+                } else {
+                    HStack {
+                        Spacer()
+                        Text("Empty — tap to add words")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary.opacity(0.6))
+                        Spacer()
+                    }
+                    .padding(.vertical, 8)
+                }
             }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color.appSurface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color(hex: 0x00D4AA).opacity(0.2), lineWidth: 1)
+                    )
+            )
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color.appSurface)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color(hex: 0x00D4AA).opacity(0.2), lineWidth: 1)
-                )
-        )
+        .buttonStyle(.plain)
     }
 
     // MARK: - Ghost Block Card

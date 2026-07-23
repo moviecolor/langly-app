@@ -15,12 +15,12 @@ extension Color {
 
     // MARK: - Adaptive Theme Colors
 
-    /// App background: white in light mode, dark navy in dark mode.
+    /// App background: moss/sage green in light mode, dark moss green in dark mode.
     static var appBackground: Color {
         Color(UIColor { traitCollection in
             traitCollection.userInterfaceStyle == .dark
-                ? UIColor(hex: 0x1A1A2E)
-                : UIColor.white
+                ? UIColor(hex: 0x2D3D28)
+                : UIColor(hex: 0xD0DFC0)
         })
     }
 

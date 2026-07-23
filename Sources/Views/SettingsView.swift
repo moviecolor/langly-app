@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var playbackGap: Double = 1.75
     @State private var loopEnabled: Bool = true
     @State private var showSaveFeedback = false
+    @AppStorage("isDarkMode") private var isDarkMode: Bool = false
 
     private let availableLanguages = [
         "English", "Spanish", "French", "German", "Italian",
@@ -39,6 +40,12 @@ struct SettingsView: View {
 
                         // Audio playback settings.
                         audioSection
+
+                        Divider()
+                            .background(Color(hex: 0x00D4AA).opacity(0.3))
+
+                        // Appearance section.
+                        appearanceSection
 
                         Divider()
                             .background(Color(hex: 0x00D4AA).opacity(0.3))
@@ -174,6 +181,40 @@ struct SettingsView: View {
                 Spacer()
 
                 Toggle("", isOn: $loopEnabled)
+                    .labelsHidden()
+                    .tint(Color(hex: 0x00D4AA))
+            }
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.appSurface)
+            )
+        }
+    }
+
+    // MARK: - Appearance Section
+
+    private var appearanceSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Appearance")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.primary)
+
+            // Dark mode toggle.
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Dark Mode")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+
+                    Text("Switch between light and dark moss green")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary.opacity(0.7))
+                }
+
+                Spacer()
+
+                Toggle("", isOn: $isDarkMode)
                     .labelsHidden()
                     .tint(Color(hex: 0x00D4AA))
             }

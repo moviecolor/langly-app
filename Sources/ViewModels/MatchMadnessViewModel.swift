@@ -241,6 +241,13 @@ final class MatchMadnessViewModel: ObservableObject {
 
     static let maxBoardWords = 8
 
+    /// Randomly swaps nativeWord ↔ translatedWord with 50% probability for jumble mode.
+    private func flipWord(_ word: MatchWord) -> MatchWord {
+        Bool.random()
+            ? word
+            : MatchWord(nativeWord: word.translatedWord, translatedWord: word.nativeWord, blockIndex: word.blockIndex)
+    }
+
     /// Deals words into both columns. Shows up to 8, rest go to reserve.
     private func dealNewWords() {
         let shuffled = allWords.shuffled()
@@ -273,23 +280,28 @@ final class MatchMadnessViewModel: ObservableObject {
         }
 
         if isJumbleEnabled {
-            leftColumn = matchWords.shuffled().map { word in
-                Bool.random()
-                    ? MatchWord(nativeWord: word.nativeWord, translatedWord: word.translatedWord, blockIndex: word.blockIndex)
-                    : MatchWord(nativeWord: word.translatedWord, translatedWord: word.nativeWord, blockIndex: word.blockIndex)
-            }
-        } else {
-            leftColumn = matchWords.shuffled()
-        }
+            // JUMBLE MODE: split words into two non-overlapping halves.
+            // Each half is independently randomly flipped so either language
+            // can appear in either column — but no word appears in both.
+            let halfCount = matchWords.count / 2
+            let leftPool = Array(matchWords.prefix(halfCount))
+            let rightPool = Array(matchWords.suffix(matchWords.count - halfCount))
 
-        // Right column: shuffled so no translation sits directly across from its pair.
-        rightColumn = shuffledRight(for: leftColumn, from: matchWords)
+            leftColumn = leftPool.shuffled().map { flipWord($0) }
+            rightColumn = rightPool.shuffled().map { flipWord($0) }
+        } else {
+            // NORMAL MODE: all words in both columns (native on left, translated on right).
+            leftColumn = matchWords.shuffled()
+            // Right column: shuffled so no translation sits directly across from its pair.
+            rightColumn = shuffledRight(for: leftColumn, from: matchWords)
+        }
 
         selectedLeft = nil
         selectedRight = nil
     }
 
     /// Shuffles words for the right column so no index has matching blockIndex with left.
+    /// Used in normal (non-jumble) mode only.
     private func shuffledRight(for left: [MatchWord], from words: [MatchWord]) -> [MatchWord] {
         var right = words.shuffled()
         var attempts = 0
@@ -314,29 +326,40 @@ final class MatchMadnessViewModel: ObservableObject {
         return right
     }
 
-    /// Adds one word from the reserve to the board (if room, max 8).
-    private func addReserveWord() {
-        guard leftColumn.count < Self.maxBoardWords else { return }
-        guard let nextWord = reserveWords.first else { return }
-        reserveWords.removeFirst()
+    /// Adds reserve words to replace a matched pair removed from the board.
+    private func addReserveWords() {
+        if isJumbleEnabled {
+            // JUMBLE MODE: each column gets a DIFFERENT reserve word (both randomly flipped).
+            if leftColumn.count < Self.maxBoardWords, !reserveWords.isEmpty {
+                let word = reserveWords.removeFirst()
+                let leftPos = leftColumn.isEmpty ? 0 : Int.random(in: 0...leftColumn.count)
+                leftColumn.insert(flipWord(word), at: leftPos)
+            }
+            if rightColumn.count < Self.maxBoardWords, !reserveWords.isEmpty {
+                let word = reserveWords.removeFirst()
+                let rightPos = rightColumn.isEmpty ? 0 : Int.random(in: 0...rightColumn.count)
+                rightColumn.insert(flipWord(word), at: min(rightPos, rightColumn.count))
+            }
+        } else {
+            // NORMAL MODE: same word inserted into both columns.
+            guard leftColumn.count < Self.maxBoardWords, !reserveWords.isEmpty else { return }
+            let word = reserveWords.removeFirst()
 
-        // Insert at random position in left column.
-        let leftPos = leftColumn.isEmpty ? 0 : Int.random(in: 0...leftColumn.count)
-        leftColumn.insert(nextWord, at: leftPos)
+            let leftPos = leftColumn.isEmpty ? 0 : Int.random(in: 0...leftColumn.count)
+            leftColumn.insert(word, at: leftPos)
 
-        // Insert into right column at a position that doesn't align with same blockIndex.
-        var rightPos = rightColumn.isEmpty ? 0 : Int.random(in: 0...rightColumn.count)
-        var attempts = 0
-        while attempts < 30 {
-            let safePos = min(rightPos, rightColumn.count)
-            // Check if inserting here would put same blockIndex across from the left word.
-            let conflict = safePos < rightColumn.count && leftPos < leftColumn.count
-                && leftColumn[leftPos].blockIndex == rightColumn[safePos].blockIndex
-            if !conflict { break }
-            rightPos = rightColumn.isEmpty ? 0 : Int.random(in: 0...rightColumn.count)
-            attempts += 1
+            var rightPos = rightColumn.isEmpty ? 0 : Int.random(in: 0...rightColumn.count)
+            var attempts = 0
+            while attempts < 30 {
+                let safePos = min(rightPos, rightColumn.count)
+                let conflict = safePos < rightColumn.count && leftPos < leftColumn.count
+                    && leftColumn[leftPos].blockIndex == rightColumn[safePos].blockIndex
+                if !conflict { break }
+                rightPos = rightColumn.isEmpty ? 0 : Int.random(in: 0...rightColumn.count)
+                attempts += 1
+            }
+            rightColumn.insert(word, at: min(rightPos, rightColumn.count))
         }
-        rightColumn.insert(nextWord, at: min(rightPos, rightColumn.count))
     }
 
     /// Checks whether the selected left and right words form a valid match.
@@ -358,8 +381,7 @@ final class MatchMadnessViewModel: ObservableObject {
 
             // If reserve has words, replace the matched pair.
             if !reserveWords.isEmpty {
-                addReserveWord()
-                addReserveWord()
+                addReserveWords()
             }
 
             // Game complete when board is empty.

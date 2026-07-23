@@ -12,6 +12,9 @@ struct WordInputView: View {
     @Query private var wordBlocks: [WordBlock]
     @Query private var vocabularyWords: [VocabularyWord]
 
+    /// Optional block ID to pre-select when opened from a block card.
+    let preselectedBlockID: UUID?
+
     /// Input field for the native-language word.
     @State private var nativeWordInput: String = ""
 
@@ -44,6 +47,10 @@ struct WordInputView: View {
 
     /// Error feedback state — shows a brief save error message.
     @State private var showSaveError: Bool = false
+
+    init(preselectedBlockID: UUID? = nil) {
+        self.preselectedBlockID = preselectedBlockID
+    }
 
     enum TranslationStatus {
         case idle
@@ -123,6 +130,12 @@ struct WordInputView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text("Could not save the word. Please try again.")
+            }
+            .task {
+                // Pre-select block if opened from a block card.
+                if let blockID = preselectedBlockID {
+                    selectedBlockID = blockID
+                }
             }
         }
     }
@@ -676,7 +689,7 @@ struct WordInputView: View {
 // MARK: - Preview
 
 #Preview {
-    WordInputView()
+    WordInputView(preselectedBlockID: nil)
         .environmentObject(TranslatorManager())
         .modelContainer(for: [WordBlock.self, VocabularyWord.self], inMemory: true)
 }

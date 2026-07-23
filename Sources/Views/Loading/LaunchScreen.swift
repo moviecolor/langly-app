@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Full-screen launch screen with Desert Highway neon sign theme.
-/// Displays for a minimum of 2.5 seconds with smooth fade-in animation.
+/// Displays for a minimum of 2 seconds with smooth fade-in animation.
 struct LaunchScreen: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isVisible = false
@@ -55,7 +55,7 @@ struct LaunchScreen: View {
         .animation(.easeIn(duration: 0.8), value: isVisible)
         .task {
             isVisible = true
-            try? await Task.sleep(for: .seconds(2.5))
+            try? await Task.sleep(for: .seconds(2.0))
             dismiss()
         }
     }

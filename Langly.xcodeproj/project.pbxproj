@@ -39,6 +39,7 @@
 		C54C8F5034E7440E46DD3BE7 /* MatchMadnessGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF4D569F860F49BA2C2C0EE8 /* MatchMadnessGameView.swift */; };
 		CB4ED061B51A854EDADCB21A /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3BD0B85ED1C17A0BE546E8C /* AppSettings.swift */; };
 		CE18EE5F9CD8D67387006AC7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C717E4A6A0D6748E9F0CAF /* SettingsView.swift */; };
+		CFB19FD3D51375C159C66C4B /* TranslationAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24E16A297AA296ADA189EB42 /* TranslationAPIService.swift */; };
 		D5D08CAB17610143441D811D /* VocabularyLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 682B271BE95A919EABC79059 /* VocabularyLoading.swift */; };
 		D9CCF7F6920187614EE4DAE1 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6266D8436CE25FD2FA4AD7 /* App.swift */; };
 		DC0AD273E6FDB953A20846DC /* WordInputView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5238987AA452299EE4138531 /* WordInputView.swift */; };
@@ -66,6 +67,7 @@
 		18054931FCBC80FA8741517E /* QASession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QASession.swift; sourceTree = "<group>"; };
 		222F9870EDEB222AD06E4325 /* Langly.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Langly.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		24A91F6E30BEBECFAEFCFBCA /* MatchMadnessViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchMadnessViewModel.swift; sourceTree = "<group>"; };
+		24E16A297AA296ADA189EB42 /* TranslationAPIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationAPIService.swift; sourceTree = "<group>"; };
 		29BE61844C5CCA99682FC1E9 /* LanglyTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = LanglyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2C84C48CFF31E74797F2F0E6 /* SentenceGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentenceGroup.swift; sourceTree = "<group>"; };
 		326015037F92F8261AB86608 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -185,6 +187,7 @@
 				C3E56240FD5A33729E4C17F9 /* IAPManager.swift */,
 				5F1F43F10ABD2D8C7C16D98B /* MockTranslator.swift */,
 				B1141101092FA92F9F5D8D79 /* ModuleRouter.swift */,
+				24E16A297AA296ADA189EB42 /* TranslationAPIService.swift */,
 				649378190B21F63A02E402E5 /* TranslationSessionProvider.swift */,
 				A7F362E7C3958361F6026F33 /* TranslatorManager.swift */,
 			);
@@ -413,6 +416,7 @@
 				70F34BB4AE932EA921EFAB96 /* Sentence.swift in Sources */,
 				E6E542C8A62C0017CC759E92 /* SentenceGroup.swift in Sources */,
 				CE18EE5F9CD8D67387006AC7 /* SettingsView.swift in Sources */,
+				CFB19FD3D51375C159C66C4B /* TranslationAPIService.swift in Sources */,
 				926417D4AB08DBC968A47921 /* TranslationSessionProvider.swift in Sources */,
 				F0C7D3AA9A4E8175A22BEA00 /* TranslatorManager.swift in Sources */,
 				D5D08CAB17610143441D811D /* VocabularyLoading.swift in Sources */,

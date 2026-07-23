@@ -97,8 +97,7 @@ final class TranslatorManager: ObservableObject {
     // MARK: - Translation
 
     /// Translates text from English to Portuguese.
-    /// Returns cached result if available; otherwise performs on-device translation.
-    /// Falls back to mock dictionary if real session is unavailable.
+    /// Priority: cache → Apple Translation framework → MyMemory API → Mock dictionary.
     func translate(_ text: String) async -> String {
         // Check cache first.
         if let cached = cachedTranslations[text] {
@@ -108,7 +107,7 @@ final class TranslatorManager: ObservableObject {
         isTranslating = true
         defer { isTranslating = false }
 
-        // Try real Translation framework first.
+        // 1. Try Apple's on-device Translation framework.
         if let session = sessionHolder?.session {
             do {
                 let response = try await session.translate(text)
@@ -117,12 +116,19 @@ final class TranslatorManager: ObservableObject {
                 isUsingMockTranslator = false
                 return translated
             } catch {
-                print("[TranslatorManager] Real translation failed: \(error.localizedDescription)")
-                // Fall through to mock translator.
+                print("[TranslatorManager] Apple Translation failed: \(error.localizedDescription)")
             }
         }
 
-        // Fallback: use mock dictionary.
+        // 2. Try MyMemory free API (works on simulator, no API key needed).
+        let apiResult = await TranslationAPIService.shared.translate(text, from: "en", to: "pt")
+        if apiResult != text {
+            cachedTranslations[text] = apiResult
+            isUsingMockTranslator = false
+            return apiResult
+        }
+
+        // 3. Last resort: built-in mock dictionary.
         isUsingMockTranslator = true
         let translated = MockTranslator.shared.translate(text)
         if translated != text {
