@@ -36,9 +36,6 @@ struct WordInputView: View {
     /// Filter for the word list.
     @State private var wordListFilter: MasteryLevel? = nil
 
-    /// Whether to use manual translation (friend told me) vs auto-translate.
-    @State private var useManualTranslation: Bool = false
-
     /// Alert state for "no block selected" warning.
     @State private var showNoBlockAlert: Bool = false
 
@@ -144,34 +141,22 @@ struct WordInputView: View {
 
     private var translationSection: some View {
         VStack(spacing: 16) {
-            // Demo mode banner (shown when using mock translator).
-            if translator.isUsingMockTranslator {
-                demoModeBanner
-            }
-
-            // Translation mode toggle.
-            translationModeToggle
-
-            // Native word input (always shown).
+            // Native word input (English).
             nativeWordInputField
 
-            // Auto-translate mode: show translate button + result.
-            if !useManualTranslation {
-                autoTranslateSection
-            }
+            // Translate button — auto-fills the Portuguese field.
+            translateButton
 
-            // Manual translation mode: show manual input field.
-            if useManualTranslation {
-                manualTranslationField
-            }
-
-            // Translation status message (auto mode only).
-            if !useManualTranslation && translationStatus == .failed {
-                Text("Translation not found. Try Manual mode to type it yourself.")
+            // Translation status message.
+            if translationStatus == .failed {
+                Text("Translation not found — type the word manually below.")
                     .font(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
             }
+
+            // Translated word input (Portuguese) — always visible, always editable.
+            translatedWordInputField
         }
         .padding()
         .background(
@@ -180,49 +165,20 @@ struct WordInputView: View {
         )
     }
 
-    // MARK: - Translation Mode Toggle
-
-    private var translationModeToggle: some View {
-        HStack(spacing: 12) {
-            Image(systemName: useManualTranslation ? "pencil.and.ruler" : "translate")
-                .font(.title3)
-                .foregroundColor(useManualTranslation ? Color(hex: 0xFF6B35) : Color(hex: 0x00D4AA))
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(useManualTranslation ? "Manual Translation" : "Auto Translate")
-                    .font(.subheadline.bold())
-                Text(useManualTranslation ? "Type the translation yourself" : "Tap to translate automatically")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            Spacer()
-
-            Toggle("", isOn: $useManualTranslation)
-                .labelsHidden()
-                .tint(Color(hex: 0xFF6B35))
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color.appSurface.opacity(0.4))
-        )
-    }
-
     // MARK: - Native Word Input Field
 
     private var nativeWordInputField: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
-                Image(systemName: useManualTranslation ? "character.cursor.ibeam" : "globe")
+                Image(systemName: "globe")
                     .font(.caption)
                     .foregroundColor(Color(hex: 0x00D4AA))
-                Text("Native Word")
+                Text("English")
                     .font(.subheadline.bold())
                     .foregroundColor(.secondary)
             }
 
-            TextField(useManualTranslation ? "Enter word in native language (e.g., house)" : "Enter word (e.g., house)", text: $nativeWordInput)
+            TextField("Type a word (e.g., banana)", text: $nativeWordInput)
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
                 .font(.title3)
@@ -232,88 +188,72 @@ struct WordInputView: View {
                         .fill(Color.appSurface.opacity(0.8))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(
-                                    translationStatus == .failed ? Color.red.opacity(0.5) : Color(hex: 0x00D4AA).opacity(0.3),
-                                    lineWidth: 1
-                                )
+                                .stroke(Color(hex: 0x00D4AA).opacity(0.3), lineWidth: 1)
                         )
                 )
                 .onSubmit {
-                    if !useManualTranslation {
-                        Task { await translateWord() }
-                    }
+                    Task { await translateWord() }
                 }
         }
     }
 
-    // MARK: - Auto Translate Section
+    // MARK: - Translate Button
 
-    private var autoTranslateSection: some View {
-        VStack(spacing: 12) {
-            // Translate button.
-            Button {
-                Task { await translateWord() }
-            } label: {
-                HStack {
-                    if isTranslating {
-                        ProgressView()
-                            .tint(.white)
-                    } else {
-                        Image(systemName: "arrow.left.arrow.right")
-                    }
-
-                    Text(isTranslating ? "Translating..." : "Translate")
-                        .font(.headline)
+    private var translateButton: some View {
+        Button {
+            Task { await translateWord() }
+        } label: {
+            HStack {
+                if isTranslating {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    Image(systemName: "arrow.left.arrow.right")
                 }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(
-                    nativeWordInput.isEmpty || isTranslating
-                        ? Color(hex: 0x00D4AA).opacity(0.5)
-                        : Color(hex: 0x00D4AA)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-            .buttonStyle(.plain)
-            .disabled(nativeWordInput.isEmpty || isTranslating)
 
-            // Translation result.
-            if !translatedWord.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Translation")
-                        .font(.subheadline.bold())
-                        .foregroundColor(.secondary)
-
-                    Text(translatedWord)
-                        .font(.title2.bold())
-                        .foregroundStyle(Color(hex: 0xFF6B35))
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.appSurface.opacity(0.8))
-                        )
-                }
-                .transition(.opacity)
+                Text(isTranslating ? "Translating..." : "Auto-Translate")
+                    .font(.subheadline.bold())
             }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(
+                nativeWordInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isTranslating
+                    ? Color(hex: 0x00D4AA).opacity(0.4)
+                    : Color(hex: 0x00D4AA)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 10))
         }
+        .buttonStyle(.plain)
+        .disabled(nativeWordInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isTranslating)
     }
 
-    // MARK: - Manual Translation Field
+    // MARK: - Translated Word Input Field (always visible, always editable)
 
-    private var manualTranslationField: some View {
+    private var translatedWordInputField: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Image(systemName: "pencil")
                     .font(.caption)
                     .foregroundColor(Color(hex: 0xFF6B35))
-                Text("Translated Word")
+                Text("Portuguese")
                     .font(.subheadline.bold())
                     .foregroundColor(.secondary)
+
+                Spacer()
+
+                if !translatedWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption)
+                        Text("Ready")
+                            .font(.caption)
+                    }
+                    .foregroundColor(Color(hex: 0x00D4AA))
+                }
             }
 
-            TextField("Type the translation (e.g., casa)", text: $translatedWord)
+            TextField("Type the translation (e.g., banana)", text: $translatedWord)
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
                 .font(.title3)
@@ -324,46 +264,18 @@ struct WordInputView: View {
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
-                                    translatedWord.isEmpty ? Color(hex: 0xFF6B35).opacity(0.3) : Color(hex: 0x00D4AA).opacity(0.5),
+                                    translatedWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                        ? Color(hex: 0xFF6B35).opacity(0.3)
+                                        : Color(hex: 0x00D4AA).opacity(0.5),
                                     lineWidth: 1
                                 )
                         )
                 )
 
-            if !translatedWord.isEmpty {
-                HStack(spacing: 6) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(Color(hex: 0x00D4AA))
-                    Text("Ready to save")
-                        .font(.caption)
-                        .foregroundColor(Color(hex: 0x00D4AA))
-                }
-                .transition(.opacity)
-            }
+            Text("Type the word yourself, or tap Auto-Translate above")
+                .font(.caption)
+                .foregroundColor(.secondary.opacity(0.7))
         }
-    }
-
-    // MARK: - Demo Mode Banner
-
-    private var demoModeBanner: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "bolt.fill")
-                .foregroundColor(.yellow)
-            Text("Demo Mode — using built-in dictionary (\(MockTranslator.shared.wordCount) words)")
-                .font(.caption.bold())
-                .foregroundColor(.yellow)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.yellow.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
-                )
-        )
     }
 
     // MARK: - Block Selector
