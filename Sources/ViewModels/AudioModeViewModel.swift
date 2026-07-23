@@ -47,6 +47,10 @@ final class AudioModeViewModel: NSObject, ObservableObject {
     private var pendingUtterances: [(text: String, language: String, label: String)] = []
     private var utteranceIndex: Int = 0
 
+    /// User-selected voice identifier for Portuguese (from AppSettings).
+    /// Empty string means use system default for the language.
+    var selectedVoiceIdentifier: String = ""
+
     // MARK: - Initialization
 
     override init() {
@@ -192,7 +196,12 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         speechUtterance.rate = AVSpeechUtteranceDefaultSpeechRate
         speechUtterance.volume = 1.0
 
-        if let voice = AVSpeechSynthesisVoice(language: utterance.language) {
+        // Use the user-selected voice for Portuguese, system default for English.
+        if utterance.language.hasPrefix("pt"),
+           !selectedVoiceIdentifier.isEmpty,
+           let voice = AVSpeechSynthesisVoice(identifier: selectedVoiceIdentifier) {
+            speechUtterance.voice = voice
+        } else if let voice = AVSpeechSynthesisVoice(language: utterance.language) {
             speechUtterance.voice = voice
         }
 

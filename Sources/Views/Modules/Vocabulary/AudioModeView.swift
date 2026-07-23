@@ -7,6 +7,7 @@ struct AudioModeView: View {
     @StateObject private var viewModel = AudioModeViewModel()
     @Environment(\.modelContext) private var modelContext
     @Query private var wordBlocks: [WordBlock]
+    @Query private var settings: [AppSettings]
 
     init() {}
 
@@ -57,6 +58,10 @@ struct AudioModeView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task {
             viewModel.loadBlocks(wordBlocks)
+            // Load the user's selected voice from settings.
+            if let savedVoice = settings.first?.selectedVoice {
+                viewModel.selectedVoiceIdentifier = savedVoice
+            }
         }
     }
 

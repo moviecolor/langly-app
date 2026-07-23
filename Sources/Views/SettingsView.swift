@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AVFoundation
 
 /// Settings view — home language, target language, audio playback settings.
 struct SettingsView: View {
@@ -19,10 +20,6 @@ struct SettingsView: View {
         "English", "Spanish", "French", "German", "Italian",
         "Portuguese", "Japanese", "Mandarin", "Korean", "Arabic",
         "Hindi", "Russian", "Dutch", "Swedish", "Turkish"
-    ]
-
-    private let availableVoices = [
-        "Default", "Male", "Female"
     ]
 
     var body: some View {
@@ -134,18 +131,39 @@ struct SettingsView: View {
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.primary)
 
-            // Voice selection.
+            // Voice selection — real Portuguese voices from the system.
             VStack(alignment: .leading, spacing: 8) {
-                Text("Voice")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
+                HStack(spacing: 6) {
+                    Image(systemName: "waveform")
+                        .font(.caption)
+                        .foregroundColor(Color(hex: 0x00D4AA))
+                    Text("Portuguese Voice")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.secondary)
+                }
 
-                Picker("Voice", selection: $selectedVoice) {
-                    ForEach(availableVoices, id: \.self) { voice in
-                        Text(voice).tag(voice)
+                if ptVoices.isEmpty {
+                    Text("No Portuguese voices found")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.appSurface)
+                        )
+                } else {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(ptVoices, id: \.identifier) { voice in
+                                voiceChip(voice)
+                            }
+                        }
                     }
                 }
-                .pickerStyle(.segmented)
+
+                Text("Download higher-quality voices in Settings → Accessibility → Spoken Content → Voices")
+                    .font(.caption)
+                    .foregroundColor(.secondary.opacity(0.7))
             }
 
             // Playback gap.
@@ -190,6 +208,56 @@ struct SettingsView: View {
                     .fill(Color.appSurface)
             )
         }
+    }
+
+    /// Loads all available Portuguese (Brazil) voices from the system.
+    private var ptVoices: [AVSpeechSynthesisVoice] {
+        AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language.hasPrefix("pt-B") }
+            .sorted { $0.name < $1.name }
+    }
+
+    private func voiceChip(_ voice: AVSpeechSynthesisVoice) -> some View {
+        let isSelected = selectedVoice == voice.identifier
+
+        return Button {
+            selectedVoice = voice.identifier
+        } label: {
+            VStack(spacing: 2) {
+                Text(voice.name)
+                    .font(.subheadline.bold())
+                    .foregroundColor(isSelected ? .white : .primary)
+
+                Text(voiceQualityLabel(voice.quality))
+                    .font(.caption2)
+                    .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(
+                        isSelected
+                            ? Color(hex: 0x00D4AA)
+                            : Color.appSurface.opacity(0.8)
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(
+                        isSelected ? Color(hex: 0x00D4AA) : Color(hex: 0x00D4AA).opacity(0.3),
+                        lineWidth: 1.5
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func voiceQualityLabel(_ quality: AVSpeechSynthesisVoiceQuality) -> String {
+        if quality == .enhanced {
+            return "enhanced"
+        }
+        return "compact"
     }
 
     // MARK: - Appearance Section
