@@ -248,6 +248,11 @@ final class MatchMadnessViewModel: ObservableObject {
             : MatchWord(nativeWord: word.translatedWord, translatedWord: word.nativeWord, blockIndex: word.blockIndex)
     }
 
+    /// Deterministically swaps nativeWord ↔ translatedWord (always flips).
+    private func forceFlip(_ word: MatchWord) -> MatchWord {
+        MatchWord(nativeWord: word.translatedWord, translatedWord: word.nativeWord, blockIndex: word.blockIndex)
+    }
+
     /// Deals words into both columns. Shows up to 8, rest go to reserve.
     private func dealNewWords() {
         let shuffled = allWords.shuffled()
@@ -280,15 +285,19 @@ final class MatchMadnessViewModel: ObservableObject {
         }
 
         if isJumbleEnabled {
-            // JUMBLE MODE: split words into two non-overlapping halves.
-            // Each half is independently randomly flipped so either language
-            // can appear in either column — but no word appears in both.
-            let halfCount = matchWords.count / 2
-            let leftPool = Array(matchWords.prefix(halfCount))
-            let rightPool = Array(matchWords.suffix(matchWords.count - halfCount))
+            // JUMBLE MODE: all words in BOTH columns. For each word, randomly
+            // decide which column shows which language. This ensures:
+            // - Same number of words in both columns (no split)
+            // - Each column shows a mix of English and Portuguese
+            // - For any word, the two columns show DIFFERENT languages
+            let leftShowsNative = matchWords.shuffled().map { _ in Bool.random() }
 
-            leftColumn = leftPool.shuffled().map { flipWord($0) }
-            rightColumn = rightPool.shuffled().map { flipWord($0) }
+            leftColumn = zip(matchWords, leftShowsNative).map { word, native in
+                native ? word : forceFlip(word)
+            }
+            rightColumn = zip(matchWords, leftShowsNative).map { word, native in
+                native ? forceFlip(word) : word
+            }
         } else {
             // NORMAL MODE: all words in both columns (native on left, translated on right).
             leftColumn = matchWords.shuffled()
@@ -328,21 +337,33 @@ final class MatchMadnessViewModel: ObservableObject {
 
     /// Adds reserve words to replace a matched pair removed from the board.
     private func addReserveWords() {
+        guard !reserveWords.isEmpty else { return }
+
         if isJumbleEnabled {
-            // JUMBLE MODE: each column gets a DIFFERENT reserve word (both randomly flipped).
-            if leftColumn.count < Self.maxBoardWords, !reserveWords.isEmpty {
-                let word = reserveWords.removeFirst()
-                let leftPos = leftColumn.isEmpty ? 0 : Int.random(in: 0...leftColumn.count)
-                leftColumn.insert(flipWord(word), at: leftPos)
+            // JUMBLE MODE: pop ONE word, add to both columns with opposite flips.
+            let word = reserveWords.removeFirst()
+            let flipLeft = Bool.random()
+
+            // Insert into left column.
+            let leftWord = flipLeft ? forceFlip(word) : word
+            let leftPos = leftColumn.isEmpty ? 0 : Int.random(in: 0...leftColumn.count)
+            leftColumn.insert(leftWord, at: leftPos)
+
+            // Insert into right column with OPPOSITE flip.
+            let rightWord = flipLeft ? word : forceFlip(word)
+            var rightPos = rightColumn.isEmpty ? 0 : Int.random(in: 0...rightColumn.count)
+            var attempts = 0
+            while attempts < 30 {
+                let safePos = min(rightPos, rightColumn.count)
+                let conflict = safePos < rightColumn.count && leftPos < leftColumn.count
+                    && leftColumn[leftPos].blockIndex == rightColumn[safePos].blockIndex
+                if !conflict { break }
+                rightPos = rightColumn.isEmpty ? 0 : Int.random(in: 0...rightColumn.count)
+                attempts += 1
             }
-            if rightColumn.count < Self.maxBoardWords, !reserveWords.isEmpty {
-                let word = reserveWords.removeFirst()
-                let rightPos = rightColumn.isEmpty ? 0 : Int.random(in: 0...rightColumn.count)
-                rightColumn.insert(flipWord(word), at: min(rightPos, rightColumn.count))
-            }
+            rightColumn.insert(rightWord, at: min(rightPos, rightColumn.count))
         } else {
             // NORMAL MODE: same word inserted into both columns.
-            guard leftColumn.count < Self.maxBoardWords, !reserveWords.isEmpty else { return }
             let word = reserveWords.removeFirst()
 
             let leftPos = leftColumn.isEmpty ? 0 : Int.random(in: 0...leftColumn.count)
