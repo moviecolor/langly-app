@@ -6,6 +6,7 @@ import SwiftData
 struct MatchMadnessGameView: View {
     @StateObject private var viewModel = MatchMadnessViewModel()
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
     @Query private var wordBlocks: [WordBlock]
     let mixAllBlocks: Bool
 
@@ -232,7 +233,10 @@ struct MatchMadnessGameView: View {
             HStack(spacing: 16) {
                 switch viewModel.gameState {
                 case .idle:
-                    EmptyView()
+                    gameActionButton(label: "Back", icon: "chevron.left",
+                                     background: Color(hex: 0x00D4AA)) {
+                        dismiss()
+                    }
 
                 case .playing:
                     gameActionButton(label: "Pause", icon: "pause.fill",
@@ -255,10 +259,7 @@ struct MatchMadnessGameView: View {
                     }
 
                 case .complete:
-                    gameActionButton(label: "Play Again", icon: "arrow.clockwise",
-                                     background: Color(hex: 0x00D4AA)) {
-                        viewModel.restartGame()
-                    }
+                    EmptyView()
                 }
             }
         }
@@ -299,8 +300,8 @@ struct MatchMadnessGameView: View {
 
                 HStack(spacing: 16) {
                     Button {
-                        showCompleteOverlay = false
-                        viewModel.stopGame()
+                        viewModel.resetToIdle()
+                        dismiss()
                     } label: {
                         Text("Done")
                             .font(.headline)

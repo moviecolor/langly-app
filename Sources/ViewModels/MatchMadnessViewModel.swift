@@ -167,8 +167,19 @@ final class MatchMadnessViewModel: ObservableObject {
         startTimer()
     }
 
-    /// Stops the game and returns to idle state.
+    /// Stops the game and transitions to complete state (shows score overlay).
     func stopGame() {
+        gameState = .complete
+        timer?.invalidate()
+        timer = nil
+        selectedLeft = nil
+        selectedRight = nil
+        showWrongMatch = false
+    }
+
+    /// Resets the game to idle without triggering the complete overlay.
+    /// Used internally by restartGame to avoid re-showing the overlay.
+    func resetToIdle() {
         gameState = .idle
         timer?.invalidate()
         timer = nil
@@ -179,7 +190,7 @@ final class MatchMadnessViewModel: ObservableObject {
 
     /// Restarts the game with a fresh board.
     func restartGame() {
-        stopGame()
+        resetToIdle()
         startGame()
     }
 
