@@ -11,6 +11,7 @@
 		025152A79A2EC9FC0CD1F977 /* VocabularyWord.swift in Sources */ = {isa = PBXBuildFile; fileRef = B85A61ADAFFE6D6A6FD4A04F /* VocabularyWord.swift */; };
 		0BB3891C386F4C03FC9DBC8E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F673967E0381D2D5DD089D6E /* ContentView.swift */; };
 		0C02DF7BDF68A83B2B8111B4 /* LaunchScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A28DEA42745ECDE0DB5909BB /* LaunchScreen.swift */; };
+		1A2F28A34BADF299186F9CC9 /* BundleImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4682E87C2FE895E497E2605E /* BundleImage.swift */; };
 		1A93A9C2B675277C5A884B8C /* IAPManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E56240FD5A33729E4C17F9 /* IAPManager.swift */; };
 		1CF07B5ECFE71124EE8DCF4C /* FeatureCardButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42F6D07CE371BEE99CB0786 /* FeatureCardButton.swift */; };
 		1F8791AA2EC77D3D03DEC157 /* MatchMadnessViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A91F6E30BEBECFAEFCFBCA /* MatchMadnessViewModel.swift */; };
@@ -76,6 +77,7 @@
 		41356FB095EA0754EE832FC1 /* QAView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QAView.swift; sourceTree = "<group>"; };
 		439FAB672909C8387A13EBCA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		45B26F1BD51D4256B46F2FC9 /* AudioModeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioModeViewModel.swift; sourceTree = "<group>"; };
+		4682E87C2FE895E497E2605E /* BundleImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleImage.swift; sourceTree = "<group>"; };
 		4EA85E9F44F054CC296D3BDE /* Sentence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sentence.swift; sourceTree = "<group>"; };
 		4F5847E1DC235F619B8EF61D /* WordBlock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordBlock.swift; sourceTree = "<group>"; };
 		5238987AA452299EE4138531 /* WordInputView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordInputView.swift; sourceTree = "<group>"; };
@@ -197,6 +199,7 @@
 		38A770398DAA0DABAF8B81BA /* Modules */ = {
 			isa = PBXGroup;
 			children = (
+				4682E87C2FE895E497E2605E /* BundleImage.swift */,
 				4204E6A2182846384F38BA94 /* CommonSentences */,
 				66ACF4C47784CE02B6CAAF37 /* Pronunciation */,
 				0DE968FA8831125C6C5C57D1 /* QA */,
@@ -395,6 +398,7 @@
 				AC9F01AE112A77120A390B63 /* AudioEngine.swift in Sources */,
 				8F4DA44AF53D534DE59F91D0 /* AudioModeView.swift in Sources */,
 				A53DC4794A6A0F7B3ECDB0A0 /* AudioModeViewModel.swift in Sources */,
+				1A2F28A34BADF299186F9CC9 /* BundleImage.swift in Sources */,
 				02481AC825FD095545579CBC /* Color+Hex.swift in Sources */,
 				FD10A1E27FB71F1A2BFEF68A /* CommonSentencesLoading.swift in Sources */,
 				306C515B3A49826D7A76C4B8 /* CommonSentencesView.swift in Sources */,

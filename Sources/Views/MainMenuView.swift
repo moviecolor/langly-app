@@ -96,7 +96,7 @@ struct MainMenuView: View {
 
         return NavigationLink {
             if isUnlocked {
-                VocabularyView()
+                moduleDestination(for: tab)
                     .navigationBarBackButtonHidden(false)
             } else {
                 lockedModuleView(tab)
@@ -161,7 +161,22 @@ struct MainMenuView: View {
             )
         }
         .buttonStyle(.plain)
-        .disabled(!isUnlocked)
+    }
+
+    // MARK: - Module Destination
+
+    @ViewBuilder
+    private func moduleDestination(for tab: AppTab) -> some View {
+        switch tab {
+        case .vocabulary:
+            VocabularyView()
+        case .commonSentences:
+            CommonSentencesView()
+        case .pronunciation:
+            PronunciationView()
+        case .qa:
+            QAView()
+        }
     }
 
     // MARK: - Locked Module View

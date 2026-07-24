@@ -157,8 +157,8 @@ extension AudioEngine: AVSpeechSynthesizerDelegate {
         _ synthesizer: AVSpeechSynthesizer,
         didFinish utterance: AVSpeechUtterance
     ) {
-        Task { @MainActor in
-            self.advanceQueue()
+        Task { @MainActor [weak self] in
+            self?.advanceQueue()
         }
     }
 
@@ -166,9 +166,9 @@ extension AudioEngine: AVSpeechSynthesizerDelegate {
         _ synthesizer: AVSpeechSynthesizer,
         didCancel utterance: AVSpeechUtterance
     ) {
-        Task { @MainActor in
-            self.isPlaying = false
-            self.currentUtteranceText = ""
+        Task { @MainActor [weak self] in
+            self?.isPlaying = false
+            self?.currentUtteranceText = ""
         }
     }
 }

@@ -1,113 +1,57 @@
 import SwiftUI
 
-/// Q&A module — "Coming Soon" stub with unlock button.
-/// Requires IAP purchase to access.
+/// Q&A module — "Coming Soon" page with loading graphic.
 struct QAView: View {
     @EnvironmentObject var iapManager: IAPManager
-    @State private var showPurchaseSheet = false
 
     var body: some View {
         ZStack {
-            Color.appBackground.ignoresSafeArea()
+            // Full-screen loading graphic from bundle.
+            BundleImage(name: "Q_Loading")
 
-            VStack(spacing: 24) {
-            Spacer()
+            // Subtle overlay for readability.
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.5)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            // Icon
-            Image(systemName: "questionmark.circle.fill")
-                .font(.system(size: 60))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color(hex: 0xCCFF00), Color(hex: 0x191970)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+            // Content overlay.
+            VStack(spacing: 20) {
+                Spacer()
 
-            // Module title
-            Text("Q&A")
-                .font(.title.bold())
-
-            // Coming soon message
-            Text("Engage in interactive conversations and test your language knowledge.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
-
-            // Unlock button
-            if !iapManager.isQAUnlocked {
-                Button {
-                    showPurchaseSheet = true
-                } label: {
-                    HStack {
-                        Image(systemName: "lock.open.fill")
-                        Text("Unlock Module")
-                            .fontWeight(.semibold)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                // Coming Soon badge.
+                Text("COMING SOON")
+                    .font(.system(size: 14, weight: .heavy))
+                    .foregroundColor(.white)
+                    .tracking(3)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
                     .background(
-                        LinearGradient(
-                            colors: [Color(hex: 0xCCFF00), Color(hex: 0x98FF98)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
+                        Capsule()
+                            .fill(Color.black.opacity(0.6))
                     )
-                    .foregroundColor(.appText)
-                    .cornerRadius(12)
-                }
-                .padding(.horizontal, 40)
-                .padding(.top, 20)
-            } else {
-                Text("Module Unlocked")
-                    .font(.caption)
-                    .foregroundColor(Color(hex: 0xCCFF00))
-            }
 
-            Spacer()
+                // Module title.
+                Text("Q&A")
+                    .font(.title.bold())
+                    .foregroundColor(.white)
+
+                // Description.
+                Text("Engage in interactive conversations and test your language knowledge. Unlock this module when it's ready!")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.85))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+
+                Spacer()
             }
         }
         .ignoresSafeArea()
         .navigationTitle("Q&A")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showPurchaseSheet) {
-            purchaseSheet
-        }
-    }
-
-    @ViewBuilder
-    private var purchaseSheet: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Text("Unlock Q&A")
-                    .font(.title2.bold())
-
-                Text("Practice conversations for $3.99")
-                    .foregroundColor(.secondary)
-
-                Button {
-                    Task {
-                        await iapManager.purchase(IAPManager.module4ID)
-                        showPurchaseSheet = false
-                    }
-                } label: {
-                    Text("Purchase")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color(hex: 0xCCFF00))
-                        .foregroundColor(.appText)
-                        .cornerRadius(12)
-                }
-
-                Button("Cancel") {
-                    showPurchaseSheet = false
-                }
-                .foregroundColor(.secondary)
-            }
-            .padding()
-            .presentationDetents([.medium])
-        }
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
     }
 }
 

@@ -143,16 +143,21 @@ final class IAPManager: ObservableObject {
 
     /// Listens for completed transactions in the background.
     private func listenForTransactions() -> Task<Void, Error> {
-        Task.detached {
+        Task.detached { [weak self] in
             for await result in Transaction.updates {
                 if case .verified(let transaction) = result {
-                    _ = await MainActor.run {
-                        self.purchasedProducts.insert(transaction.productID)
-                    }
+                    let productID = transaction.productID
+                    await self?.onTransactionVerified(productID)
                     _ = await transaction.finish()
                 }
             }
         }
+    }
+
+    /// Handles a verified transaction on the MainActor.
+    @MainActor
+    private func onTransactionVerified(_ productID: String) {
+        purchasedProducts.insert(productID)
     }
 
     // MARK: - Helpers
