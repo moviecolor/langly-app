@@ -1,23 +1,28 @@
 # SESSION HANDOFF — LANGLY
 
-**Last Session:** 2026-07-21 17:20
-**Agent:** OpenCode (deepseek-v4-flash-free)
+**Last Session:** 2026-07-24 12:45
+**Agent:** OpenCode (big-pickle)
 
 ---
 
 ## Session State
 
 ### ✅ Completed
-1. **Screen sizing fix** — LaunchScreen.storyboard + 4 Info.plist keys added. App now fills full iPhone 17 screen.
-2. **Vocabulary page reorder** — "Add Word Block" moved between Audio Mode and block cards.
-3. **English words display** — block cards show English words in 3-column compact tag grid.
-4. **Ghost block card** — dashed-border suggestion card at bottom to add new blocks.
+1. **Jumble mode rewrite** — All words appear in BOTH columns. Each word randomly either normal (EN→PT) or flipped (PT→EN). Both columns get SAME flip decision, shuffled independently.
+2. **Translation API** — MyMemory free API added as fallback between Apple Translation and MockTranslator.
+3. **Word input restructured** — Both English and Portuguese fields always visible. "Auto-Translate" button as convenience.
+4. **Tappable block cards** — VocabularyView block cards open WordInputView with block preselected.
+5. **Voice picker** — Real pt-BR voices from AVSpeechSynthesisVoice in Settings. Saved to AppSettings.selectedVoice.
+6. **Audio mode fixed** — English spoken once, Portuguese repeated N times (repetitions setting).
+7. **Audio display update** — Display now shows current word being spoken in real time (nil-then-reassign + .id() modifiers).
+8. **Game stop/done navigation** — Stop/Done buttons dismiss back to VocabularyView with score shown. Player can pick new block.
+9. **Dark mode + settings** — Dark mode toggle, app backgrounds, launch screen, settings appearance section.
 
 ### 🔄 In Progress
-- Audio Mode playback verification not yet done.
+- None
 
 ### 📋 Pending
-- Audio Mode testing (N reps per word + loop)
+- ReMyk server issues (separate project — microphone not live/muted/ended)
 - More blocks/words for testing
 - TD Bank PDF extraction
 
@@ -26,17 +31,19 @@
 ## Git State
 
 **Branch:** `master`
-**Latest commit:** `9c62c9c docs: session save 2026-07-21`
-**Uncommitted:** 5 modified, 2 untracked (LaunchScreen.storyboard + build/)
-**Remote (main):** `github` → `https://github.com/moviecolor/langly-app.git`
-**Remote (backup):** Thunder drive mirror
+**Latest commit:** `a4a4afa fix: audio display now updates as words play`
+**Remote:** `github` → `https://github.com/moviecolor/langly-app.git`
 
-## Key Files Changed This Session
+## Commits This Session
 ```
-Sources/LaunchScreen.storyboard          ← NEW - fixes screen sizing
-Sources/Info.plist                       ← MODIFIED - added 4 iOS keys
-project.yml                              ← MODIFIED - locked plist properties
-Sources/Views/Modules/Vocabulary/VocabularyView.swift ← MODIFIED - reorder + word grid + ghost block
+a4a4afa fix: audio display now updates as words play
+0e70e18 fix: audio mode — English once, Portuguese repeated N times
+87abf34 fix: game stop/done navigates back to VocabularyView with score
+875010a fix: jumble mode — same flip per word across both columns
+dabcc22 fix: jumble mode — all words in both columns, correct odd counts
+23ba466 feat: voice picker in Settings + AudioMode reads saved voice
+7ebc2f3 feat: restructure word input — both fields always visible, translate as helper
+75671fd feat: jumble bug fix + translation API + tappable blocks
 ```
 
 ## How to Resume
@@ -44,6 +51,10 @@ Sources/Views/Modules/Vocabulary/VocabularyView.swift ← MODIFIED - reorder + w
 git checkout master
 git pull github master
 # Open the project, build and run on iPhone 17 simulator
-# Verify Vocabulary page layout
-# Test Audio Mode playback
+# Test Audio Mode: words should display as they play
+# Test Match Madness: Stop/Done should go back to VocabularyView
 ```
+
+## Known Issues
+- **ReMyk**: Microphone track not live / muted / ended — separate project, may need MBP restart
+- **System performance**: Sluggish today — possibly RustDesk or AC Studio consuming resources
