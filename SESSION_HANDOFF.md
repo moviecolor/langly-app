@@ -1,7 +1,8 @@
 # SESSION HANDOFF — LANGLY
 
-**Last Session:** 2026-07-24 12:45
+**Last Session:** 2026-07-24 13:00
 **Agent:** OpenCode (big-pickle)
+**Status:** App working well, user adding words manually, then system restart
 
 ---
 
@@ -19,23 +20,25 @@
 9. **Dark mode + settings** — Dark mode toggle, app backgrounds, launch screen, settings appearance section.
 
 ### 🔄 In Progress
-- None
+- User adding vocabulary words manually to blocks
 
 ### 📋 Pending
-- ReMyk server issues (separate project — microphone not live/muted/ended)
-- More blocks/words for testing
+- ReMyk server issues (separate project — microphone not live/muted/ended, may need MBP restart)
 - TD Bank PDF extraction
+- Thunder drive backup (currently powered off)
 
 ---
 
 ## Git State
 
 **Branch:** `master`
-**Latest commit:** `a4a4afa fix: audio display now updates as words play`
+**Latest commit:** `8b224f7 [SAVE ALL NOW] session handoff 2026-07-24`
 **Remote:** `github` → `https://github.com/moviecolor/langly-app.git`
+**Local backup:** `/Volumes/16TB_LARGE_NVME/OpenCODE_Projects/LANGLY_PROJECT_BACKUP_2026-07-24/`
 
 ## Commits This Session
 ```
+8b224f7 [SAVE ALL NOW] session handoff 2026-07-24
 a4a4afa fix: audio display now updates as words play
 0e70e18 fix: audio mode — English once, Portuguese repeated N times
 87abf34 fix: game stop/done navigates back to VocabularyView with score
@@ -50,11 +53,11 @@ dabcc22 fix: jumble mode — all words in both columns, correct odd counts
 ```
 git checkout master
 git pull github master
-# Open the project, build and run on iPhone 17 simulator
-# Test Audio Mode: words should display as they play
-# Test Match Madness: Stop/Done should go back to VocabularyView
+# Open project, build and run on iPhone 17 simulator
+# Words should be in the blocks now — test Audio Mode and Match Madness
 ```
 
 ## Known Issues
-- **ReMyk**: Microphone track not live / muted / ended — separate project, may need MBP restart
+- **ReMyk**: Microphone track not live / muted / ended — separate project, likely needs MBP restart
+- **Thunder drive**: Powered off (fan noise) — backup stored locally on 16TB NVMe
 - **System performance**: Sluggish today — possibly RustDesk or AC Studio consuming resources
