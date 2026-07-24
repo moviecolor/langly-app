@@ -151,6 +151,8 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         }
 
         let word = playbackQueue[queueIndex]
+        // Force SwiftUI to detect the change by nil-ing then reassigning.
+        currentWord = nil
         currentWord = word
         progressIndex = queueIndex + 1
 

@@ -73,10 +73,12 @@ struct AudioModeView: View {
                 Text(word.nativeWord)
                     .font(.title2.bold())
                     .foregroundStyle(Color(hex: 0x00D4AA))
+                    .id("native-\(word.id)")
 
                 Text(word.translatedWord)
                     .font(.title)
                     .foregroundStyle(Color(hex: 0xFF6B35))
+                    .id("translated-\(word.id)")
 
                 if !viewModel.currentUtteranceType.isEmpty {
                     Text(viewModel.currentUtteranceType.capitalized)
