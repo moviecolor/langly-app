@@ -133,14 +133,13 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         return queue.shuffled()
     }
 
-    /// Plays the current word pair: native once, then translated once.
-    /// After all utterances, repeats if under the repetition count.
+    /// Plays the current word pair: native once, then translated N times.
+    /// After all utterances, moves to the next word.
     private func speakCurrentWordPair() {
         guard !wasManuallyStopped, queueIndex < playbackQueue.count else {
             // Queue exhausted — loop back to start.
             if !wasManuallyStopped && !playbackQueue.isEmpty {
                 queueIndex = 0
-                currentWordRepetition = 0
                 progressIndex = 1
                 speakCurrentWordPair()
             } else {
@@ -155,11 +154,11 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         currentWord = word
         progressIndex = queueIndex + 1
 
-        // Build utterance sequence: native once, then translated once.
-        pendingUtterances = [
-            (word.nativeWord, "en-US", "English"),
-            (word.translatedWord, "pt-BR", "Portuguese")
-        ]
+        // Build utterance sequence: native once, then translated N times.
+        pendingUtterances = [(word.nativeWord, "en-US", "English")]
+        for _ in 0..<repetitions {
+            pendingUtterances.append((word.translatedWord, "pt-BR", "Portuguese"))
+        }
 
         utteranceIndex = 0
         speakNextUtterance()
@@ -167,20 +166,11 @@ final class AudioModeViewModel: NSObject, ObservableObject {
 
     private func speakNextUtterance() {
         guard !wasManuallyStopped, utteranceIndex < pendingUtterances.count else {
-            // Done with this utterance sequence for the current word.
-            currentWordRepetition += 1
-
+            // Done with this utterance sequence for the current word — move to next.
             if !wasManuallyStopped {
-                if currentWordRepetition < repetitions {
-                    // Repeat the same word pair.
-                    currentWordRepetition += 1
-                    speakCurrentWordPair()
-                } else {
-                    // Move to next word.
-                    currentWordRepetition = 0
-                    queueIndex += 1
-                    speakCurrentWordPair()
-                }
+                currentWordRepetition = 0
+                queueIndex += 1
+                speakCurrentWordPair()
             } else {
                 playbackState = .stopped
                 currentWord = nil
