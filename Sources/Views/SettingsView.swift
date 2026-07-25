@@ -152,10 +152,44 @@ struct SettingsView: View {
                                 .fill(Color.appSurface)
                         )
                 } else {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(ptVoices, id: \.identifier) { voice in
-                                voiceChip(voice)
+                    // Male voices.
+                    if !maleVoices.isEmpty {
+                        Text("Male")
+                            .font(.caption.bold())
+                            .foregroundColor(.secondary)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(maleVoices, id: \.identifier) { voice in
+                                    voiceChip(voice, gender: "Male")
+                                }
+                            }
+                        }
+                    }
+
+                    // Female voices.
+                    if !femaleVoices.isEmpty {
+                        Text("Female")
+                            .font(.caption.bold())
+                            .foregroundColor(.secondary)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(femaleVoices, id: \.identifier) { voice in
+                                    voiceChip(voice, gender: "Female")
+                                }
+                            }
+                        }
+                    }
+
+                    // Other/unspecified voices.
+                    if !otherVoices.isEmpty {
+                        Text("Other")
+                            .font(.caption.bold())
+                            .foregroundColor(.secondary)
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(otherVoices, id: \.identifier) { voice in
+                                    voiceChip(voice, gender: "")
+                                }
                             }
                         }
                     }
@@ -217,20 +251,55 @@ struct SettingsView: View {
             .sorted { $0.name < $1.name }
     }
 
-    private func voiceChip(_ voice: AVSpeechSynthesisVoice) -> some View {
+    private var maleVoices: [AVSpeechSynthesisVoice] {
+        ptVoices.filter { voiceGender($0) == "Male" }
+    }
+
+    private var femaleVoices: [AVSpeechSynthesisVoice] {
+        ptVoices.filter { voiceGender($0) == "Female" }
+    }
+
+    private var otherVoices: [AVSpeechSynthesisVoice] {
+        ptVoices.filter { voiceGender($0) == "Unknown" }
+    }
+
+    private func voiceGender(_ voice: AVSpeechSynthesisVoice) -> String {
+        // Try to detect gender from voice name patterns.
+        let name = voice.name.lowercased()
+        if name.contains("male") || name.contains("joão") || name.contains("lucas") || name.contains("felipe") {
+            return "Male"
+        } else if name.contains("female") || name.contains("maria") || name.contains("fernanda") || name.contains("lucia") {
+            return "Female"
+        }
+        // Default: compact voices are often female, enhanced can be either.
+        return "Unknown"
+    }
+
+    private func voiceChip(_ voice: AVSpeechSynthesisVoice, gender: String = "") -> some View {
         let isSelected = selectedVoice == voice.identifier
 
         return Button {
             selectedVoice = voice.identifier
         } label: {
             VStack(spacing: 2) {
-                Text(voice.name)
-                    .font(.subheadline.bold())
-                    .foregroundColor(isSelected ? .white : .primary)
+                HStack(spacing: 4) {
+                    Image(systemName: gender == "Male" ? "person.fill" : gender == "Female" ? "person.fill" : "person.fill")
+                        .font(.caption2)
+                    Text(voice.name)
+                        .font(.subheadline.bold())
+                        .lineLimit(1)
+                }
+                .foregroundColor(isSelected ? .white : .primary)
 
-                Text(voiceQualityLabel(voice.quality))
-                    .font(.caption2)
-                    .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
+                HStack(spacing: 4) {
+                    if !gender.isEmpty {
+                        Text(gender)
+                            .font(.caption2)
+                    }
+                    Text(voiceQualityLabel(voice.quality))
+                        .font(.caption2)
+                }
+                .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
