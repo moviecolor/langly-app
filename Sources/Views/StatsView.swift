@@ -23,6 +23,12 @@ struct StatsView: View {
                     // MARK: - Engagement Stats
                     engagementSection(stats)
 
+                    // MARK: - Session Heatmap
+                    heatmapSection(stats)
+
+                    // MARK: - Word Difficulty
+                    difficultySection(stats)
+
                     // MARK: - Privacy Notice
                     privacyNotice
                 } else {
@@ -156,6 +162,104 @@ struct StatsView: View {
                     .fill(Color.appSurface)
             )
         }
+    }
+
+    // MARK: - Heatmap Section
+
+    private func heatmapSection(_ stats: LocalAnalytics) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("When You Practice")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                if stats.peakHour != nil {
+                    Text("Peak: \(stats.formattedPeakHour)")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(Color(hex: 0x00D4AA))
+                }
+            }
+
+            // 24-hour heatmap grid.
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 12), spacing: 2) {
+                ForEach(0..<24, id: \.self) { hour in
+                    let count = hour < stats.hourlyUsage.count ? stats.hourlyUsage[hour] : 0
+                    let maxCount = stats.hourlyUsage.max() ?? 1
+                    let intensity = maxCount > 0 ? Double(count) / Double(maxCount) : 0
+
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color(hex: 0x00D4AA).opacity(intensity > 0 ? max(0.2, intensity) : 0.05))
+                        .frame(height: 20)
+                        .overlay(
+                            Text("\(hour)")
+                                .font(.system(size: 7))
+                                .foregroundColor(.secondary.opacity(0.6))
+                        )
+                }
+            }
+
+            Text("Each cell = 1 hour of the day. Darker = more practice.")
+                .font(.caption)
+                .foregroundColor(.secondary.opacity(0.7))
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.appSurface)
+        )
+    }
+
+    // MARK: - Difficulty Section
+
+    private func difficultySection(_ stats: LocalAnalytics) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Tricky Words")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.primary)
+
+            let difficult = stats.difficultWords(limit: 5)
+
+            if difficult.isEmpty {
+                Text("No errors tracked yet. Play some games to see which words trip you up!")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .padding(.vertical, 8)
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(difficult, id: \.word) { item in
+                        HStack {
+                            Text(item.word)
+                                .font(.subheadline.bold())
+                                .foregroundColor(.primary)
+
+                            Spacer()
+
+                            HStack(spacing: 4) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.caption)
+                                    .foregroundColor(.red.opacity(0.7))
+                                Text("\(item.errors) errors")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+
+                        if item.word != difficult.last?.word {
+                            Divider()
+                                .background(Color.gray.opacity(0.2))
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.appSurface)
+        )
     }
 
     private func statRow(label: String, value: String) -> some View {

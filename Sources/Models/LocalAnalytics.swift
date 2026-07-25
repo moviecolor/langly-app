@@ -35,6 +35,17 @@ final class LocalAnalytics {
     var audioModeOpens: Int
     var settingsOpens: Int
 
+    // MARK: - Session Heatmap (hourly usage, 0-23)
+    var hourlyUsage: [Int]
+
+    // MARK: - Word Difficulty Tracking
+    var wordErrorCountsJSON: String
+
+    // MARK: - Drop-off Tracking
+    var onboardingCompleted: Bool
+    var lastFeatureUsed: String?
+    var lastFeatureTimestamp: Date?
+
     init() {
         self.totalSessionCount = 0
         self.totalSessionDurationSeconds = 0
@@ -54,6 +65,11 @@ final class LocalAnalytics {
         self.matchMadnessOpens = 0
         self.audioModeOpens = 0
         self.settingsOpens = 0
+        self.hourlyUsage = Array(repeating: 0, count: 24)
+        self.wordErrorCountsJSON = "{}"
+        self.onboardingCompleted = false
+        self.lastFeatureUsed = nil
+        self.lastFeatureTimestamp = nil
     }
 
     // MARK: - Tracking Methods
@@ -96,6 +112,8 @@ final class LocalAnalytics {
         case .audioMode: audioModeOpens += 1
         case .settings: settingsOpens += 1
         }
+        lastFeatureUsed = feature.rawValue
+        lastFeatureTimestamp = .now
     }
 
     /// Record a session and update streak.
@@ -103,6 +121,27 @@ final class LocalAnalytics {
         totalSessionCount += 1
         totalSessionDurationSeconds += durationSeconds
         lastSessionDate = .now
+
+        // Update hourly heatmap.
+        let hour = Calendar.current.component(.hour, from: .now)
+        if hour < hourlyUsage.count {
+            hourlyUsage[hour] += 1
+        }
+    }
+
+    /// Record a word error (wrong match in game).
+    func trackWordError(word: String) {
+        var errors = decodeWordErrors()
+        errors[word, default: 0] += 1
+        wordErrorCountsJSON = encodeWordErrors(errors)
+    }
+
+    /// Get the most difficult words (sorted by error count).
+    func difficultWords(limit: Int = 5) -> [(word: String, errors: Int)] {
+        let errors = decodeWordErrors()
+        return errors.sorted { $0.value > $1.value }
+            .prefix(limit)
+            .map { (word: $0.key, errors: $0.value) }
     }
 
     // MARK: - Computed Stats
@@ -132,6 +171,40 @@ final class LocalAnalytics {
     /// Days since first launch.
     var daysSinceLaunch: Int {
         Calendar.current.dateComponents([.day], from: firstLaunchDate, to: .now).day ?? 0
+    }
+
+    /// Peak usage hour.
+    var peakHour: Int? {
+        hourlyUsage.enumerated()
+            .max(by: { $0.element < $1.element })?
+            .offset
+    }
+
+    /// Peak hour formatted.
+    var formattedPeakHour: String {
+        guard let hour = peakHour else { return "N/A" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "h a"
+        let date = Calendar.current.date(from: DateComponents(hour: hour)) ?? .now
+        return formatter.string(from: date)
+    }
+
+    // MARK: - JSON Encoding/Decoding
+
+    private func decodeWordErrors() -> [String: Int] {
+        guard let data = wordErrorCountsJSON.data(using: .utf8),
+              let decoded = try? JSONSerialization.jsonObject(with: data) as? [String: Int] else {
+            return [:]
+        }
+        return decoded
+    }
+
+    private func encodeWordErrors(_ errors: [String: Int]) -> String {
+        guard let data = try? JSONSerialization.data(withJSONObject: errors),
+              let json = String(data: data, encoding: .utf8) else {
+            return "{}"
+        }
+        return json
     }
 }
 

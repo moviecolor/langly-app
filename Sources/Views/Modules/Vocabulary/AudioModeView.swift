@@ -92,6 +92,13 @@ struct AudioModeView: View {
                     .foregroundStyle(Color(hex: 0x00D4AA))
                     .id("native-\(word.id)")
 
+                // Waveform visualization.
+                AudioWaveformView(
+                    isPlaying: viewModel.playbackState == .playing,
+                    barCount: 7,
+                    color: Color(hex: 0xFF6B35)
+                )
+
                 Text(word.translatedWord)
                     .font(.title)
                     .foregroundStyle(Color(hex: 0xFF6B35))

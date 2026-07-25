@@ -65,6 +65,12 @@ final class MatchMadnessViewModel: ObservableObject {
     /// Total number of wrong attempts in this session.
     @Published var wrongAttempts: Int = 0
 
+    /// Whether the last action was a correct match (for haptic feedback).
+    @Published var lastMatchCorrect: Bool? = nil
+
+    /// Last wrong word for error tracking.
+    @Published var lastWrongWord: String? = nil
+
     // MARK: - Properties
 
     /// All available vocabulary words from active blocks.
@@ -401,6 +407,7 @@ final class MatchMadnessViewModel: ObservableObject {
             // Correct match! Score = 1 per pair.
             score += 1
             totalMatches += 1
+            lastMatchCorrect = true
 
             // Remove matched words from both columns.
             leftColumn.removeAll { $0.id == left.id }
@@ -421,6 +428,8 @@ final class MatchMadnessViewModel: ObservableObject {
         } else {
             // Wrong match.
             wrongAttempts += 1
+            lastMatchCorrect = false
+            lastWrongWord = left.nativeWord
             showWrongMatch = true
 
             Task {

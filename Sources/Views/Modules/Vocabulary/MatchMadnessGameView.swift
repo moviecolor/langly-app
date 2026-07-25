@@ -64,6 +64,7 @@ struct MatchMadnessGameView: View {
         .onChange(of: viewModel.gameState) { _, newState in
             if newState == .complete {
                 showCompleteOverlay = true
+                HapticPattern.notification.trigger()
                 // Track streak progress.
                 if let tracker = trackers.first {
                     tracker.totalGamesPlayed += 1
@@ -76,6 +77,20 @@ struct MatchMadnessGameView: View {
                     stats.trackGameCompleted(matches: viewModel.totalMatches, score: viewModel.score)
                     stats.trackWordsReviewed(count: viewModel.totalMatches)
                     try? modelContext.save()
+                }
+            }
+        }
+        .onChange(of: viewModel.lastMatchCorrect) { _, correct in
+            if let correct = correct {
+                if correct {
+                    HapticPattern.success.trigger()
+                } else {
+                    HapticPattern.error.trigger()
+                    // Track word error for analytics.
+                    if let word = viewModel.lastWrongWord, let stats = analytics.first {
+                        stats.trackWordError(word: word)
+                        try? modelContext.save()
+                    }
                 }
             }
         }

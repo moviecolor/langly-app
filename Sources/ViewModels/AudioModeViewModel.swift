@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import AVFoundation
+import UIKit
 
 /// Playback states for Audio Mode.
 enum AudioPlaybackState: String {
@@ -19,6 +20,7 @@ struct AudioWord: Identifiable, Equatable {
 }
 
 /// ViewModel for Audio Mode — plays each word pair N times, loops until stopped.
+/// Supports background audio playback when app is minimized.
 @MainActor
 final class AudioModeViewModel: NSObject, ObservableObject {
     // MARK: - Published State
@@ -51,11 +53,27 @@ final class AudioModeViewModel: NSObject, ObservableObject {
     /// Empty string means use system default for the language.
     var selectedVoiceIdentifier: String = ""
 
+    /// Background task identifier for audio.
+    private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
+
     // MARK: - Initialization
 
     override init() {
         super.init()
         synthesizer.delegate = self
+        setupAudioSession()
+    }
+
+    // MARK: - Audio Session Setup
+
+    private func setupAudioSession() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers])
+            try session.setActive(true)
+        } catch {
+            print("[AudioModeViewModel] Failed to setup audio session: \(error)")
+        }
     }
 
     // MARK: - Public API
@@ -91,6 +109,7 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         progressIndex = 1
         playbackState = .playing
 
+        beginBackgroundTask()
         speakCurrentWordPair()
     }
 
@@ -100,6 +119,7 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         playbackState = .stopped
         currentWord = nil
         currentUtteranceType = ""
+        endBackgroundTask()
     }
 
     func pausePlayback() {
@@ -113,6 +133,25 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         synthesizer.continueSpeaking()
         playbackState = .playing
         wasManuallyStopped = false
+        beginBackgroundTask()
+    }
+
+    // MARK: - Background Task Management
+
+    private func beginBackgroundTask() {
+        guard backgroundTaskID == .invalid else { return }
+        backgroundTaskID = UIApplication.shared.beginBackgroundTask { [weak self] in
+            // System is asking us to end the background task.
+            Task { @MainActor [weak self] in
+                self?.endBackgroundTask()
+            }
+        }
+    }
+
+    private func endBackgroundTask() {
+        guard backgroundTaskID != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(backgroundTaskID)
+        backgroundTaskID = .invalid
     }
 
     // MARK: - Private
@@ -146,6 +185,7 @@ final class AudioModeViewModel: NSObject, ObservableObject {
                 playbackState = .stopped
                 currentWord = nil
                 currentUtteranceType = ""
+                endBackgroundTask()
             }
             return
         }
@@ -177,6 +217,7 @@ final class AudioModeViewModel: NSObject, ObservableObject {
                 playbackState = .stopped
                 currentWord = nil
                 currentUtteranceType = ""
+                endBackgroundTask()
             }
             return
         }
@@ -226,6 +267,7 @@ extension AudioModeViewModel: AVSpeechSynthesizerDelegate {
                 self.playbackState = .stopped
                 self.currentWord = nil
                 self.currentUtteranceType = ""
+                self.endBackgroundTask()
             }
         }
     }

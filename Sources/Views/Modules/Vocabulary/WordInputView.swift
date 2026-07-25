@@ -428,9 +428,17 @@ struct WordInputView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 20)
                 } else {
-                    ForEach(filteredWords) { word in
-                        wordRow(word)
-                    }
+                ForEach(filteredWords) { word in
+                    wordRow(word)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                HapticPattern.impact.trigger()
+                                deleteWord(word)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                }
                 }
             }
         }

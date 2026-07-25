@@ -15,6 +15,8 @@ struct SettingsView: View {
     @State private var loopEnabled: Bool = true
     @State private var showSaveFeedback = false
     @AppStorage("isDarkMode") private var isDarkMode: Bool = false
+    @State private var isVoiceTesting = false
+    private let testSynthesizer = AVSpeechSynthesizer()
 
     private let availableLanguages = [
         "English", "Spanish", "French", "German", "Italian",
@@ -198,6 +200,27 @@ struct SettingsView: View {
                 Text("Download higher-quality voices in Settings → Accessibility → Spoken Content → Voices")
                     .font(.caption)
                     .foregroundColor(.secondary.opacity(0.7))
+
+                // Voice test button.
+                if !selectedVoice.isEmpty {
+                    Button {
+                        testVoice()
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: isVoiceTesting ? "stop.circle.fill" : "play.circle.fill")
+                                .font(.title3)
+                            Text(isVoiceTesting ? "Playing..." : "Test Selected Voice")
+                                .font(.subheadline.bold())
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color(hex: 0x00D4AA))
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isVoiceTesting)
+                }
             }
 
             // Playback gap.
@@ -449,6 +472,25 @@ struct SettingsView: View {
             }
         } catch {
             print("Failed to save settings: \(error)")
+        }
+    }
+
+    private func testVoice() {
+        isVoiceTesting = true
+        HapticPattern.impact.trigger()
+
+        let utterance = AVSpeechUtterance(string: "Olá, como vai você? Eu estou aprendendo português.")
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+
+        if let voice = AVSpeechSynthesisVoice(identifier: selectedVoice) {
+            utterance.voice = voice
+        }
+
+        utterance.postUtteranceDelay = 0.1
+        testSynthesizer.speak(utterance)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            isVoiceTesting = false
         }
     }
 }

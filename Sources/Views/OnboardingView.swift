@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AVFoundation
 
 /// Onboarding flow — first-launch walkthrough for new users.
 /// Shows 4 screens: Welcome, Modules, Add Words, Get Started.
@@ -9,8 +10,23 @@ struct OnboardingView: View {
     @State private var currentPage = 0
     @State private var selectedLanguage = "Portuguese"
     @State private var showMainApp = false
+    @State private var isPreviewPlaying = false
+
+    private let synthesizer = AVSpeechSynthesizer()
 
     private let languages = ["Portuguese", "Spanish", "French", "German", "Italian", "Japanese", "Korean", "Chinese"]
+
+    /// Sample words for language preview.
+    private let sampleWords: [String: (native: String, translated: String, voiceCode: String)] = [
+        "Portuguese": ("Hello", "Olá", "pt-BR"),
+        "Spanish": ("Hello", "Hola", "es-ES"),
+        "French": ("Hello", "Bonjour", "fr-FR"),
+        "German": ("Hello", "Hallo", "de-DE"),
+        "Italian": ("Hello", "Ciao", "it-IT"),
+        "Japanese": ("Hello", "こんにちは", "ja-JP"),
+        "Korean": ("Hello", "안녕하세요", "ko-KR"),
+        "Chinese": ("Hello", "你好", "zh-CN")
+    ]
 
     var body: some View {
         ZStack {
@@ -169,8 +185,8 @@ struct OnboardingView: View {
                     .multilineTextAlignment(.center)
             }
 
-            // Language selector.
-            VStack(alignment: .leading, spacing: 8) {
+            // Language selector with preview.
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Learning Language")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.secondary)
@@ -178,28 +194,77 @@ struct OnboardingView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 10) {
                         ForEach(languages, id: \.self) { lang in
-                            Button {
-                                selectedLanguage = lang
-                            } label: {
-                                Text(lang)
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(selectedLanguage == lang ? .white : .primary)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 10)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 10)
-                                            .fill(selectedLanguage == lang ? Color(hex: 0x00D4AA) : Color.appSurface)
-                                    )
-                            }
-                            .buttonStyle(.plain)
+                            languageChip(lang)
                         }
                     }
+                }
+
+                // Preview button.
+                if let sample = sampleWords[selectedLanguage] {
+                    Button {
+                        previewLanguage(sample)
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: isPreviewPlaying ? "stop.circle.fill" : "play.circle.fill")
+                                .font(.title2)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("\(sample.native) → \(sample.translated)")
+                                    .font(.subheadline.bold())
+                                Text("Tap to hear it")
+                                    .font(.caption)
+                                    .opacity(0.7)
+                            }
+                        }
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(hex: 0x00D4AA))
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
             Spacer()
         }
         .padding(.horizontal, 32)
+    }
+
+    private func languageChip(_ lang: String) -> some View {
+        Button {
+            HapticPattern.selection.trigger()
+            selectedLanguage = lang
+        } label: {
+            Text(lang)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(selectedLanguage == lang ? .white : .primary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(selectedLanguage == lang ? Color(hex: 0x00D4AA) : Color.appSurface)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func previewLanguage(_ sample: (native: String, translated: String, voiceCode: String)) {
+        isPreviewPlaying = true
+        HapticPattern.impact.trigger()
+
+        let utterance = AVSpeechUtterance(string: sample.translated)
+        utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+        utterance.voice = AVSpeechSynthesisVoice(language: sample.voiceCode)
+
+        utterance.postUtteranceDelay = 0.1
+        synthesizer.speak(utterance)
+
+        // Reset after playback.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            isPreviewPlaying = false
+        }
     }
 
     // MARK: - Page 4: Get Started
@@ -250,6 +315,7 @@ struct OnboardingView: View {
 
             // Action button.
             Button {
+                HapticPattern.impact.trigger()
                 if currentPage < 3 {
                     withAnimation {
                         currentPage += 1

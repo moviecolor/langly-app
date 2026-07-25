@@ -38,6 +38,11 @@ struct ContentView: View {
             seedStarterVocabulary()
             seedStreakTracker()
             seedAnalytics()
+            // Request notification permission and schedule daily reminder.
+            let granted = await NotificationManager.shared.requestPermission()
+            if granted {
+                NotificationManager.shared.scheduleDailyReminder(hour: 19, minute: 0)
+            }
             // Show onboarding on first launch.
             if let settings = settings.first, !settings.hasCompletedOnboarding {
                 showOnboarding = true
