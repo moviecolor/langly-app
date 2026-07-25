@@ -41,10 +41,25 @@ struct MatchMadnessGameView: View {
                     .background(Color(hex: 0x00D4AA).opacity(0.3))
                     .padding(.vertical, 8)
 
-                // Game board: two columns of word buttons.
-                gameBoard
+                // Game board: two columns of word buttons (scrollable).
+                ScrollView(.vertical, showsIndicators: false) {
+                    gameBoard
 
-                Spacer()
+                    // Scroll indicator.
+                    if viewModel.leftColumn.count > 4 {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "chevron.down")
+                                .font(.caption)
+                                .foregroundColor(.secondary.opacity(0.5))
+                            Text("Scroll for more")
+                                .font(.caption2)
+                                .foregroundColor(.secondary.opacity(0.5))
+                            Spacer()
+                        }
+                        .padding(.top, 8)
+                    }
+                }
 
                 // Bottom controls: Jumble toggle + Start/Stop/Restart.
                 bottomControls
@@ -177,7 +192,7 @@ struct MatchMadnessGameView: View {
             }
         } label: {
             Text(column == .left ? word.nativeWord : word.translatedWord)
-                .font(.callout)
+                .font(.callout.bold())
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
                 .foregroundColor(isSelected ? .white : .black)
@@ -376,12 +391,12 @@ struct MatchMadnessGameView: View {
     private func gameActionButton(label: String, icon: String, background: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label(label, systemImage: icon)
-                .font(.headline)
+                .font(.subheadline.bold())
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
+                .padding(.vertical, 10)
                 .background(background)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
         }
         .buttonStyle(.plain)
     }
