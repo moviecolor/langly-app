@@ -6,8 +6,13 @@ struct PronunciationView: View {
 
     var body: some View {
         ZStack {
-            // Full-screen loading graphic from bundle.
-            BundleImage(name: "P_Loading")
+            // Full-screen loading graphic.
+            Image("PronunciationLoading")
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
+                .ignoresSafeArea()
 
             // Subtle overlay for readability.
             LinearGradient(
@@ -17,35 +22,36 @@ struct PronunciationView: View {
             )
             .ignoresSafeArea()
 
-            // Content overlay.
-            VStack(spacing: 20) {
-                Spacer()
-
-                // Coming Soon badge.
-                Text("COMING SOON")
-                    .font(.system(size: 14, weight: .heavy))
-                    .foregroundColor(.white)
-                    .tracking(3)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 8)
-                    .background(
-                        Capsule()
-                            .fill(Color.black.opacity(0.6))
-                    )
-
-                // Module title.
-                Text("Pronunciation")
-                    .font(.title.bold())
-                    .foregroundColor(.white)
-
-                // Description.
+            // Content: description at top, badge at bottom.
+            VStack {
+                // Description — pinned to the top.
                 Text("Practice speaking with real-time feedback and improve your accent. Unlock this module when it's ready!")
                     .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.85))
+                    .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
+                    .padding(.top, 110)
 
                 Spacer()
+
+                // Coming Soon badge + title — pinned to the very bottom.
+                VStack(spacing: 10) {
+                    Text("COMING SOON")
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundColor(.white)
+                        .tracking(3)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(Color.black.opacity(0.6))
+                        )
+
+                    Text("Pronunciation")
+                        .font(.title.bold())
+                        .foregroundColor(.white)
+                }
+                .padding(.bottom, 40)
             }
         }
         .ignoresSafeArea()

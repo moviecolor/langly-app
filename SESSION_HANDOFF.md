@@ -1,63 +1,47 @@
-# SESSION HANDOFF — LANGLY
+# SESSION_HANDOFF.md
+**Date:** 2026-07-24  
+**Branch:** master  
+**Commit:** 57acefe  
+**Remote:** github.com/moviecolor/langly-app.git (synced)
 
-**Last Session:** 2026-07-24 13:00
-**Agent:** OpenCode (big-pickle)
-**Status:** App working well, user adding words manually, then system restart
+## Current State
+The app builds and runs on iPhone 16 Pro simulator (iOS 18.3). All features from prior sessions are intact: vocabulary module working with audio playback, game mode, scores, spaced repetition.
 
----
+## What We Were Working On
+**Loading graphics for locked module pages** — tried multiple approaches:
+1. Asset catalog images (single-scale, no dark mode qualifier) — images did not render
+2. Bundle resources via `BundleImage` helper using `UIImage(contentsOfFile:)` — still not rendering
+3. The three source PNGs are in `Resources/`: `CS_Loading.png`, `P_Loading.png`, `Q_Loading.png`
+4. Asset catalog images also exist: `CommonSentences_BG.png`, `Pronunciation_BG.png`
+5. The `BundleImage.swift` helper is at `Sources/Views/Modules/BundleImage.swift`
 
-## Session State
+**Next step:** Debug why the images are not rendering. Likely a bundle path issue or the PNGs are not being copied into the app bundle. Check:
+- `Resources/` is in `resources:` section of `project.yml` (it is)
+- `UIImage(contentsOfFile:)` path may need `Bundle.main.path(forResource:ofType:)` instead of string concatenation
+- Verify images exist in `.app` bundle at runtime: `po Bundle.main.bundlePath`
+- Try `Image(uiImage:)` with a known-working asset catalog image first to isolate
 
-### ✅ Completed
-1. **Jumble mode rewrite** — All words appear in BOTH columns. Each word randomly either normal (EN→PT) or flipped (PT→EN). Both columns get SAME flip decision, shuffled independently.
-2. **Translation API** — MyMemory free API added as fallback between Apple Translation and MockTranslator.
-3. **Word input restructured** — Both English and Portuguese fields always visible. "Auto-Translate" button as convenience.
-4. **Tappable block cards** — VocabularyView block cards open WordInputView with block preselected.
-5. **Voice picker** — Real pt-BR voices from AVSpeechSynthesisVoice in Settings. Saved to AppSettings.selectedVoice.
-6. **Audio mode fixed** — English spoken once, Portuguese repeated N times (repetitions setting).
-7. **Audio display update** — Display now shows current word being spoken in real time (nil-then-reassign + .id() modifiers).
-8. **Game stop/done navigation** — Stop/Done buttons dismiss back to VocabularyView with score shown. Player can pick new block.
-9. **Dark mode + settings** — Dark mode toggle, app backgrounds, launch screen, settings appearance section.
+## Other Completed Fixes (committed)
+- Navigation bug: `MainMenuView.swift` routes each module to correct view
+- IAPManager retain cycle: extracted `onTransactionVerified` to avoid sending self across actor boundary
+- AudioEngine memory leak: `[weak self]` in delegate callbacks
+- WordInputView: GCD remnant replaced with `Task.sleep`
+- Locked modules: `.disabled(!isUnlocked)` removed so they're tappable
+- Loading overlay: `Color.black.opacity(0.4)` replaced with `LinearGradient(.clear → .black.opacity(0.5))`
 
-### 🔄 In Progress
-- User adding vocabulary words manually to blocks
-
-### 📋 Pending
-- ReMyk server issues (separate project — microphone not live/muted/ended, may need MBP restart)
-- TD Bank PDF extraction
-- Thunder drive backup (currently powered off)
-
----
-
-## Git State
-
-**Branch:** `master`
-**Latest commit:** `8b224f7 [SAVE ALL NOW] session handoff 2026-07-24`
-**Remote:** `github` → `https://github.com/moviecolor/langly-app.git`
-**Local backup:** `/Volumes/16TB_LARGE_NVME/OpenCODE_Projects/LANGLY_PROJECT_BACKUP_2026-07-24/`
-
-## Commits This Session
-```
-8b224f7 [SAVE ALL NOW] session handoff 2026-07-24
-a4a4afa fix: audio display now updates as words play
-0e70e18 fix: audio mode — English once, Portuguese repeated N times
-87abf34 fix: game stop/done navigates back to VocabularyView with score
-875010a fix: jumble mode — same flip per word across both columns
-dabcc22 fix: jumble mode — all words in both columns, correct odd counts
-23ba466 feat: voice picker in Settings + AudioMode reads saved voice
-7ebc2f3 feat: restructure word input — both fields always visible, translate as helper
-75671fd feat: jumble bug fix + translation API + tappable blocks
-```
-
-## How to Resume
-```
-git checkout master
-git pull github master
-# Open project, build and run on iPhone 17 simulator
-# Words should be in the blocks now — test Audio Mode and Match Madness
-```
+## Files Modified (this session)
+- `Sources/Views/MainMenuView.swift` — navigation routing, removed `.disabled`
+- `Sources/Services/IAPManager.swift` — retain cycle fix
+- `Sources/Services/AudioEngine.swift` — delegate memory leak fix
+- `Sources/Views/Modules/Vocabulary/WordInputView.swift` — GCD → Task.sleep
+- `Sources/Views/Modules/CommonSentences/CommonSentencesView.swift` — loading graphic + gradient overlay
+- `Sources/Views/Modules/Pronunciation/PronunciationView.swift` — loading graphic + gradient overlay
+- `Sources/Views/Modules/QA/QAView.swift` — loading graphic + gradient overlay
+- `Sources/Views/Modules/BundleImage.swift` — NEW: bundle image loader helper
+- `Resources/CS_Loading.png`, `Resources/P_Loading.png`, `Resources/Q_Loading.png` — NEW: loading graphics
 
 ## Known Issues
-- **ReMyk**: Microphone track not live / muted / ended — separate project, likely needs MBP restart
-- **Thunder drive**: Powered off (fan noise) — backup stored locally on 16TB NVMe
-- **System performance**: Sluggish today — possibly RustDesk or AC Studio consuming resources
+- **Loading graphics not rendering** — most urgent, debug on next session
+- `commit-msg` hook has an unbound variable error (`VALID_Types`)
+- `gh` CLI not installed
+- iPhone 17 Pro simulators can't build (iOS 26.2 runtime not available)

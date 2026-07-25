@@ -95,12 +95,8 @@ struct MainMenuView: View {
         }
 
         return NavigationLink {
-            if isUnlocked {
-                moduleDestination(for: tab)
-                    .navigationBarBackButtonHidden(false)
-            } else {
-                lockedModuleView(tab)
-            }
+            moduleDestination(for: tab)
+                .navigationBarBackButtonHidden(false)
         } label: {
             HStack(spacing: 16) {
                 // Icon circle.
