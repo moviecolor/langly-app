@@ -180,7 +180,7 @@ struct MatchMadnessGameView: View {
                 .font(.callout)
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
-                .foregroundColor(isSelected ? .white : Color(hex: 0x00D4AA))
+                .foregroundColor(isSelected ? .white : .black)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(
