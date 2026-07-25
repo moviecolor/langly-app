@@ -29,6 +29,9 @@ final class AudioEngine: NSObject, ObservableObject {
     /// The selected voice identifier (empty string uses system default).
     var selectedVoice: String = ""
 
+    /// The selected voice gender for pitch adjustment.
+    var selectedVoiceGender: String = ""
+
     /// The current playback queue.
     private var playbackQueue: [String] = []
 
@@ -99,6 +102,12 @@ final class AudioEngine: NSObject, ObservableObject {
         if !selectedVoice.isEmpty,
            let voice = AVSpeechSynthesisVoice(identifier: selectedVoice) {
             utterance.voice = voice
+            // Lower pitch for male voice, slightly higher for female.
+            if selectedVoiceGender == "Male" {
+                utterance.pitchMultiplier = 0.5
+            } else {
+                utterance.pitchMultiplier = 1.15
+            }
         } else {
             // Default to Portuguese (Brazil) voice.
             utterance.voice = AVSpeechSynthesisVoice(language: "pt-BR")

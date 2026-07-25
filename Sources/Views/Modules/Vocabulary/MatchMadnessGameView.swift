@@ -177,7 +177,7 @@ struct MatchMadnessGameView: View {
             }
         } label: {
             Text(column == .left ? word.nativeWord : word.translatedWord)
-                .font(.callout.bold())
+                .font(.body.bold())
                 .lineLimit(2)
                 .minimumScaleFactor(0.7)
                 .foregroundColor(isSelected ? .white : .black)
@@ -188,7 +188,7 @@ struct MatchMadnessGameView: View {
                         .fill(
                             isSelected
                                 ? Color(hex: 0xFF6B35)
-                                : Color.appSurface.opacity(0.8)
+                                : Color.white.opacity(0.95)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)

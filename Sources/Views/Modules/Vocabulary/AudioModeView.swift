@@ -10,6 +10,7 @@ struct AudioModeView: View {
     @Query private var settings: [AppSettings]
     @Query private var trackers: [StreakTracker]
     @Query private var analytics: [LocalAnalytics]
+    @AppStorage("selectedVoiceGender") private var savedGender: String = ""
 
     init() {}
 
@@ -64,6 +65,7 @@ struct AudioModeView: View {
             if let savedVoice = settings.first?.selectedVoice {
                 viewModel.selectedVoiceIdentifier = savedVoice
             }
+            viewModel.selectedVoiceGender = savedGender
         }
         .onChange(of: viewModel.playbackState) { _, newState in
             // Track audio session when user stops playback.

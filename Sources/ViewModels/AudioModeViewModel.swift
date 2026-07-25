@@ -53,6 +53,9 @@ final class AudioModeViewModel: NSObject, ObservableObject {
     /// Empty string means use system default for the language.
     var selectedVoiceIdentifier: String = ""
 
+    /// User-selected voice gender for pitch adjustment.
+    var selectedVoiceGender: String = ""
+
     /// Background task identifier for audio.
     private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
 
@@ -234,6 +237,12 @@ final class AudioModeViewModel: NSObject, ObservableObject {
            !selectedVoiceIdentifier.isEmpty,
            let voice = AVSpeechSynthesisVoice(identifier: selectedVoiceIdentifier) {
             speechUtterance.voice = voice
+            // Lower pitch for male voice, slightly higher for female.
+            if selectedVoiceGender == "Male" {
+                speechUtterance.pitchMultiplier = 0.5
+            } else {
+                speechUtterance.pitchMultiplier = 1.15
+            }
         } else if let voice = AVSpeechSynthesisVoice(language: utterance.language) {
             speechUtterance.voice = voice
         }

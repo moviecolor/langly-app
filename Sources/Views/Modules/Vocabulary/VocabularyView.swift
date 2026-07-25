@@ -73,6 +73,14 @@ struct VocabularyView: View {
                     } else {
                         ForEach(wordBlocks) { block in
                             blockCard(block)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        HapticPattern.impact.trigger()
+                                        deleteBlock(block)
+                                    } label: {
+                                        Label("Delete Block", systemImage: "trash")
+                                    }
+                                }
                         }
 
                         // Ghost block suggestion.
@@ -306,6 +314,18 @@ struct VocabularyView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    // MARK: - Delete Block
+
+    private func deleteBlock(_ block: WordBlock) {
+        withAnimation(.spring(duration: 0.3)) {
+            modelContext.delete(block)
+            try? modelContext.save()
+            if selectedBlockForInput == block.id {
+                selectedBlockForInput = nil
+            }
+        }
     }
 
     // MARK: - Ghost Block Card

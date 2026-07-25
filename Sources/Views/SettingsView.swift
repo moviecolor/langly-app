@@ -11,6 +11,8 @@ struct SettingsView: View {
     @State private var homeLanguage: String = "English"
     @State private var targetLanguage: String = "Portuguese"
     @State private var selectedVoice: String = ""
+    @State private var selectedGender: String = ""
+    @AppStorage("selectedVoiceGender") private var savedGender: String = ""
     @State private var playbackGap: Double = 1.75
     @State private var loopEnabled: Bool = true
     @State private var showSaveFeedback = false
@@ -154,30 +156,34 @@ struct SettingsView: View {
                                 .fill(Color.appSurface)
                         )
                 } else {
-                    // Male voices.
-                    if !maleVoices.isEmpty {
-                        Text("Male")
-                            .font(.caption.bold())
-                            .foregroundColor(.secondary)
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
+                    // Male voices — always show section, use default voice as fallback.
+                    Text("Male")
+                        .font(.caption.bold())
+                        .foregroundColor(.secondary)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            if !maleVoices.isEmpty {
                                 ForEach(maleVoices, id: \.identifier) { voice in
                                     voiceChip(voice, gender: "Male")
                                 }
+                            } else if let fallback = ptVoices.first {
+                                voiceChip(fallback, gender: "Male")
                             }
                         }
                     }
 
-                    // Female voices.
-                    if !femaleVoices.isEmpty {
-                        Text("Female")
-                            .font(.caption.bold())
-                            .foregroundColor(.secondary)
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
+                    // Female voices — always show section.
+                    Text("Female")
+                        .font(.caption.bold())
+                        .foregroundColor(.secondary)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            if !femaleVoices.isEmpty {
                                 ForEach(femaleVoices, id: \.identifier) { voice in
                                     voiceChip(voice, gender: "Female")
                                 }
+                            } else if let fallback = ptVoices.first {
+                                voiceChip(fallback, gender: "Female")
                             }
                         }
                     }
@@ -298,17 +304,25 @@ struct SettingsView: View {
         return "Unknown"
     }
 
+    private func voiceDisplayName(_ voice: AVSpeechSynthesisVoice, gender: String) -> String {
+        if gender == "Female" { return "Valeria" }
+        if gender == "Male" { return "Ryan" }
+        return voice.name
+    }
+
     private func voiceChip(_ voice: AVSpeechSynthesisVoice, gender: String = "") -> some View {
-        let isSelected = selectedVoice == voice.identifier
+        let isSelected = selectedVoice == voice.identifier && selectedGender == gender
 
         return Button {
             selectedVoice = voice.identifier
+            selectedGender = gender
+            savedGender = gender
         } label: {
             VStack(spacing: 2) {
                 HStack(spacing: 4) {
                     Image(systemName: gender == "Male" ? "person.fill" : gender == "Female" ? "person.fill" : "person.fill")
                         .font(.caption2)
-                    Text(voice.name)
+                    Text(voiceDisplayName(voice, gender: gender))
                         .font(.subheadline.bold())
                         .lineLimit(1)
                 }
@@ -453,6 +467,8 @@ struct SettingsView: View {
         selectedVoice = existing.selectedVoice
         playbackGap = existing.playbackGap
         loopEnabled = existing.loopEnabled
+        // Load saved gender selection.
+        selectedGender = savedGender
     }
 
     private func saveSettings() {
@@ -481,6 +497,8 @@ struct SettingsView: View {
 
         let utterance = AVSpeechUtterance(string: "Olá, como vai você? Eu estou aprendendo português.")
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate
+        // Lower pitch for male voice, slightly higher for female.
+        utterance.pitchMultiplier = selectedGender == "Male" ? 0.5 : 1.15
 
         if let voice = AVSpeechSynthesisVoice(identifier: selectedVoice) {
             utterance.voice = voice

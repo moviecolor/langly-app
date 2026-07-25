@@ -5,10 +5,8 @@ struct ContentView: View {
     @StateObject private var iapManager = IAPManager()
     @StateObject private var translatorManager = TranslatorManager()
     @State private var showLaunch = true
-    @State private var showOnboarding = false
     @State private var sessionHolder = TranslationSessionHolder()
     @Environment(\.modelContext) private var modelContext
-    @Query private var settings: [AppSettings]
 
     var body: some View {
         ZStack {
@@ -17,9 +15,6 @@ struct ContentView: View {
         .ignoresSafeArea()
         .fullScreenCover(isPresented: $showLaunch) {
             LaunchScreen()
-        }
-        .fullScreenCover(isPresented: $showOnboarding) {
-            OnboardingView()
         }
         .environmentObject(iapManager)
         .environmentObject(translatorManager)
@@ -42,10 +37,6 @@ struct ContentView: View {
             let granted = await NotificationManager.shared.requestPermission()
             if granted {
                 NotificationManager.shared.scheduleDailyReminder(hour: 19, minute: 0)
-            }
-            // Show onboarding on first launch.
-            if let settings = settings.first, !settings.hasCompletedOnboarding {
-                showOnboarding = true
             }
         }
     }
