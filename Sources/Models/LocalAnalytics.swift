@@ -35,8 +35,8 @@ final class LocalAnalytics {
     var audioModeOpens: Int
     var settingsOpens: Int
 
-    // MARK: - Session Heatmap (hourly usage, 0-23)
-    var hourlyUsage: [Int]
+    // MARK: - Session Heatmap (hourly usage, 0-23, stored as JSON)
+    var hourlyUsageJSON: String
 
     // MARK: - Word Difficulty Tracking
     var wordErrorCountsJSON: String
@@ -65,7 +65,7 @@ final class LocalAnalytics {
         self.matchMadnessOpens = 0
         self.audioModeOpens = 0
         self.settingsOpens = 0
-        self.hourlyUsage = Array(repeating: 0, count: 24)
+        self.hourlyUsageJSON = "[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
         self.wordErrorCountsJSON = "{}"
         self.onboardingCompleted = false
         self.lastFeatureUsed = nil
@@ -124,9 +124,11 @@ final class LocalAnalytics {
 
         // Update hourly heatmap.
         let hour = Calendar.current.component(.hour, from: .now)
-        if hour < hourlyUsage.count {
-            hourlyUsage[hour] += 1
+        var usage = decodeHourlyUsage()
+        if hour < usage.count {
+            usage[hour] += 1
         }
+        hourlyUsageJSON = encodeHourlyUsage(usage)
     }
 
     /// Record a word error (wrong match in game).
@@ -175,7 +177,8 @@ final class LocalAnalytics {
 
     /// Peak usage hour.
     var peakHour: Int? {
-        hourlyUsage.enumerated()
+        let usage = decodeHourlyUsage()
+        return usage.enumerated()
             .max(by: { $0.element < $1.element })?
             .offset
     }
@@ -190,6 +193,22 @@ final class LocalAnalytics {
     }
 
     // MARK: - JSON Encoding/Decoding
+
+    private func decodeHourlyUsage() -> [Int] {
+        guard let data = hourlyUsageJSON.data(using: .utf8),
+              let decoded = try? JSONSerialization.jsonObject(with: data) as? [Int] else {
+            return Array(repeating: 0, count: 24)
+        }
+        return decoded
+    }
+
+    private func encodeHourlyUsage(_ usage: [Int]) -> String {
+        guard let data = try? JSONSerialization.data(withJSONObject: usage),
+              let json = String(data: data, encoding: .utf8) else {
+            return "[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]"
+        }
+        return json
+    }
 
     private func decodeWordErrors() -> [String: Int] {
         guard let data = wordErrorCountsJSON.data(using: .utf8),

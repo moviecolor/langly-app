@@ -27,6 +27,7 @@ struct Langly: App {
                      LocalAnalytics.self
             )
         } catch {
+            print("[App.swift] ModelContainer error: \(error)")
             fatalError("Failed to create ModelContainer: \(error)")
         }
     }

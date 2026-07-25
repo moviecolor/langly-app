@@ -185,8 +185,9 @@ struct StatsView: View {
             // 24-hour heatmap grid.
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 12), spacing: 2) {
                 ForEach(0..<24, id: \.self) { hour in
-                    let count = hour < stats.hourlyUsage.count ? stats.hourlyUsage[hour] : 0
-                    let maxCount = stats.hourlyUsage.max() ?? 1
+                    let usage = decodeHourlyUsage(stats)
+                    let count = hour < usage.count ? usage[hour] : 0
+                    let maxCount = usage.max() ?? 1
                     let intensity = maxCount > 0 ? Double(count) / Double(maxCount) : 0
 
                     RoundedRectangle(cornerRadius: 3)
@@ -277,6 +278,14 @@ struct StatsView: View {
     private func masteryRate(_ stats: LocalAnalytics) -> Int {
         guard stats.totalWordsAdded > 0 else { return 0 }
         return Int((Double(stats.totalWordsMastered) / Double(stats.totalWordsAdded)) * 100)
+    }
+
+    private func decodeHourlyUsage(_ stats: LocalAnalytics) -> [Int] {
+        guard let data = stats.hourlyUsageJSON.data(using: .utf8),
+              let decoded = try? JSONSerialization.jsonObject(with: data) as? [Int] else {
+            return Array(repeating: 0, count: 24)
+        }
+        return decoded
     }
 
     // MARK: - Privacy Notice
