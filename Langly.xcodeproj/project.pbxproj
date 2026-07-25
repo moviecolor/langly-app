@@ -15,6 +15,7 @@
 		1A93A9C2B675277C5A884B8C /* IAPManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3E56240FD5A33729E4C17F9 /* IAPManager.swift */; };
 		1CF07B5ECFE71124EE8DCF4C /* FeatureCardButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42F6D07CE371BEE99CB0786 /* FeatureCardButton.swift */; };
 		1F8791AA2EC77D3D03DEC157 /* MatchMadnessViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A91F6E30BEBECFAEFCFBCA /* MatchMadnessViewModel.swift */; };
+		227A07180A2027B9C60F258B /* VocabularyContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8D7BC94ACBFB984D618B329 /* VocabularyContent.swift */; };
 		259C3EDB577BD285663DDCCD /* ModuleRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1141101092FA92F9F5D8D79 /* ModuleRouter.swift */; };
 		306C515B3A49826D7A76C4B8 /* CommonSentencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1629131DAAF52FDCA5649F94 /* CommonSentencesView.swift */; };
 		32247323453C5C72FFEC87F3 /* VocabularyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CEC76CDB0527B02C2510C55 /* VocabularyView.swift */; };
@@ -107,6 +108,7 @@
 		EB5B801530FB9715BDFD7752 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
 		F1E2CD1C0E98C840694C9886 /* MainMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenuView.swift; sourceTree = "<group>"; };
 		F673967E0381D2D5DD089D6E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F8D7BC94ACBFB984D618B329 /* VocabularyContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyContent.swift; sourceTree = "<group>"; };
 		FCC92D41F050E21B2FE0017E /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -193,6 +195,7 @@
 				24E16A297AA296ADA189EB42 /* TranslationAPIService.swift */,
 				649378190B21F63A02E402E5 /* TranslationSessionProvider.swift */,
 				A7F362E7C3958361F6026F33 /* TranslatorManager.swift */,
+				F8D7BC94ACBFB984D618B329 /* VocabularyContent.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -423,6 +426,7 @@
 				CFB19FD3D51375C159C66C4B /* TranslationAPIService.swift in Sources */,
 				926417D4AB08DBC968A47921 /* TranslationSessionProvider.swift in Sources */,
 				F0C7D3AA9A4E8175A22BEA00 /* TranslatorManager.swift in Sources */,
+				227A07180A2027B9C60F258B /* VocabularyContent.swift in Sources */,
 				D5D08CAB17610143441D811D /* VocabularyLoading.swift in Sources */,
 				32247323453C5C72FFEC87F3 /* VocabularyView.swift in Sources */,
 				025152A79A2EC9FC0CD1F977 /* VocabularyWord.swift in Sources */,
