@@ -41,25 +41,10 @@ struct MatchMadnessGameView: View {
                     .background(Color(hex: 0x00D4AA).opacity(0.3))
                     .padding(.vertical, 8)
 
-                // Game board: two columns of word buttons (scrollable).
-                ScrollView(.vertical, showsIndicators: false) {
-                    gameBoard
+                // Game board: two columns of word buttons.
+                gameBoard
 
-                    // Scroll indicator.
-                    if viewModel.leftColumn.count > 4 {
-                        HStack {
-                            Spacer()
-                            Image(systemName: "chevron.down")
-                                .font(.caption)
-                                .foregroundColor(.secondary.opacity(0.5))
-                            Text("Scroll for more")
-                                .font(.caption2)
-                                .foregroundColor(.secondary.opacity(0.5))
-                            Spacer()
-                        }
-                        .padding(.top, 8)
-                    }
-                }
+                Spacer()
 
                 // Bottom controls: Jumble toggle + Start/Stop/Restart.
                 bottomControls
@@ -224,33 +209,45 @@ struct MatchMadnessGameView: View {
     // MARK: - Bottom Controls
 
     private var bottomControls: some View {
-        VStack(spacing: 16) {
-            // Block toggles section — shows all blocks with ON/OFF switches.
+        VStack(spacing: 10) {
+            // Block toggles section — 2-column grid, compact.
             if wordBlocks.count > 1 {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("Word Blocks")
-                        .font(.subheadline.bold())
+                        .font(.caption.bold())
                         .foregroundColor(.secondary)
 
-                    ForEach(wordBlocks.filter { $0.isActive }) { block in
-                        HStack {
-                            Image(systemName: viewModel.activeBlockNames.contains(block.blockName)
-                                  ? "checkmark.circle.fill" : "circle")
-                                .foregroundColor(viewModel.activeBlockNames.contains(block.blockName)
-                                                 ? Color(hex: 0x00D4AA) : .secondary)
+                    let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 2)
+                    LazyVGrid(columns: columns, spacing: 6) {
+                        ForEach(wordBlocks.filter { $0.isActive }) { block in
+                            Button {
+                                viewModel.toggleBlock(block.blockName, blocks: wordBlocks)
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: viewModel.activeBlockNames.contains(block.blockName)
+                                          ? "checkmark.circle.fill" : "circle")
+                                        .font(.caption2)
+                                        .foregroundColor(viewModel.activeBlockNames.contains(block.blockName)
+                                                         ? Color(hex: 0x00D4AA) : .secondary)
 
-                            Text(block.blockName)
-                                .font(.subheadline)
+                                    Text(block.blockName)
+                                        .font(.caption)
+                                        .lineLimit(1)
 
-                            Spacer()
+                                    Spacer(minLength: 2)
 
-                            Text("\(block.vocabularyWords.count) words")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            viewModel.toggleBlock(block.blockName, blocks: wordBlocks)
+                                    Text("\(block.vocabularyWords.count)")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 6)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .fill(Color.appSurface.opacity(0.6))
+                                )
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
@@ -259,8 +256,8 @@ struct MatchMadnessGameView: View {
 
             // Jumble toggle.
             HStack {
-                Text("Jumble Columns")
-                    .font(.subheadline)
+                Text("Jumble")
+                    .font(.caption)
                     .foregroundColor(.secondary)
 
                 Spacer()
@@ -275,7 +272,7 @@ struct MatchMadnessGameView: View {
             .padding(.horizontal, 4)
 
             // Game control buttons.
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 switch viewModel.gameState {
                 case .idle:
                     gameActionButton(label: "Back", icon: "chevron.left",
