@@ -39,6 +39,8 @@ enum AppTab: Int, CaseIterable {
 struct MainMenuView: View {
     @EnvironmentObject var iapManager: IAPManager
     @State private var showSettings = false
+    @State private var showAchievements = false
+    @State private var showStats = false
 
     var body: some View {
         NavigationStack {
@@ -68,6 +70,22 @@ struct MainMenuView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    HStack(spacing: 16) {
+                        Button {
+                            showAchievements = true
+                        } label: {
+                            Image(systemName: "trophy.fill")
+                                .foregroundColor(.secondary)
+                        }
+                        Button {
+                            showStats = true
+                        } label: {
+                            Image(systemName: "chart.bar.fill")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showSettings = true
@@ -79,6 +97,16 @@ struct MainMenuView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
+            }
+            .sheet(isPresented: $showAchievements) {
+                NavigationStack {
+                    AchievementsView()
+                }
+            }
+            .sheet(isPresented: $showStats) {
+                NavigationStack {
+                    StatsView()
+                }
             }
         }
     }

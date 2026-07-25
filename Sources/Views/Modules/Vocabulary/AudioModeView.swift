@@ -8,6 +8,8 @@ struct AudioModeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var wordBlocks: [WordBlock]
     @Query private var settings: [AppSettings]
+    @Query private var trackers: [StreakTracker]
+    @Query private var analytics: [LocalAnalytics]
 
     init() {}
 
@@ -61,6 +63,21 @@ struct AudioModeView: View {
             // Load the user's selected voice from settings.
             if let savedVoice = settings.first?.selectedVoice {
                 viewModel.selectedVoiceIdentifier = savedVoice
+            }
+        }
+        .onChange(of: viewModel.playbackState) { _, newState in
+            // Track audio session when user stops playback.
+            if newState == .stopped {
+                if let tracker = trackers.first {
+                    tracker.totalAudioSessions += 1
+                    tracker.recordPractice()
+                    try? modelContext.save()
+                }
+                // Track analytics.
+                if let stats = analytics.first {
+                    stats.trackAudioSession()
+                    try? modelContext.save()
+                }
             }
         }
     }

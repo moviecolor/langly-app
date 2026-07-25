@@ -8,6 +8,8 @@ struct MatchMadnessGameView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query private var wordBlocks: [WordBlock]
+    @Query private var trackers: [StreakTracker]
+    @Query private var analytics: [LocalAnalytics]
     let mixAllBlocks: Bool
 
     init(mixAllBlocks: Bool = false) {
@@ -62,6 +64,19 @@ struct MatchMadnessGameView: View {
         .onChange(of: viewModel.gameState) { _, newState in
             if newState == .complete {
                 showCompleteOverlay = true
+                // Track streak progress.
+                if let tracker = trackers.first {
+                    tracker.totalGamesPlayed += 1
+                    tracker.totalWordsReviewed += viewModel.totalMatches
+                    tracker.recordPractice()
+                    try? modelContext.save()
+                }
+                // Track analytics.
+                if let stats = analytics.first {
+                    stats.trackGameCompleted(matches: viewModel.totalMatches, score: viewModel.score)
+                    stats.trackWordsReviewed(count: viewModel.totalMatches)
+                    try? modelContext.save()
+                }
             }
         }
         .overlay {

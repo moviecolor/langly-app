@@ -22,7 +22,9 @@ struct Langly: App {
                      Sentence.self,
                      QASession.self,
                      ModuleProgress.self,
-                     WordBlock.self
+                     WordBlock.self,
+                     StreakTracker.self,
+                     LocalAnalytics.self
             )
         } catch {
             fatalError("Failed to create ModelContainer: \(error)")

@@ -5,8 +5,10 @@ struct ContentView: View {
     @StateObject private var iapManager = IAPManager()
     @StateObject private var translatorManager = TranslatorManager()
     @State private var showLaunch = true
+    @State private var showOnboarding = false
     @State private var sessionHolder = TranslationSessionHolder()
     @Environment(\.modelContext) private var modelContext
+    @Query private var settings: [AppSettings]
 
     var body: some View {
         ZStack {
@@ -15,6 +17,9 @@ struct ContentView: View {
         .ignoresSafeArea()
         .fullScreenCover(isPresented: $showLaunch) {
             LaunchScreen()
+        }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingView()
         }
         .environmentObject(iapManager)
         .environmentObject(translatorManager)
@@ -31,6 +36,12 @@ struct ContentView: View {
         .task {
             await iapManager.restorePurchases()
             seedStarterVocabulary()
+            seedStreakTracker()
+            seedAnalytics()
+            // Show onboarding on first launch.
+            if let settings = settings.first, !settings.hasCompletedOnboarding {
+                showOnboarding = true
+            }
         }
     }
 
@@ -57,6 +68,24 @@ struct ContentView: View {
             }
         }
 
+        try? modelContext.save()
+    }
+
+    /// Seeds a StreakTracker if none exists.
+    private func seedStreakTracker() {
+        let descriptor = FetchDescriptor<StreakTracker>()
+        guard let count = try? modelContext.fetchCount(descriptor), count == 0 else { return }
+        let tracker = StreakTracker()
+        modelContext.insert(tracker)
+        try? modelContext.save()
+    }
+
+    /// Seeds LocalAnalytics if none exists.
+    private func seedAnalytics() {
+        let descriptor = FetchDescriptor<LocalAnalytics>()
+        guard let count = try? modelContext.fetchCount(descriptor), count == 0 else { return }
+        let analytics = LocalAnalytics()
+        modelContext.insert(analytics)
         try? modelContext.save()
     }
 }

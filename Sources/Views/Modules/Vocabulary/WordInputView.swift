@@ -11,6 +11,8 @@ struct WordInputView: View {
     @EnvironmentObject private var translator: TranslatorManager
     @Query private var wordBlocks: [WordBlock]
     @Query private var vocabularyWords: [VocabularyWord]
+    @Query private var trackers: [StreakTracker]
+    @Query private var analytics: [LocalAnalytics]
 
     /// Optional block ID to pre-select when opened from a block card.
     let preselectedBlockID: UUID?
@@ -565,6 +567,20 @@ struct WordInputView: View {
             print("[WordInputView] Failed to save word: \(error)")
             showSaveError = true
             return
+        }
+
+        // Track streak progress.
+        if let tracker = trackers.first {
+            tracker.totalWordsReviewed += 1
+            tracker.recordPractice()
+            try? modelContext.save()
+        }
+
+        // Track analytics.
+        if let stats = analytics.first {
+            stats.trackWordAdded()
+            stats.trackWordsReviewed(count: 1)
+            try? modelContext.save()
         }
 
         // Haptic feedback for successful save.

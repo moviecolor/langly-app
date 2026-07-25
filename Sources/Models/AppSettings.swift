@@ -10,6 +10,7 @@ final class AppSettings {
     var playbackGap: Double
     var loopEnabled: Bool
     var totalWordsLearned: Int
+    var hasCompletedOnboarding: Bool
 
     init(
         homeLanguage: String = "English",
@@ -17,7 +18,8 @@ final class AppSettings {
         selectedVoice: String = "",
         playbackGap: Double = 1.75,
         loopEnabled: Bool = true,
-        totalWordsLearned: Int = 0
+        totalWordsLearned: Int = 0,
+        hasCompletedOnboarding: Bool = false
     ) {
         self.homeLanguage = homeLanguage
         self.targetLanguage = targetLanguage
@@ -25,5 +27,6 @@ final class AppSettings {
         self.playbackGap = playbackGap
         self.loopEnabled = loopEnabled
         self.totalWordsLearned = totalWordsLearned
+        self.hasCompletedOnboarding = hasCompletedOnboarding
     }
 }
