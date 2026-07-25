@@ -85,6 +85,8 @@ struct MainMenuView: View {
 
     // MARK: - Module Card
 
+    @State private var pressedCard: AppTab?
+
     private func moduleCard(_ tab: AppTab) -> some View {
         let isUnlocked: Bool
         switch tab {
@@ -99,10 +101,16 @@ struct MainMenuView: View {
                 .navigationBarBackButtonHidden(false)
         } label: {
             HStack(spacing: 16) {
-                // Icon circle.
+                // Icon — gradient circle.
                 ZStack {
                     Circle()
-                        .fill(tab.accentColor.opacity(0.15))
+                        .fill(
+                            LinearGradient(
+                                colors: [tab.accentColor.opacity(0.2), tab.accentColor.opacity(0.08)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                         .frame(width: 52, height: 52)
 
                     Image(systemName: tab.icon)
@@ -145,18 +153,36 @@ struct MainMenuView: View {
             }
             .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 16)
                     .fill(Color.appSurface)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14)
+                        RoundedRectangle(cornerRadius: 16)
                             .stroke(
-                                isUnlocked ? tab.accentColor.opacity(0.3) : Color.gray.opacity(0.15),
+                                isUnlocked
+                                    ? LinearGradient(
+                                        colors: [tab.accentColor.opacity(0.4), tab.accentColor.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                      )
+                                    : LinearGradient(
+                                        colors: [Color.gray.opacity(0.2), Color.gray.opacity(0.05)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                      ),
                                 lineWidth: 1.5
                             )
                     )
+                    .shadow(color: isUnlocked ? tab.accentColor.opacity(0.1) : .clear, radius: 8, x: 0, y: 4)
             )
+            .scaleEffect(pressedCard == tab ? 0.97 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: pressedCard)
         }
         .buttonStyle(.plain)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in pressedCard = tab }
+                .onEnded { _ in pressedCard = nil }
+        )
     }
 
     // MARK: - Module Destination
