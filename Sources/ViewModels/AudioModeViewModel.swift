@@ -15,6 +15,7 @@ struct AudioWord: Identifiable, Equatable {
     let id = UUID()
     let nativeWord: String
     let translatedWord: String
+    let phoneticText: String
     let blockIndex: Int
     let blockName: String
 }
@@ -41,6 +42,9 @@ final class AudioModeViewModel: NSObject, ObservableObject {
     private var playbackQueue: [AudioWord] = []
     private var queueIndex: Int = 0
     private var wasManuallyStopped: Bool = false
+
+    /// Phonetic lookup: "translatedWord" → "phonetic pronunciation"
+    private var phoneticLookup: [String: String] = [:]
 
     /// How many times the current word pair has been spoken in this round.
     private var currentWordRepetition: Int = 0
@@ -83,6 +87,13 @@ final class AudioModeViewModel: NSObject, ObservableObject {
 
     func loadBlocks(_ blocks: [WordBlock]) {
         allBlocks = blocks
+        // Build phonetic lookup from static content.
+        phoneticLookup = [:]
+        for block in VocabularyContent.starterBlocks {
+            for pair in block.words {
+                phoneticLookup[pair.translated] = pair.phonetic
+            }
+        }
     }
 
     func toggleBlockSelection(_ blockID: UUID) {
@@ -167,6 +178,7 @@ final class AudioModeViewModel: NSObject, ObservableObject {
                 queue.append(AudioWord(
                     nativeWord: word.nativeWord,
                     translatedWord: word.translatedWord,
+                    phoneticText: phoneticLookup[word.translatedWord] ?? "",
                     blockIndex: word.wordBlockIndex,
                     blockName: block.blockName
                 ))

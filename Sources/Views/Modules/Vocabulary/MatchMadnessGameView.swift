@@ -51,7 +51,7 @@ struct MatchMadnessGameView: View {
             }
             .padding()
         }
-        .navigationTitle("Match Madness")
+          .navigationTitle("Mix N Match")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             if mixAllBlocks {

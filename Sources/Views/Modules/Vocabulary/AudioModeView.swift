@@ -11,6 +11,7 @@ struct AudioModeView: View {
     @Query private var trackers: [StreakTracker]
     @Query private var analytics: [LocalAnalytics]
     @AppStorage("selectedVoiceGender") private var savedGender: String = ""
+    @AppStorage("showPhonetics") private var showPhonetics: Bool = true
 
     init() {}
 
@@ -47,6 +48,12 @@ struct AudioModeView: View {
 
                     // Settings: repetitions and gap.
                     settingsSection
+
+                    // Phonetic toggle (compact, single-line).
+                    phoneticToggle
+
+                    // Scroll hint.
+                    scrollHint
 
                     Divider()
                         .background(Color(hex: 0x00D4AA).opacity(0.3))
@@ -105,6 +112,14 @@ struct AudioModeView: View {
                     .font(.title)
                     .foregroundStyle(Color(hex: 0xFF6B35))
                     .id("translated-\(word.id)")
+
+                // Phonetic pronunciation guide.
+                if showPhonetics && !word.phoneticText.isEmpty {
+                    Text(word.phoneticText)
+                        .font(.subheadline)
+                        .foregroundStyle(Color(hex: 0x00D4AA).opacity(0.8))
+                        .id("phonetic-\(word.id)")
+                }
 
                 if !viewModel.currentUtteranceType.isEmpty {
                     Text(viewModel.currentUtteranceType.capitalized)
@@ -253,6 +268,44 @@ struct AudioModeView: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.appSurface.opacity(0.6))
         )
+    }
+
+    // MARK: - Phonetic Toggle (compact)
+
+    private var phoneticToggle: some View {
+        HStack {
+            Image(systemName: "text.magnifyingglass")
+                .font(.system(size: 14))
+                .foregroundStyle(Color(hex: 0x00D4AA))
+
+            Text("Show Phonetics")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            Spacer()
+
+            Toggle("", isOn: $showPhonetics)
+                .labelsHidden()
+                .tint(Color(hex: 0x00D4AA))
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color.appSurface.opacity(0.4))
+        )
+    }
+
+    // MARK: - Scroll Hint
+
+    private var scrollHint: some View {
+        HStack {
+            Spacer()
+            Image(systemName: "chevron.compact.down")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(Color(hex: 0x00D4AA).opacity(0.4))
+            Spacer()
+        }
     }
 
     // MARK: - Block Selection Section

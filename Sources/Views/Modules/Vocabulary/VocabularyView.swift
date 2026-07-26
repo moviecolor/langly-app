@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-/// Vocabulary module — 3 buttons: Add Word Block, Word Match Madness, Audio Mode.
+/// Vocabulary module — 3 buttons: Add Word Block, Mix N Match, Audio Mode.
 struct VocabularyView: View {
     @EnvironmentObject var iapManager: IAPManager
     @Environment(\.modelContext) private var modelContext
@@ -24,12 +24,12 @@ struct VocabularyView: View {
                     // Block summary.
                     blockSummary
 
-                    // Word Match Madness button.
+                    // Word Mix N Match button.
                     if vocabularyWords.count >= 2 {
                         FeatureCardButton(
                             icon: "gamecontroller.fill",
                             iconGradientColors: [Color(hex: 0xFF6B35), Color(hex: 0xFF8F5E)],
-                            title: "Word Match Madness",
+                             title: "Mix N Match",
                             subtitle: "Match English and Portuguese pairs before time runs out",
                             accentColors: [Color(hex: 0xFF6B35).opacity(0.4), Color(hex: 0x00D4AA).opacity(0.3)],
                             action: { selectedMode = .matchMadness }
@@ -368,7 +368,7 @@ struct VocabularyView: View {
 
 enum VocabularyMode: String, Identifiable {
     case wordBank = "Word Bank"
-    case matchMadness = "Match Madness"
+    case matchMadness = "Mix N Match"
     case audioMode = "Audio Mode"
 
     var id: String { rawValue }
