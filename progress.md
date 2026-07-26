@@ -1,18 +1,13 @@
-# LANGLY — Progress Tracker
+# Progress Log
 
-## Phase: UI Polish & Screen Fix
-
-| Task | Status |
-|------|--------|
-| Screen sizing (iPhone 4 issue) | ✅ Fixed |
-| LaunchScreen.storyboard | ✅ Created |
-| Info.plist keys | ✅ Added + locked in project.yml |
-| Vocabulary page reorder | ✅ Done |
-| Block card word display | ✅ Done |
-| Ghost block suggestion | ✅ Done |
-| Audio Mode verification | ⏳ Pending |
-| TD Bank PDF extraction | ⏳ Pending |
-
-## Git
-- Branch: `master`
-- Remote: `github` (main), `backup` (Thunder drive)
+## 2026-07-26
+- [x] Fixed iPad multitasking orientation validation (removed build setting override)
+- [x] Archived English version with all 4 orientations in Info.plist
+- [x] Uploaded English version to App Store Connect ✅
+- [x] Security/memory scan passed
+- [x] Git commit + push to github (995ae52)
+- [x] Updated SESSION_HANDOFF.md
+- [ ] Archive and upload PT-BR version
+- [ ] Create PT-BR App Store Connect listing
+- [ ] Fill in English App Store metadata
+- [ ] Submit for review
