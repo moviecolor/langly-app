@@ -9,17 +9,18 @@
 - [ ] Set subtitle: "Learn Languages Faster"
 - [ ] Set primary category: Education
 - [ ] Set secondary category: Reference
-- [ ] Set price: $6.99
+- [ ] Set price: Free (7-day trial) + Langly Premium $8.99/month
 - [ ] Add app description (see AppStoreMetadata.md)
 - [ ] Add keywords (see AppStoreMetadata.md)
 - [ ] Upload app icon (1024×1024 PNG, no alpha, no rounded corners)
 
 ### IAP Products (in App Store Connect)
-- [ ] Create "Common Sentences" IAP — $3.99, non-consumable
-- [ ] Create "Pronunciation" IAP — $3.99, non-consumable
-- [ ] Create "Q&A" IAP — $3.99, non-consumable
-- [ ] Create "All Modules Bundle" IAP — $9.95, non-consumable
-- [ ] Set product IDs to match code: `com.langly.app.commonsentences`, etc.
+- [x] Create "Langly Premium" subscription — $8.99/month, auto-renewable
+- [x] Set product ID: `com.langly.app.premium.monthly`
+- [x] Subscription group: "Langly Premium" (22293861)
+- [ ] Add review metadata (MISSING_METADATA → READY_TO_SUBMIT)
+- [ ] Capture paywall screenshots for ASC review
+- [ ] Set up StoreKit Configuration file for simulator testing
 
 ### Privacy & Legal
 - [ ] Host PRIVACY_POLICY.md at a public URL (e.g., GitHub Pages, your site)

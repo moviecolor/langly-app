@@ -1,4 +1,5 @@
 import SwiftUI
+import StoreKit
 
 /// App tab enumeration for the main menu.
 enum AppTab: Int, CaseIterable {
@@ -9,10 +10,10 @@ enum AppTab: Int, CaseIterable {
 
     var title: String {
         switch self {
-        case .vocabulary: return "Vocabulary"
-        case .commonSentences: return "Common Sentences"
-        case .pronunciation: return "Pronunciation"
-        case .qa: return "Q&A"
+        case .vocabulary: return "Vocabulário"
+        case .commonSentences: return "Frases Comuns"
+        case .pronunciation: return "Pronúncia"
+        case .qa: return "Perguntas e Respostas"
         }
     }
 
@@ -41,6 +42,7 @@ struct MainMenuView: View {
     @State private var showSettings = false
     @State private var showAchievements = false
     @State private var showStats = false
+    @State private var showPaywall = false
 
     var body: some View {
         NavigationStack {
@@ -55,7 +57,7 @@ struct MainMenuView: View {
                             .foregroundColor(.primary)
                             .padding(.top, 20)
 
-                        Text("Choose a module to start learning")
+                        Text("Escolha um módulo para começar a aprender")
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                             .padding(.bottom, 8)
@@ -108,6 +110,10 @@ struct MainMenuView: View {
                     StatsView()
                 }
             }
+            .fullScreenCover(isPresented: $showPaywall) {
+                PaywallView()
+                    .environmentObject(iapManager)
+            }
         }
     }
 
@@ -153,14 +159,14 @@ struct MainMenuView: View {
                         .foregroundColor(.primary)
 
                     if isUnlocked {
-                        Text("Tap to open")
+                        Text("Toque para abrir")
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                     } else {
                         HStack(spacing: 4) {
                             Image(systemName: "lock.fill")
                                 .font(.system(size: 10))
-                            Text("Coming soon — purchase to unlock")
+                            Text("Disponível com Langly Premium")
                                 .font(.system(size: 12))
                         }
                         .foregroundColor(.secondary)
@@ -221,11 +227,23 @@ struct MainMenuView: View {
         case .vocabulary:
             VocabularyView()
         case .commonSentences:
-            CommonSentencesView()
+            if iapManager.isCommonSentencesUnlocked {
+                CommonSentencesView()
+            } else {
+                lockedModuleView(tab)
+            }
         case .pronunciation:
-            PronunciationView()
+            if iapManager.isPronunciationUnlocked {
+                PronunciationView()
+            } else {
+                lockedModuleView(tab)
+            }
         case .qa:
-            QAView()
+            if iapManager.isQAUnlocked {
+                QAView()
+            } else {
+                lockedModuleView(tab)
+            }
         }
     }
 
@@ -241,11 +259,34 @@ struct MainMenuView: View {
                 .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.primary)
 
-            Text("This module is coming soon.\nPurchase to unlock when available.")
+            Text("Este módulo faz parte do Langly Premium.\nAssine para desbloquear todos os módulos.")
                 .font(.system(size: 14))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
+
+            Button {
+                showPaywall = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                    Text("Desbloquear com Langly Premium")
+                        .fontWeight(.semibold)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 14)
+                .background(
+                    LinearGradient(
+                        colors: [Color(hex: 0x00A34A), Color(hex: 0x008C3F)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(16)
+            }
+            .padding(.top, 8)
         }
+        .padding(.horizontal, 24)
         .navigationTitle(tab.title)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -254,4 +295,185 @@ struct MainMenuView: View {
 #Preview {
     MainMenuView()
         .environmentObject(IAPManager())
+}
+
+// MARK: - Paywall
+
+/// Full-screen paywall for the Langly Premium monthly subscription.
+struct PaywallView: View {
+    @EnvironmentObject var iapManager: IAPManager
+    @Environment(\.dismiss) private var dismiss
+
+    /// The Langly Premium subscription product, when loaded.
+    private var product: Product? {
+        iapManager.products.first { $0.id == IAPManager.premiumMonthlyID }
+    }
+
+    var body: some View {
+        ZStack {
+            // Brand gradient background.
+            LinearGradient(
+                colors: [
+                    Color(hex: 0x00A34A),
+                    Color(hex: 0x008C3F),
+                    Color(hex: 0x005224)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Close button.
+                    HStack {
+                        Spacer()
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 26))
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                    }
+
+                    Spacer().frame(height: 8)
+
+                    // Logo: gold diamond with the blue ball in front.
+                    ZStack {
+                        Rectangle()
+                            .fill(Color(hex: 0xFFDF00).opacity(0.15))
+                            .frame(width: 68, height: 68)
+                            .rotationEffect(.degrees(45))
+                        Rectangle()
+                            .stroke(Color(hex: 0xFFDF00), lineWidth: 2.5)
+                            .frame(width: 68, height: 68)
+                            .rotationEffect(.degrees(45))
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color(hex: 0x66B2FF), Color(hex: 0x0055CC)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 30, height: 30)
+                            .overlay(Circle().stroke(Color.white.opacity(0.7), lineWidth: 1.5))
+                            .offset(x: 16, y: 16)
+                    }
+                    .frame(height: 90)
+
+                    Text("Langly Premium")
+                        .font(.system(size: 34, weight: .bold))
+                        .foregroundColor(.white)
+
+                    Text("Seu trajeto é a sua sala de aula.")
+                        .font(.system(size: 16))
+                        .foregroundColor(.white.opacity(0.85))
+
+                    // Benefits card.
+                    VStack(alignment: .leading, spacing: 14) {
+                        benefitRow(icon: "infinity", text: "Gameplay ilimitado — sem vidas, sem limites")
+                        benefitRow(icon: "waveform", text: "Listas personalizadas com áudio em loop")
+                        benefitRow(icon: "wifi.slash", text: "Funciona 100% offline")
+                        benefitRow(icon: "nosign", text: "Sem anúncios")
+                    }
+                    .padding(20)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(0.12))
+                    )
+
+                    Spacer().frame(height: 8)
+
+                    // Subscribe button.
+                    if let product {
+                        Button {
+                            Task {
+                                await iapManager.purchase(IAPManager.premiumMonthlyID)
+                                if iapManager.isPremiumActive {
+                                    dismiss()
+                                }
+                            }
+                        } label: {
+                            HStack {
+                                if iapManager.isPurchasing {
+                                    ProgressView()
+                                        .tint(Color(hex: 0x005224))
+                                } else {
+                                    Text("Assinar por \(product.displayPrice)/mês")
+                                        .font(.system(size: 18, weight: .bold))
+                                }
+                            }
+                            .foregroundColor(Color(hex: 0x005224))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color(hex: 0xFFE25C), Color(hex: 0xFFD200)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .cornerRadius(18)
+                        }
+                        .disabled(iapManager.isPurchasing)
+                    } else {
+                        ProgressView()
+                            .tint(.white)
+                            .padding(.vertical, 16)
+                    }
+
+                    // Restore.
+                    Button {
+                        Task { await iapManager.restorePurchases() }
+                    } label: {
+                        Text("Restaurar Compra")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+                    .padding(.top, 4)
+
+                    // Terms.
+                    VStack(spacing: 6) {
+                        Text("A assinatura é renovada automaticamente até ser cancelada. O pagamento é cobrado na sua conta Apple ID na confirmação da compra.")
+                            .font(.system(size: 11))
+                            .multilineTextAlignment(.center)
+                        HStack(spacing: 12) {
+                            Link(
+                                "Termos de Uso",
+                                destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
+                            )
+                            Link(
+                                "Privacidade",
+                                destination: URL(string: "https://moviecolor.github.io/langly-app/")!
+                            )
+                        }
+                        .font(.system(size: 11))
+                    }
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.top, 8)
+                }
+                .padding(24)
+            }
+        }
+        .onAppear {
+            if iapManager.products.isEmpty {
+                Task { await iapManager.loadProducts() }
+            }
+        }
+    }
+
+    private func benefitRow(icon: String, text: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(Color(hex: 0xFFE25C))
+                .frame(width: 28)
+            Text(text)
+                .font(.system(size: 15))
+                .foregroundColor(.white)
+        }
+    }
 }

@@ -11,7 +11,10 @@ Learn Languages Faster
 - **Secondary:** Reference
 
 ## Price
-$6.99 (one-time purchase)
+Free to download — **7-day free trial**, then **Langly Premium** subscription
+- USA: **$8.99 / month**
+- Brazil: **R$ 26,90 / month**
+- All features included — no partial access, no locked modules
 
 ---
 
@@ -22,16 +25,16 @@ $6.99 (one-time purchase)
 Langly is your personal language learning assistant that adapts to your pace and style. Whether you're a complete beginner or brushing up on skills, Langly makes language learning engaging, effective, and fun.
 
 **VOCABULARY BUILDER**
-• Learn new words with AI-generated lessons
-• Smart spaced repetition system that remembers what you know
+• Play the Match Madness word game — match pairs before time runs out
+• Audio Mode — listen on repeat to memorize, set reps and gap
 • Track your progress with detailed scorecards
-• Multiple learning modes: flashcards, quizzes, and audio practice
+• Add up to 10 blocks of 15 words each
 
 **AUDIO PRACTICE**
-• Listen to native pronunciation with text-to-speech
-• Practice listening comprehension with real sentences
-• Adjust speech rate to match your level
-• Full audio playback controls for hands-free learning
+• Listen on repeat to memorize — set repetitions and gap
+• Native pronunciation with text-to-speech
+• Hands-free learning loop: English → target language → repeat
+• The real learning tool — practice makes permanent
 
 **GAMIFIED LEARNING**
 • Earn points and track your streak
@@ -50,10 +53,13 @@ Langly is your personal language learning assistant that adapts to your pace and
 • No data collection, no tracking
 • Your progress stays private
 
-**COMING SOON**
+**LANGLY PREMIUM**
+• Audio Mode — repetition-based practice loops for vocabulary
 • Common Sentences — everyday phrases and expressions
 • Pronunciation — real-time speaking feedback
 • Q&A — interactive conversations
+• 7-day free trial, then $8.99/month
+• No ads, works fully offline
 
 Download Langly today and start your language learning journey.
 
@@ -96,17 +102,15 @@ The developer does not collect any data from this app.
 - Age Rating: 4+
 
 ### Pricing and Availability
-- Price: $6.99
+- Model: Free with subscription (Langly Premium)
+- USA: $8.99 / month; Brazil: R$ 26,90 / month
 - Available in all territories
 
 ### In-App Purchases (set up in App Store Connect)
 
 | Product ID | Type | Price | Description |
 |-----------|------|-------|-------------|
-| com.langly.app.commonsentences | Non-Consumable | $3.99 | Common Sentences Module |
-| com.langly.app.pronunciation | Non-Consumable | $3.99 | Pronunciation Module |
-| com.langly.app.qa | Non-Consumable | $3.99 | Q&A Module |
-| com.langly.app.allmodules | Non-Consumable | $9.95 | All Modules Bundle |
+| com.langly.app.premium.monthly | Auto-Renewable Subscription | USA $8.99 / BRA R$ 26,90 | Langly Premium — unlocks all modules |
 
 ### Build
 - Upload latest build via Xcode or `xcodebuild archive`

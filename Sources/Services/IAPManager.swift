@@ -2,13 +2,15 @@ import Foundation
 import StoreKit
 import SwiftUI
 
-/// Manages StoreKit 2 in-app purchases and cross-promotion for Langly modules.
+/// Manages StoreKit 2 in-app purchases for Langly.
 ///
 /// Product IDs:
-/// - `com.langly.app.commonSentences` — Module 2 ($3.99)
-/// - `com.langly.app.pronunciation` — Module 3 ($3.99)
-/// - `com.langly.app.qa` — Module 4 ($3.99)
-/// - `com.langly.app.fullSuite` — Bundle ($9.95)
+/// - `com.langly.app.premium.monthly` — Langly Premium monthly auto-renewable
+///   subscription (USA $8.99 / BRA R$ 26,90). Unlocks Modules 2–4.
+///
+/// Entitlements are derived from `Transaction.currentEntitlements`, so the
+/// subscription restores automatically on any device signed in with the same
+/// Apple ID.
 @MainActor
 final class IAPManager: ObservableObject {
     // MARK: - Published State
@@ -16,8 +18,8 @@ final class IAPManager: ObservableObject {
     /// All available products fetched from the App Store.
     @Published var products: [Product] = []
 
-    /// Set of product identifiers the user has purchased.
-    @Published var purchasedProducts: Set<String> = []
+    /// Whether the auto-renewable Langly Premium subscription is currently active.
+    @Published var isPremiumActive: Bool = false
 
     /// Whether a purchase transaction is currently in progress.
     @Published var isPurchasing: Bool = false
@@ -27,13 +29,11 @@ final class IAPManager: ObservableObject {
 
     // MARK: - Product Identifiers
 
-    nonisolated static let module2ID = "com.langly.app.commonSentences"
-    nonisolated static let module3ID = "com.langly.app.pronunciation"
-    nonisolated static let module4ID = "com.langly.app.qa"
-    nonisolated static let fullSuiteID = "com.langly.app.fullSuite"
+    /// Langly Premium — monthly auto-renewable subscription.
+    nonisolated static let premiumMonthlyID = "com.langly.app.premium.monthly"
 
     nonisolated static let allProductIDs: Set<String> = [
-        module2ID, module3ID, module4ID, fullSuiteID
+        premiumMonthlyID
     ]
 
     // MARK: - Properties
@@ -45,7 +45,10 @@ final class IAPManager: ObservableObject {
 
     init() {
         transactionListener = listenForTransactions()
-        Task { await loadProducts() }
+        Task {
+            await loadProducts()
+            await refreshEntitlements()
+        }
     }
 
     deinit {
@@ -65,7 +68,7 @@ final class IAPManager: ObservableObject {
 
     // MARK: - Purchasing
 
-    /// Purchases a product by its identifier.
+    /// Purchases a product by its identifier (auto-renewable subscription or one-time).
     func purchase(_ productID: String) async {
         guard let product = products.first(where: { $0.id == productID }) else {
             print("[IAPManager] Product not found: \(productID)")
@@ -80,9 +83,10 @@ final class IAPManager: ObservableObject {
             switch result {
             case .success(let verification):
                 let transaction = try checkVerified(verification)
-                purchasedProducts.insert(productID)
                 await transaction.finish()
                 print("[IAPManager] Purchased: \(productID)")
+                // Re-derive entitlements so the UI unlocks immediately.
+                await refreshEntitlements()
 
             case .userCancelled:
                 break
@@ -98,36 +102,48 @@ final class IAPManager: ObservableObject {
         }
     }
 
-    /// Restores previous purchases by scanning the transaction history.
+    /// Restores previous purchases by scanning the current entitlements.
+    /// Auto-renewable subscriptions restore automatically on the same Apple ID.
     func restorePurchases() async {
+        await refreshEntitlements()
+    }
+
+    // MARK: - Entitlements
+
+    /// Recomputes `isPremiumActive` from `Transaction.currentEntitlements`.
+    func refreshEntitlements() async {
+        var active = false
         for await result in Transaction.currentEntitlements {
-            if case .verified(let transaction) = result {
-                purchasedProducts.insert(transaction.productID)
+            guard case .verified(let transaction) = result else { continue }
+            if transaction.productID == Self.premiumMonthlyID {
+                active = true
             }
         }
+        isPremiumActive = active
+        print("[IAPManager] isPremiumActive = \(active)")
     }
 
     // MARK: - Accessors
 
-    /// Returns whether a specific module is unlocked.
+    /// Returns whether a gated module is unlocked.
+    /// All premium modules share the single Langly Premium entitlement.
     func isModuleUnlocked(_ productID: String) -> Bool {
-        purchasedProducts.contains(productID)
-            || purchasedProducts.contains(Self.fullSuiteID)
+        isPremiumActive
     }
 
     /// Returns whether Module 2 (Common Sentences) is unlocked.
     var isCommonSentencesUnlocked: Bool {
-        isModuleUnlocked(Self.module2ID)
+        isPremiumActive
     }
 
     /// Returns whether Module 3 (Pronunciation) is unlocked.
     var isPronunciationUnlocked: Bool {
-        isModuleUnlocked(Self.module3ID)
+        isPremiumActive
     }
 
     /// Returns whether Module 4 (Q&A) is unlocked.
     var isQAUnlocked: Bool {
-        isModuleUnlocked(Self.module4ID)
+        isPremiumActive
     }
 
     // MARK: - Cross-Promo Overlay
@@ -146,8 +162,7 @@ final class IAPManager: ObservableObject {
         Task.detached { [weak self] in
             for await result in Transaction.updates {
                 if case .verified(let transaction) = result {
-                    let productID = transaction.productID
-                    await self?.onTransactionVerified(productID)
+                    await self?.onTransactionVerified()
                     _ = await transaction.finish()
                 }
             }
@@ -156,8 +171,8 @@ final class IAPManager: ObservableObject {
 
     /// Handles a verified transaction on the MainActor.
     @MainActor
-    private func onTransactionVerified(_ productID: String) {
-        purchasedProducts.insert(productID)
+    private func onTransactionVerified() {
+        Task { await refreshEntitlements() }
     }
 
     // MARK: - Helpers

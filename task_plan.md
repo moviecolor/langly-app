@@ -16,21 +16,31 @@
 - [x] Phonetic pronunciation guide for English words
 - [x] Audio TTS language fix (isNativePortuguese flag)
 - [x] Code parity verified with English version
-- [ ] Archive and upload to App Store Connect
-- [ ] Create App Store Connect listing (com.langly.app.pt)
+- [x] Archive and upload to App Store Connect
+- [x] Create App Store Connect listing (com.langly.app.pt)
 
-## Phase 3: App Store Submission
-- [ ] Fill in English App Store listing metadata
-- [ ] Submit English for review
-- [ ] Fill in PT-BR App Store listing metadata
+## Phase 3: Subscription Monetization ✅
+- [x] ASC subscription group + pricing configured ($8.99/mo USA, R$ 26,90/mo BRA)
+- [x] IAPManager rewritten for auto-renewable subscription
+- [x] ModuleRouter updated (modules 2–4 → premium)
+- [x] PaywallView added to MainMenuView
+- [x] SettingsView "Como Usar" section
+- [x] Build passed strict concurrency
+- [x] All files restored from backup → live project
+
+## Phase 4: App Store Submission
+- [ ] StoreKit Configuration file for simulator testing
+- [ ] Capture paywall screenshots for ASC review
+- [ ] Complete ASC review metadata (MISSING_METADATA → READY_TO_SUBMIT)
+- [ ] Upload build 1.1 + submit English for review
+- [ ] Fix LanglyPT REJECTED 1.0
 - [ ] Submit PT-BR for review
 - [ ] Wait for Apple review (24-48 hours each)
 
-## Phase 4: Post-Launch
+## Phase 5: Post-Launch
 - [ ] Monitor reviews
 - [ ] Portuguese proofreader feedback
 - [ ] Add more vocabulary content
 - [ ] Common Sentences module
 - [ ] Pronunciation module
 - [ ] Q&A module
-- [ ] Subscription setup (after 3 months free)

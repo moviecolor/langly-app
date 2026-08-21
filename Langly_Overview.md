@@ -2,24 +2,31 @@
 
 ## 1. BUSINESS MODEL
 
-**One Paid App on App Store ($6.99 upfront) + In-App Purchases (IAP).**
-Upon purchase, the user gets **Module 1 (Vocabulary)** instantly. The other 3 modules are offered as In-App Purchases via a cross-promotion carousel that loads on first open.
+**Free to download with 7-day free trial. Subscription required to use the app.**
+All features unlock immediately upon subscription — no partial access, no tiered gating. The user subscribes, they get everything: Match Madness game, Audio Mode loops, Common Sentences, Pronunciation, and Q&A. Period.
 
 ### Pricing Strategy:
 | Product | Price | Notes |
 |-----|-----|------|
-| **Langly (App Download)** | **$6.99** | Unlocks Module 1 (Vocabulary) |
-| **Common Sentences** | **$3.99** | Module 2 IAP |
-| **Pronunciation** | **$3.99** | Module 3 IAP |
-| **Q&A** | **$3.99** | Module 4 IAP |
-| **Full Suite Bundle** | **$9.95** | Unlocks Modules 2, 3, + 4 instantly |
+| **Langly (App Download)** | **Free** | 7-day free trial, then subscription required |
+| **Langly Premium** | **$8.99/month** (USA) / **R$ 26,90/month** (Brazil) | Unlocks everything — all modules, all modes |
+| **Free Trial** | **7 days free** | Full access, no restrictions, then auto-renews |
 
-**Maximum Revenue Per User:** $16.94 | **Strategy Target:** ~$13–$14 (bundle adoption)
-- Instant gratification (user gets a working module immediately)
-- Apple officially supports cross-promotion (StoreKit 2)
-- No "freemium paywall sneaky" feel
-- Bundle naturally nudges users toward the full suite
-- Revenue potential stays strong
+**Revenue Model:** Free trial → auto-renewable subscription via StoreKit 2.
+- 7-day trial lets users experience the full app before committing
+- All features available from day one — no bait-and-switch
+- Single subscription = simple, honest, no confusion
+- Short trial = less revenue lost to forgetters/cancellers
+- Auto-renewal after trial = predictable recurring revenue
+
+**Special cases:** 3-month trial available for negotiated partnerships (not public-facing).
+
+**Revenue Model:** Recurring monthly subscription via StoreKit 2 auto-renewable.
+- Free entry removes download friction — users experience value first
+- Single subscription simplifies purchasing (no per-module decisions)
+- Auto-renewable = predictable recurring revenue
+- 3-month free trial builds habit before payment kicks in
+- Cross-market pricing: USA $8.99, Brazil R$ 26,90
 
 ## 2. TECH STACK
 
@@ -71,7 +78,7 @@ Upon purchase, the user gets **Module 1 (Vocabulary)** instantly. The other 3 mo
 | Mode | Behavior |
 |-----|-----|
 | **Match Madness (Game)** | 8 English words (left column) + 8 Portuguese words (right column), shuffled. Match by selection. Pairs remove themselves and are replaced by new random words until 1min 45s time runs out or all words are matched. Optional: Jumble Columns toggle (either language can appear in either column). |
-| **Audio Mode** | User selects one or more blocks → sets repetitions (1–9x per word) + gap (seconds between words) → presses Play. Words play in continuous loop until Stop. English word plays, then target-language word plays N times. |
+| **Audio Mode** | User selects one or more blocks → sets repetitions (1–9x per word) + gap (seconds between words) → presses Play. Words play in continuous loop until Stop. English word plays, then target-language word plays N times. The core practice tool — memorize through repetition. |
 
 **Data Entry:** Up to 10 blocks of 15 words each. User types native-language word → app auto-translates + saves.
 
@@ -217,9 +224,9 @@ D) Use `Image("name")` to load them
 
 | Decision | Status |
 |-----|-----|
-| **App Model** | One Paid App ($6.99) + Module 4 IAP |
-| **Pricing** | $6.99 |
-| **Pricing** | $6.99 (Base) + $3.99 each ($9.99 Bundle) |
+| **App Model** | Free app + Langly Premium subscription |
+| **Pricing** | Free (Module 1) + $8.99/month / R$ 26,90 (Modules 2–4) |
+| **Free Trial** | 7 days free, then auto-renew |
 | **Module 1** | Match Madness + Audio Mode (locked) |
 | **Module 2** | Common Sentences (locked) |
 | **Module 3** | Lock |

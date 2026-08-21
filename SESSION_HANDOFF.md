@@ -1,52 +1,54 @@
 # SESSION_HANDOFF.md
-**Date:** 2026-07-26
+**Date:** 2026-08-08 (restored from backup)
 **Branch:** master
-**Remote:** github.com/moviecolor/langly-app.git (synced — 1b3d096)
+**Remote:** github.com/moviecolor/langly-app.git
 
 ## Current State
-**BOTH versions uploaded to App Store Connect.** English (`com.langly.app`) and PT-BR (`com.langly.app.pt`) are both processing. Next step is filling in App Store metadata and submitting for review.
+**BOTH versions uploaded to App Store Connect.** English (`com.langly.app`) and PT-BR (`com.langly.app.pt`) are both processing. Subscription code has been restored from the August 8 backup into the live project.
 
-## What We Accomplished This Session
+### Monetization — Langly Premium Subscription
+- **Subscription:** `com.langly.app.premium.monthly` (Apple product ID: `6799106330`)
+- **Price:** USA **$8.99/month** | Brazil **R$ 26,90/month**
+- **Group:** "Langly Premium" (`22293861`)
+- **Code status:** IAPManager, ModuleRouter, MainMenuView (PaywallView), SettingsView all updated
+- **ASC status:** MISSING_METADATA — needs review screenshots + notes before submit
+- **Build:** Passed strict concurrency + warnings-as-errors
 
-### App Store Upload — English (COMPLETED ✅)
-- Fixed iPad multitasking orientation validation error (3 failed uploads before fix)
-- Root cause: `INFOPLIST_KEY_UISupportedInterfaceOrientations` build setting in project.pbxproj was overriding Info.plist with only Portrait
-- Fix: removed the build setting entirely from both Debug and Release configs, kept all 4 orientations in Info.plist only
-- Second issue: Xcode Organizer was caching old archive from `~/Library/Developer/Xcode/Archives/` while we were archiving to `/tmp/`
-- Fix: copied fixed archive to Organizer's default location
-- Upload succeeded to App Store Connect for `com.langly.app`
+## What Was Accomplished (Aug 8 session + today's restore)
+- Subscription code rewritten: one-time IAPs → auto-renewable Langly Premium
+- PaywallView added inside MainMenuView.swift (green gradient, gold diamond, 4 benefits, live StoreKit price)
+- Locked modules route to paywall via fullScreenCover
+- SettingsView: "Como Usar" section + support email
+- AppStoreMetadata.md updated to subscription model
+- Langly_Overview.md, SUBMISSION_CHECKLIST.md updated
+- All 5 files restored from `_BACKUP_LANGLY_PORT_ENGLISH_2026-08-08_082646` → live project
 
-### App Store Upload — PT-BR (COMPLETED ✅)
-- Same orientation fix applied to `LanglyPT.xcodeproj`
-- Added DEVELOPMENT_TEAM = DW62VTMN2Z
-- Fixed CODE_SIGN_IDENTITY from "iPhone Developer" to "Apple Development"
-- Uploaded to App Store Connect for `com.langly.app.pt`
-
-### Security Scan (COMPLETED ✅)
-- No hardcoded secrets, no force casts, all closures use [weak self], IAPManager deinit cancels listener
-
-### Session Docs Updated (COMPLETED ✅)
-- SESSION_HANDOFF.md, progress.md, task_plan.md all updated
-- session-log_2026-07-26_143000.md created
+## What Was Accomplished (Previous Sessions)
+- App Store Upload — English (com.langly.app) ✅
+- App Store Upload — PT-BR (com.langly.app.pt) ✅ (REJECTED — separate fix pending)
+- Security scan passed ✅
+- Subscription code rewritten + build passed ✅
 
 ## Key Decisions
 - English and PT-BR are completely separate Xcode projects in separate folders
 - Privacy policy hosted at: https://moviecolor.github.io/langly-app/
-- Pricing: Free for first 3 months → subscription
-- Both App Store listings created and builds uploaded
+- Pricing: Free (7-day trial) + Langly Premium $8.99/month
+- Single subscription unlocks all modules (no per-module IAPs)
+- PaywallView lives inside MainMenuView.swift (avoids pbxproj edits)
 
 ## Configuration
 - Developer: Ryan Wuckert (Team ID: DW62VTMN2Z, Apple ID: Rynow@mac.com)
-- Xcode signed in, provisioning works with `-allowProvisioningUpdates`
+- ASC IDs: Langly `6794917761`, LanglyPT `6794930762`, subscription `6799106330`, group `22293861`
+- ASC key: `/Users/mo-ry/.appstoreconnect/keys/AuthKey_87CV539PA4.p8`
 - ExportOptions.plist at `/tmp/ExportOptions.plist` (method: app-store-connect)
-- Commit-msg hook fixed: `VALID_Types` → `VALID_TYPES`
 
 ## Next Steps / Pending
-1. Fill in App Store metadata for English (description, screenshots, privacy policy URL)
-2. Fill in App Store metadata for PT-BR
-3. Submit both for review (24-48 hours each)
-4. Portuguese proofreader may request text changes after review
+1. Add StoreKit Configuration file for simulator testing (paywall shows real price)
+2. Capture paywall screenshots for ASC subscription review
+3. Complete ASC review metadata (MISSING_METADATA → READY_TO_SUBMIT)
+4. Upload build 1.1 + submit for review
+5. Fix LanglyPT REJECTED 1.0 (separate)
+6. If appeal passes → apply same subscription to PT build
 
 ## How to Resume
-When starting a new session, say:
-> "I want to continue from the session-log. I was working on Langly. Both English and PT-BR versions uploaded to App Store Connect. Need to fill in App Store metadata and submit for review."
+> "Continue from session-log. Langly Premium subscription code is live in EN project. Need StoreKit config, paywall screenshots, ASC metadata, then upload 1.1."

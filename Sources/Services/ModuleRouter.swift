@@ -8,27 +8,24 @@ enum AppModule: String, CaseIterable {
     case pronunciation
     case qa
 
-    /// The StoreKit product ID associated with this module (if purchasable).
+    /// The StoreKit product ID associated with this module (if gated).
+    /// Modules 2–4 are unlocked by the single Langly Premium subscription.
     var productID: String? {
         switch self {
         case .vocabulary:
             return nil // Free module
-        case .commonSentences:
-            return IAPManager.module2ID
-        case .pronunciation:
-            return IAPManager.module3ID
-        case .qa:
-            return IAPManager.module4ID
+        case .commonSentences, .pronunciation, .qa:
+            return IAPManager.premiumMonthlyID
         }
     }
 
     /// Display name for the module.
     var displayName: String {
         switch self {
-        case .vocabulary: return "Vocabulary"
-        case .commonSentences: return "Common Sentences"
-        case .pronunciation: return "Pronunciation"
-        case .qa: return "Q&A"
+        case .vocabulary: return "Vocabulário"
+        case .commonSentences: return "Frases Comuns"
+        case .pronunciation: return "Pronúncia"
+        case .qa: return "Perguntas e Respostas"
         }
     }
 
