@@ -16,7 +16,12 @@ import SwiftUI
 final class TranslatorManager: ObservableObject {
     // MARK: - Published State
 
+    /// Language is at least supported (model downloadable).
     @Published var isModelDownloaded: Bool = false
+
+    /// Language model is fully installed and ready for on-device use.
+    /// Strictly true only when LanguageAvailability returns .installed.
+    @Published var isModelInstalled: Bool = false
     @Published var downloadProgress: Float = 0.0
     @Published var isTranslating: Bool = false
     @Published var isSessionReady: Bool = false
@@ -58,6 +63,19 @@ final class TranslatorManager: ObservableObject {
     /// With Apple's Translation framework, models are managed by the system.
     func checkModelStatus() {
         Task {
+            #if targetEnvironment(simulator)
+            // The simulator structurally cannot host Apple's on-device translation
+            // models. Asking LanguageAvailability still connects to
+            // com.apple.translation.text and surfaces an "isn't supported" alert,
+            // so never probe it here — fall straight to the API/mock path.
+            await MainActor.run {
+                self.isModelDownloaded = false
+                self.isModelInstalled = false
+                self.isSessionReady = false
+                self.isUsingMockTranslator = true
+            }
+            return
+            #else
             let availability = LanguageAvailability()
             let status = await availability.status(
                 from: sourceLanguage,
@@ -65,13 +83,18 @@ final class TranslatorManager: ObservableObject {
             )
 
             await MainActor.run {
-                // .installed = model downloaded and ready
-                // .supported = supported but needs model download
+                // .installed = model downloaded and ready (safe to use session.translate)
+                // .supported = supported but needs model download (avoid — system alert on failure)
                 // .unsupported = language pair not available
                 self.isModelDownloaded = (status == .installed || status == .supported)
+                self.isModelInstalled = (status == .installed)
                 self.isSessionReady = self.sessionHolder?.isSessionReady ?? false
-                self.isUsingMockTranslator = !(self.isModelDownloaded && self.isSessionReady)
+                // Never attempt Apple on-device translation on unsupported devices.
+                // .supported triggers the system "translation not supported" alert
+                // every time session.translate is called — only use it when the model is truly installed.
+                self.isUsingMockTranslator = !(self.isModelInstalled && self.isSessionReady)
             }
+            #endif
         }
     }
 
@@ -82,7 +105,7 @@ final class TranslatorManager: ObservableObject {
         downloadCount += 1
         lastDownloaded = .now
         // If we were using mock, check if real session is now available.
-        if isModelDownloaded {
+        if isModelInstalled {
             isUsingMockTranslator = false
         }
     }
@@ -100,11 +123,18 @@ final class TranslatorManager: ObservableObject {
     }
 
     /// Whether Apple's on-device Translation framework is safe to use.
-    /// On unsupported devices (e.g. simulator without a translation model) the
+    /// On unsupported devices (e.g. simulator where models can't be downloaded) the
     /// system shows a "translation is not supported" alert if we call it, so
-    /// we only attempt it when LanguageAvailability reported installed/supported.
+    /// we only attempt it when LanguageAvailability reported .installed.
     private var canUseAppleTranslation: Bool {
-        isModelDownloaded && isSessionReady && sessionHolder?.session != nil
+        #if targetEnvironment(simulator)
+        // The simulator reports pairs as "installed" but every session.translate
+        // call fails with TranslationErrorDomain Code=11 AND shows a system alert.
+        // Never attempt Apple on-device translation here.
+        return false
+        #else
+        return isModelInstalled && isSessionReady && sessionHolder?.session != nil
+        #endif
     }
 
     // MARK: - Translation

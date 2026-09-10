@@ -19,6 +19,10 @@ struct ContentView: View {
         .environmentObject(iapManager)
         .environmentObject(translatorManager)
         .overlay {
+            #if !targetEnvironment(simulator)
+            // On-device only: the simulator structurally cannot use Apple's
+            // on-device Translation framework, and mounting the session there
+            // triggers the system "translation is not supported" alert.
             TranslationSessionView(
                 holder: sessionHolder,
                 source: translatorManager.sourceLanguage,
@@ -27,6 +31,7 @@ struct ContentView: View {
             .onAppear {
                 translatorManager.sessionDidBecomeReady(sessionHolder)
             }
+            #endif
         }
         .task {
             await iapManager.restorePurchases()

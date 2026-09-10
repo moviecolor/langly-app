@@ -50,9 +50,9 @@ final class TranslationAPIService {
         let result = await translateMyMemory(text: trimmed, from: sourceLang, to: targetLang)
 
         // If MyMemory returned identity (no translation), try Google fallback.
-        if result.lowercased() == trimmed.lowercased() || result.isEmpty {
+        if !isValidTranslation(result, original: trimmed) {
             let googleResult = await translateGoogleLegacy(text: trimmed, from: sourceLang, to: targetLang)
-            if !googleResult.isEmpty && googleResult.lowercased() != trimmed.lowercased() {
+            if isValidTranslation(googleResult, original: trimmed) {
                 cache.setObject(googleResult as NSString, forKey: cacheKey)
                 return googleResult
             }
@@ -64,6 +64,18 @@ final class TranslationAPIService {
         }
 
         return result
+    }
+
+    /// Rejects results that are actually the query echoed back to us.
+    /// MyMemory (and other free APIs) occasionally return the raw query —
+    /// including a URL-encoded form of it — instead of a real translation.
+    private func isValidTranslation(_ result: String, original: String) -> Bool {
+        let trimmedResult = result.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedResult.isEmpty else { return false }
+        guard trimmedResult.lowercased() != original.lowercased() else { return false }
+        // A real translation of "who is this" is never "who%20is%20this".
+        guard !trimmedResult.contains("%") else { return false }
+        return true
     }
 
     /// Translates multiple texts concurrently.
