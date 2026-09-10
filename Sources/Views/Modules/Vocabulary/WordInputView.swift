@@ -47,6 +47,9 @@ struct WordInputView: View {
     /// Error feedback state — shows a brief save error message.
     @State private var showSaveError: Bool = false
 
+    /// Whether the English input field should grab focus on appear.
+    @FocusState private var nativeInputFocused: Bool
+
     init(preselectedBlockID: UUID? = nil) {
         self.preselectedBlockID = preselectedBlockID
     }
@@ -135,6 +138,8 @@ struct WordInputView: View {
                 if let blockID = preselectedBlockID {
                     selectedBlockID = blockID
                 }
+                // Auto-focus the English input so the user can type immediately.
+                nativeInputFocused = true
             }
         }
     }
@@ -146,10 +151,10 @@ struct WordInputView: View {
             nativeWordInput: $nativeWordInput,
             translatedWord: $translatedWord,
             isTranslating: isTranslating,
-            translationStatus: translationStatus
-        ) {
-            Task { await translateWord() }
-        }
+            translationStatus: translationStatus,
+            onTranslate: { Task { await translateWord() } },
+            nativeInputFocused: $nativeInputFocused
+        )
     }
 
     // MARK: - Translated Word Input Field (always visible, always editable)
@@ -378,6 +383,7 @@ private struct TranslationInputSection: View {
     let isTranslating: Bool
     let translationStatus: WordInputView.TranslationStatus
     let onTranslate: () -> Void
+    var nativeInputFocused: FocusState<Bool>.Binding
 
     var body: some View {
         VStack(spacing: 16) {
@@ -429,6 +435,7 @@ private struct TranslationInputSection: View {
                                 .stroke(Color(hex: 0x00D4AA).opacity(0.3), lineWidth: 1)
                         )
                 )
+                .focused(nativeInputFocused)
                 .onSubmit(onTranslate)
         }
     }

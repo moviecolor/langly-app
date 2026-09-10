@@ -46,16 +46,29 @@ final class TranslationAPIService {
             return cached as String
         }
 
-        // Try MyMemory API first (free, reliable).
-        let result = await translateMyMemory(text: trimmed, from: sourceLang, to: targetLang)
+        // Race MyMemory and Google concurrently and return the FIRST valid
+        // translation to arrive. Previously they ran serially, which meant a
+        // slow/failing Google call added its whole timeout on top of MyMemory's
+        // latency even when MyMemory had already succeeded.
+        let result = await withTaskGroup(of: String.self) { group in
+            group.addTask { await self.translateMyMemory(text: trimmed, from: sourceLang, to: targetLang) }
+            group.addTask { await self.translateGoogleLegacy(text: trimmed, from: sourceLang, to: targetLang) }
 
-        // If MyMemory returned identity (no translation), try Google fallback.
-        if !isValidTranslation(result, original: trimmed) {
-            let googleResult = await translateGoogleLegacy(text: trimmed, from: sourceLang, to: targetLang)
-            if isValidTranslation(googleResult, original: trimmed) {
-                cache.setObject(googleResult as NSString, forKey: cacheKey)
-                return googleResult
+            var lastNonEmpty: String?
+            for await candidate in group {
+                if !candidate.isEmpty {
+                    lastNonEmpty = candidate
+                }
+                if isValidTranslation(candidate, original: trimmed) {
+                    // First valid result wins; cancel the slower provider.
+                    group.cancelAll()
+                    return candidate
+                }
             }
+            // Neither provider produced a valid translation — return whatever
+            // non-empty response we saw (probably an identity echo) so the
+            // caller can fall through to the mock dictionary.
+            return lastNonEmpty ?? trimmed
         }
 
         // Cache successful translations.
