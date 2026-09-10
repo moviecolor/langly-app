@@ -10,9 +10,16 @@ struct WordInputView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var translator: TranslatorManager
     @Query private var wordBlocks: [WordBlock]
-    @Query private var vocabularyWords: [VocabularyWord]
     @Query private var trackers: [StreakTracker]
     @Query private var analytics: [LocalAnalytics]
+
+    /// Lazily-loaded vocabulary words. The full word list is NOT fetched on
+    /// sheet open (132+ words × 9 blocks = slow sheet presentation). Instead
+    /// we fetch a cheap COUNT for the header, then load objects only when the
+    /// user expands the word list.
+    @State private var vocabularyWords: [VocabularyWord] = []
+    @State private var wordCount: Int = 0
+    @State private var isWordListLoaded = false
 
     /// Optional block ID to pre-select when opened from a block card.
     let preselectedBlockID: UUID?
@@ -138,7 +145,13 @@ struct WordInputView: View {
                 if let blockID = preselectedBlockID {
                     selectedBlockID = blockID
                 }
+                // Lightweight COUNT only — keeps the "Word List (n)" header
+                // accurate without deserializing the full word objects.
+                wordCount = (try? modelContext.fetchCount(FetchDescriptor<VocabularyWord>())) ?? 0
                 // Auto-focus the English input so the user can type immediately.
+                // Small delay: focus requests made while the sheet is still
+                // animating in can be dropped on the simulator.
+                try? await Task.sleep(for: .milliseconds(450))
                 nativeInputFocused = true
             }
         }
@@ -256,9 +269,12 @@ struct WordInputView: View {
     private var wordListSection: some View {
         WordListSection(
             words: filteredWords,
+            totalCount: wordCount,
+            isLoaded: isWordListLoaded,
             showWordList: $showWordList,
             wordListFilter: $wordListFilter,
-            onDelete: deleteWord
+            onDelete: deleteWord,
+            onExpand: loadWordListIfNeeded
         )
     }
 
@@ -341,6 +357,12 @@ struct WordInputView: View {
         translatedWord = ""
         translationStatus = .idle
 
+        // Keep the lazily-loaded word list in sync.
+        wordCount += 1
+        if isWordListLoaded {
+            vocabularyWords.insert(newWord, at: 0)
+        }
+
         // Show brief success feedback.
         showSaveFeedback = true
         Task {
@@ -352,6 +374,19 @@ struct WordInputView: View {
     /// Deletes a word from its block and the context.
     private func deleteWord(_ word: VocabularyWord) {
         modelContext.delete(word)
+        vocabularyWords.removeAll { $0.id == word.id }
+        wordCount = max(0, wordCount - 1)
+    }
+
+    /// Fetches the full vocabulary word list ONLY when the user expands the
+    /// word-list section. Opening the sheet stays cheap (COUNT only).
+    private func loadWordListIfNeeded() {
+        guard !isWordListLoaded else { return }
+        isWordListLoaded = true
+        let descriptor = FetchDescriptor<VocabularyWord>(
+            sortBy: [SortDescriptor(\.dateAdded, order: .reverse)]
+        )
+        vocabularyWords = (try? modelContext.fetch(descriptor)) ?? []
     }
 
     // MARK: - Computed
@@ -593,17 +628,21 @@ private struct BlockSelectorSection: View {
 }
 
 /// The "Word List" card. Only re-renders when words/filter state change —
-/// NOT on every keystroke.
+/// NOT on every keystroke. Word objects are fetched on demand (see `onExpand`);
+/// the list shows a lightweight COUNT until the user expands it.
 private struct WordListSection: View {
     let words: [VocabularyWord]
+    let totalCount: Int
+    let isLoaded: Bool
     @Binding var showWordList: Bool
     @Binding var wordListFilter: MasteryLevel?
     let onDelete: (VocabularyWord) -> Void
+    let onExpand: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Word List (\(words.count))")
+                Text("Word List (\(totalCount))")
                     .font(.headline)
                     .foregroundStyle(Color(hex: 0x00D4AA))
 
@@ -611,6 +650,8 @@ private struct WordListSection: View {
 
                 Button {
                     showWordList.toggle()
+                    // Load the full list only when the user expands it.
+                    if showWordList { onExpand() }
                 } label: {
                     Image(systemName: showWordList ? "chevron.up" : "chevron.down")
                         .foregroundColor(.secondary)
@@ -628,8 +669,12 @@ private struct WordListSection: View {
                     }
                 }
 
-                // Words.
-                if words.isEmpty {
+                // Words (objects load on demand — may take a moment).
+                if !isLoaded {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                } else if words.isEmpty {
                     Text("No words yet.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)

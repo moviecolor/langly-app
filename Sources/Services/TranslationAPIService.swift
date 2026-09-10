@@ -46,6 +46,9 @@ final class TranslationAPIService {
             return cached as String
         }
 
+        let start = Date()
+        print("[API] translate(\(trimmed)) start t=\(start.timeIntervalSinceReferenceDate)")
+
         // Race MyMemory and Google concurrently and return the FIRST valid
         // translation to arrive. Previously they ran serially, which meant a
         // slow/failing Google call added its whole timeout on top of MyMemory's
@@ -71,6 +74,7 @@ final class TranslationAPIService {
             return lastNonEmpty ?? trimmed
         }
 
+        print("[API] translate(\(trimmed)) done in \(Date().timeIntervalSince(start))s → \(result)")
         // Cache successful translations.
         if result != trimmed {
             cache.setObject(result as NSString, forKey: cacheKey)
@@ -121,8 +125,11 @@ final class TranslationAPIService {
             return text
         }
 
+        let start = Date()
+        print("[MyMemory] request start t=\(start.timeIntervalSinceReferenceDate)")
         do {
             let (data, response) = try await session.data(from: url)
+            print("[MyMemory] response in \(Date().timeIntervalSince(start))s")
 
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
@@ -138,7 +145,7 @@ final class TranslationAPIService {
                 return translated
             }
         } catch {
-            print("[TranslationAPI] MyMemory failed: \(error.localizedDescription)")
+            print("[TranslationAPI] MyMemory failed after \(Date().timeIntervalSince(start))s: \(error.localizedDescription)")
         }
 
         return text
