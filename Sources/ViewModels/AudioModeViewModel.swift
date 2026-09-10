@@ -34,6 +34,7 @@ final class AudioModeViewModel: NSObject, ObservableObject {
     @Published var selectedBlockIDs: Set<UUID> = []
     @Published var repetitions: Int = 4
     @Published var gapSeconds: Double = 1.5
+    @Published var shuffleEnabled: Bool = false
 
     // MARK: - Properties
 
@@ -188,11 +189,15 @@ final class AudioModeViewModel: NSObject, ObservableObject {
 
     // MARK: - Private
 
-    private func buildPlaybackQueue() -> [AudioWord] {
+    func buildPlaybackQueue() -> [AudioWord] {
         var queue: [AudioWord] = []
         let selectedBlocks = allBlocks.filter { selectedBlockIDs.contains($0.id) }
         for block in selectedBlocks {
-            for word in block.vocabularyWords where !word.translatedWord.isEmpty {
+            // Sort by wordBlockIndex — SwiftData does NOT guarantee @Relationship
+            // array order after save, but BlockDetailView re-normalizes wordBlockIndex
+            // to match user reorder, so this deterministically reproduces user order.
+            let orderedWords = block.vocabularyWords.sorted { $0.wordBlockIndex < $1.wordBlockIndex }
+            for word in orderedWords where !word.translatedWord.isEmpty {
                 queue.append(AudioWord(
                     nativeWord: word.nativeWord,
                     translatedWord: word.translatedWord,
@@ -202,7 +207,13 @@ final class AudioModeViewModel: NSObject, ObservableObject {
                 ))
             }
         }
-        return queue.shuffled()
+        // Shuffle only when the user enables it; otherwise preserve
+        // block order (as shown in the blocks list) and word order
+        // within each block (the user's reordered order from BlockDetailView).
+        if shuffleEnabled {
+            return queue.shuffled()
+        }
+        return queue
     }
 
     /// Plays the current word pair: native once, then translated N times.

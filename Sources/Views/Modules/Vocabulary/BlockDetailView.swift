@@ -14,10 +14,11 @@ struct BlockDetailView: View {
     @State private var renameText: String = ""
     @State private var showAddWords = false
     @State private var showDeleteBlockConfirmation = false
+    @State private var editMode: EditMode = .inactive
 
     var body: some View {
         List {
-            ForEach(Array(block.vocabularyWords.enumerated()), id: \.element.id) { index, word in
+            ForEach(block.vocabularyWords) { word in
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(word.nativeWord)
@@ -32,10 +33,45 @@ struct BlockDetailView: View {
             }
             .onDelete(perform: deleteWords)
             .onMove(perform: moveWords)
+
+            // Hint footer — appears as the last section's footer.
+            Section {
+                EmptyView()
+            } footer: {
+                Text(editMode.isEditing ? "Drag the handles to reorder words" : "Tap Reorder to change word order")
+                    .font(.caption)
+                    .foregroundColor(.secondary.opacity(0.6))
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .listRowBackground(Color.clear)
+            }
         }
+        .environment(\.editMode, $editMode)
         .navigationTitle(block.blockName)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            // SwiftData does NOT guarantee @Relationship array order after save,
+            // but wordBlockIndex is the persisted source of truth (re-normalized
+            // on every reorder/delete). Re-sort the live array so the List rows,
+            // onDelete/onMove offsets, and Audio Mode playback all agree.
+            let sorted = block.vocabularyWords.sorted { $0.wordBlockIndex < $1.wordBlockIndex }
+            if sorted.map(\.id) != block.vocabularyWords.map(\.id) {
+                block.vocabularyWords = sorted
+                try? modelContext.save()
+            }
+        }
         .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    withAnimation {
+                        editMode = editMode.isEditing ? .inactive : .active
+                    }
+                } label: {
+                    Text(editMode.isEditing ? "Done" : "Reorder")
+                        .font(.subheadline.bold())
+                        .foregroundColor(Color(hex: 0x00D4AA))
+                }
+            }
+
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
                     Button {
@@ -102,14 +138,11 @@ struct BlockDetailView: View {
     // MARK: - Actions
 
     private func deleteWords(at offsets: IndexSet) {
-        let sortedWords = block.vocabularyWords.sorted { $0.wordBlockIndex < $1.wordBlockIndex }
         for index in offsets {
-            let word = sortedWords[index]
+            let word = block.vocabularyWords[index]
             modelContext.delete(word)
         }
-        // Remove from the block's array.
         block.vocabularyWords.remove(atOffsets: offsets)
-        // Re-normalize wordBlockIndex.
         for (idx, word) in block.vocabularyWords.enumerated() {
             word.wordBlockIndex = idx
         }

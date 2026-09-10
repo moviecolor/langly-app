@@ -12,6 +12,7 @@ struct AudioModeView: View {
     @Query private var analytics: [LocalAnalytics]
     @AppStorage("selectedVoiceGender") private var savedGender: String = ""
     @AppStorage("showPhonetics") private var showPhonetics: Bool = true
+    @AppStorage("audioShuffleEnabled") private var shufflePersisted: Bool = false
 
     init() {}
 
@@ -73,6 +74,11 @@ struct AudioModeView: View {
                 viewModel.selectedVoiceIdentifier = savedVoice
             }
             viewModel.selectedVoiceGender = savedGender
+            // Restore the shuffle preference from the last session.
+            viewModel.shuffleEnabled = shufflePersisted
+        }
+        .onChange(of: viewModel.shuffleEnabled) { _, newValue in
+            shufflePersisted = newValue
         }
         .onChange(of: viewModel.playbackState) { _, newState in
             // Track audio session when user stops playback.
@@ -261,6 +267,30 @@ struct AudioModeView: View {
                 Text("Loops automatically — press Stop to end")
                     .font(.caption)
                     .foregroundColor(.secondary)
+            }
+
+            // Shuffle toggle.
+            HStack(spacing: 10) {
+                Image(systemName: "shuffle")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color(hex: 0x00D4AA))
+                    .frame(width: 18)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Shuffle order")
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+
+                    Text("Randomize word order instead of playing in block order")
+                        .font(.caption)
+                        .foregroundColor(.secondary.opacity(0.7))
+                }
+
+                Spacer()
+
+                Toggle("", isOn: $viewModel.shuffleEnabled)
+                    .labelsHidden()
+                    .tint(Color(hex: 0x00D4AA))
             }
         }
         .padding()
