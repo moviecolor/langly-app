@@ -142,92 +142,14 @@ struct WordInputView: View {
     // MARK: - Translation Section
 
     private var translationSection: some View {
-        VStack(spacing: 16) {
-            // Native word input (English).
-            nativeWordInputField
-
-            // Translate button — auto-fills the Portuguese field.
-            translateButton
-
-            // Translation status message.
-            if translationStatus == .failed {
-                Text("Translation not found — type the word manually below.")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-
-            // Translated word input (Portuguese) — always visible, always editable.
-            translatedWordInputField
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.appSurface.opacity(0.6))
-        )
-    }
-
-    // MARK: - Native Word Input Field
-
-    private var nativeWordInputField: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: "globe")
-                    .font(.caption)
-                    .foregroundColor(Color(hex: 0x00D4AA))
-                Text("English")
-                    .font(.subheadline.bold())
-                    .foregroundColor(.secondary)
-            }
-
-            TextField("Type a word (e.g., banana)", text: $nativeWordInput)
-                .textInputAutocapitalization(.never)
-                .disableAutocorrection(true)
-                .font(.title3)
-                .padding()
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.appSurface.opacity(0.8))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color(hex: 0x00D4AA).opacity(0.3), lineWidth: 1)
-                        )
-                )
-                .onSubmit {
-                    Task { await translateWord() }
-                }
-        }
-    }
-
-    // MARK: - Translate Button
-
-    private var translateButton: some View {
-        Button {
+        TranslationInputSection(
+            nativeWordInput: $nativeWordInput,
+            translatedWord: $translatedWord,
+            isTranslating: isTranslating,
+            translationStatus: translationStatus
+        ) {
             Task { await translateWord() }
-        } label: {
-            HStack {
-                if isTranslating {
-                    ProgressView()
-                        .tint(.white)
-                } else {
-                    Image(systemName: "arrow.left.arrow.right")
-                }
-
-                Text(isTranslating ? "Translating..." : "Auto-Translate")
-                    .font(.subheadline.bold())
-            }
-            .foregroundColor(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(
-                nativeWordInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isTranslating
-                    ? Color(hex: 0x00D4AA).opacity(0.4)
-                    : Color(hex: 0x00D4AA)
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 10))
         }
-        .buttonStyle(.plain)
-        .disabled(nativeWordInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isTranslating)
     }
 
     // MARK: - Translated Word Input Field (always visible, always editable)
@@ -283,73 +205,7 @@ struct WordInputView: View {
     // MARK: - Block Selector
 
     private var blockSelectorSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Add to Block")
-                .font(.subheadline.bold())
-                .foregroundColor(.secondary)
-
-            if wordBlocks.isEmpty {
-                Text("No blocks available. Create a block first.")
-                    .font(.subheadline)
-                    .foregroundColor(.red)
-                    .multilineTextAlignment(.center)
-                    .padding(.vertical, 12)
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(wordBlocks) { block in
-                            blockChip(block)
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.appSurface.opacity(0.6))
-        )
-    }
-
-    private func blockChip(_ block: WordBlock) -> some View {
-        let isSelected = selectedBlockID == block.id
-        let wordCount = block.vocabularyWords.count
-        let isFull = wordCount >= 15
-
-        return Button {
-            selectedBlockID = block.id
-        } label: {
-            VStack(spacing: 4) {
-                Text(block.blockName)
-                    .font(.subheadline.bold())
-                    .foregroundColor(isSelected ? .white : .primary)
-
-                Text(isFull ? "Full" : "\(wordCount)/15")
-                    .font(.caption)
-                    .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(
-                        isSelected
-                            ? Color(hex: 0x00D4AA)
-                            : Color.appSurface.opacity(0.8)
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(
-                        isSelected ? Color(hex: 0x00D4AA) : Color(hex: 0x00D4AA).opacity(0.3),
-                        lineWidth: 1.5
-                    )
-            )
-        }
-        .buttonStyle(.plain)
-        .disabled(isFull)
-        .opacity(isFull ? 0.5 : 1)
+        BlockSelectorSection(wordBlocks: wordBlocks, selectedBlockID: $selectedBlockID)
     }
 
     // MARK: - Save Button
@@ -393,132 +249,12 @@ struct WordInputView: View {
     // MARK: - Word List Section
 
     private var wordListSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Word List (\(filteredWords.count))")
-                    .font(.headline)
-                    .foregroundStyle(Color(hex: 0x00D4AA))
-
-                Spacer()
-
-                Button {
-                    showWordList.toggle()
-                } label: {
-                    Image(systemName: showWordList ? "chevron.up" : "chevron.down")
-                        .foregroundColor(.secondary)
-                }
-            }
-
-            if showWordList {
-                // Mastery filter.
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        filterChip(label: "All", level: nil)
-                        ForEach(MasteryLevel.allCases, id: \.self) { level in
-                            filterChip(label: level.rawValue.capitalized, level: level)
-                        }
-                    }
-                }
-
-                // Words.
-                if filteredWords.isEmpty {
-                    Text("No words yet.")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
-                } else {
-                ForEach(filteredWords) { word in
-                    wordRow(word)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                HapticPattern.impact.trigger()
-                                deleteWord(word)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
-                }
-                }
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.appSurface.opacity(0.6))
+        WordListSection(
+            words: filteredWords,
+            showWordList: $showWordList,
+            wordListFilter: $wordListFilter,
+            onDelete: deleteWord
         )
-    }
-
-    private func filterChip(label: String, level: MasteryLevel?) -> some View {
-        let isSelected = wordListFilter == level
-
-        return Button {
-            wordListFilter = level
-        } label: {
-            Text(label)
-                .font(.caption.bold())
-                .foregroundColor(isSelected ? .white : .secondary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(isSelected ? Color(hex: 0x00D4AA) : Color.appSurface.opacity(0.8))
-                )
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func wordRow(_ word: VocabularyWord) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(word.nativeWord)
-                    .font(.subheadline.bold())
-
-                Text(word.translatedWord)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            Spacer()
-
-            // Mastery badge.
-            masteryBadge(for: word.masteryLevel)
-
-            // Delete button.
-            Button {
-                deleteWord(word)
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.red.opacity(0.6))
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.vertical, 6)
-    }
-
-    private func masteryBadge(for level: MasteryLevel) -> some View {
-        let (color, label) = masteryInfo(for: level)
-
-        return Text(label)
-            .font(.caption.bold())
-            .foregroundColor(color)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(
-                Capsule()
-                    .fill(color.opacity(0.15))
-            )
-    }
-
-    private func masteryInfo(for level: MasteryLevel) -> (color: Color, label: String) {
-        switch level {
-        case .unlearned:
-            return (.secondary, "New")
-        case .learning:
-            return (Color(hex: 0xFF6B35), "Learning")
-        case .mastered:
-            return (Color(hex: 0x00D4AA), "Mastered")
-        }
     }
 
     // MARK: - Actions
@@ -629,4 +365,360 @@ struct WordInputView: View {
     WordInputView(preselectedBlockID: nil)
         .environmentObject(TranslatorManager())
         .modelContainer(for: [WordBlock.self, VocabularyWord.self], inMemory: true)
+}
+
+// MARK: - Isolated Subviews
+// Each subview owns its own @State/@Binding so a keystroke in a TextField only
+// re-renders the input section — NOT the whole word list / block chips.
+
+/// The two text fields + Auto-Translate button. Re-renders per keystroke; cheap.
+private struct TranslationInputSection: View {
+    @Binding var nativeWordInput: String
+    @Binding var translatedWord: String
+    let isTranslating: Bool
+    let translationStatus: WordInputView.TranslationStatus
+    let onTranslate: () -> Void
+
+    var body: some View {
+        VStack(spacing: 16) {
+            // Native word input (English).
+            nativeWordInputField
+
+            // Translate button — auto-fills the Portuguese field.
+            translateButton
+
+            // Translation status message.
+            if translationStatus == .failed {
+                Text("Translation not found — type the word manually below.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            // Translated word input (Portuguese) — always visible, always editable.
+            translatedWordInputField
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.appSurface.opacity(0.6))
+        )
+    }
+
+    private var nativeWordInputField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "globe")
+                    .font(.caption)
+                    .foregroundColor(Color(hex: 0x00D4AA))
+                Text("English")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.secondary)
+            }
+
+            TextField("Type a word (e.g., banana)", text: $nativeWordInput)
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
+                .font(.title3)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.appSurface.opacity(0.8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(hex: 0x00D4AA).opacity(0.3), lineWidth: 1)
+                        )
+                )
+                .onSubmit(onTranslate)
+        }
+    }
+
+    private var translateButton: some View {
+        Button(action: onTranslate) {
+            HStack {
+                if isTranslating {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    Image(systemName: "arrow.left.arrow.right")
+                }
+
+                Text(isTranslating ? "Translating..." : "Auto-Translate")
+                    .font(.subheadline.bold())
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(
+                nativeWordInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isTranslating
+                    ? Color(hex: 0x00D4AA).opacity(0.4)
+                    : Color(hex: 0x00D4AA)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+        .buttonStyle(.plain)
+        .disabled(nativeWordInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isTranslating)
+    }
+
+    private var translatedWordInputField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "pencil")
+                    .font(.caption)
+                    .foregroundColor(Color(hex: 0xFF6B35))
+                Text("Portuguese")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                if !translatedWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.caption)
+                        Text("Ready")
+                            .font(.caption)
+                    }
+                    .foregroundColor(Color(hex: 0x00D4AA))
+                }
+            }
+
+            TextField("Type the translation (e.g., banana)", text: $translatedWord)
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
+                .font(.title3)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.appSurface.opacity(0.8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(
+                                    translatedWord.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                        ? Color(hex: 0xFF6B35).opacity(0.3)
+                                        : Color(hex: 0x00D4AA).opacity(0.5),
+                                    lineWidth: 1
+                                )
+                        )
+                )
+
+            Text("Type the word yourself, or tap Auto-Translate above")
+                .font(.caption)
+                .foregroundColor(.secondary.opacity(0.7))
+        }
+    }
+}
+
+/// Block chips. Only re-renders when blocks or the selection change.
+private struct BlockSelectorSection: View {
+    let wordBlocks: [WordBlock]
+    @Binding var selectedBlockID: UUID?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Add to Block")
+                .font(.subheadline.bold())
+                .foregroundColor(.secondary)
+
+            if wordBlocks.isEmpty {
+                Text("No blocks available. Create a block first.")
+                    .font(.subheadline)
+                    .foregroundColor(.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.vertical, 12)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(wordBlocks) { block in
+                            blockChip(block)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.appSurface.opacity(0.6))
+        )
+    }
+
+    private func blockChip(_ block: WordBlock) -> some View {
+        let isSelected = selectedBlockID == block.id
+        let wordCount = block.vocabularyWords.count
+        let isFull = wordCount >= 15
+
+        return Button {
+            selectedBlockID = block.id
+        } label: {
+            VStack(spacing: 4) {
+                Text(block.blockName)
+                    .font(.subheadline.bold())
+                    .foregroundColor(isSelected ? .white : .primary)
+
+                Text(isFull ? "Full" : "\(wordCount)/15")
+                    .font(.caption)
+                    .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(
+                        isSelected
+                            ? Color(hex: 0x00D4AA)
+                            : Color.appSurface.opacity(0.8)
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(
+                        isSelected ? Color(hex: 0x00D4AA) : Color(hex: 0x00D4AA).opacity(0.3),
+                        lineWidth: 1.5
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(isFull)
+        .opacity(isFull ? 0.5 : 1)
+    }
+}
+
+/// The "Word List" card. Only re-renders when words/filter state change —
+/// NOT on every keystroke.
+private struct WordListSection: View {
+    let words: [VocabularyWord]
+    @Binding var showWordList: Bool
+    @Binding var wordListFilter: MasteryLevel?
+    let onDelete: (VocabularyWord) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Word List (\(words.count))")
+                    .font(.headline)
+                    .foregroundStyle(Color(hex: 0x00D4AA))
+
+                Spacer()
+
+                Button {
+                    showWordList.toggle()
+                } label: {
+                    Image(systemName: showWordList ? "chevron.up" : "chevron.down")
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            if showWordList {
+                // Mastery filter.
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        filterChip(label: "All", level: nil)
+                        ForEach(MasteryLevel.allCases, id: \.self) { level in
+                            filterChip(label: level.rawValue.capitalized, level: level)
+                        }
+                    }
+                }
+
+                // Words.
+                if words.isEmpty {
+                    Text("No words yet.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                } else {
+                    ForEach(words) { word in
+                        wordRow(word)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    HapticPattern.impact.trigger()
+                                    onDelete(word)
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.appSurface.opacity(0.6))
+        )
+    }
+
+    private func filterChip(label: String, level: MasteryLevel?) -> some View {
+        let isSelected = wordListFilter == level
+
+        return Button {
+            wordListFilter = level
+        } label: {
+            Text(label)
+                .font(.caption.bold())
+                .foregroundColor(isSelected ? .white : .secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(isSelected ? Color(hex: 0x00D4AA) : Color.appSurface.opacity(0.8))
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func wordRow(_ word: VocabularyWord) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(word.nativeWord)
+                    .font(.subheadline.bold())
+
+                Text(word.translatedWord)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
+
+            // Mastery badge.
+            masteryBadge(for: word.masteryLevel)
+
+            // Delete button.
+            Button {
+                onDelete(word)
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(.red.opacity(0.6))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, 6)
+    }
+
+    private func masteryBadge(for level: MasteryLevel) -> some View {
+        let (color, label) = masteryInfo(for: level)
+
+        return Text(label)
+            .font(.caption.bold())
+            .foregroundColor(color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(
+                Capsule()
+                    .fill(color.opacity(0.15))
+            )
+    }
+
+    private func masteryInfo(for level: MasteryLevel) -> (color: Color, label: String) {
+        switch level {
+        case .unlearned:
+            return (.secondary, "New")
+        case .learning:
+            return (Color(hex: 0xFF6B35), "Learning")
+        case .mastered:
+            return (Color(hex: 0x00D4AA), "Mastered")
+        }
+    }
 }
