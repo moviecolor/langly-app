@@ -10,6 +10,7 @@
 		02481AC825FD095545579CBC /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC92D41F050E21B2FE0017E /* Color+Hex.swift */; };
 		025152A79A2EC9FC0CD1F977 /* VocabularyWord.swift in Sources */ = {isa = PBXBuildFile; fileRef = B85A61ADAFFE6D6A6FD4A04F /* VocabularyWord.swift */; };
 		02DC9C131AFAA37E589A3F43 /* AchievementsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC75A005A153F43DB598B590 /* AchievementsView.swift */; };
+		0511FB9E1F38F757C589C814 /* NetworkMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 167B5BB2BD6D43FC4C7C53AC /* NetworkMonitor.swift */; };
 		0A2C6E13E998FBC04DEDB506 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B72F1CE27E96D90868EFB499 /* PrivacyInfo.xcprivacy */; };
 		0BB3891C386F4C03FC9DBC8E /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F673967E0381D2D5DD089D6E /* ContentView.swift */; };
 		0C02DF7BDF68A83B2B8111B4 /* LaunchScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A28DEA42745ECDE0DB5909BB /* LaunchScreen.swift */; };
@@ -49,6 +50,7 @@
 		CB4ED061B51A854EDADCB21A /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3BD0B85ED1C17A0BE546E8C /* AppSettings.swift */; };
 		CE18EE5F9CD8D67387006AC7 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C717E4A6A0D6748E9F0CAF /* SettingsView.swift */; };
 		CFB19FD3D51375C159C66C4B /* TranslationAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24E16A297AA296ADA189EB42 /* TranslationAPIService.swift */; };
+		D2F4A79B4DD8C77B5FA289BC /* BlockDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C354E44A73363C7252857438 /* BlockDetailView.swift */; };
 		D5D08CAB17610143441D811D /* VocabularyLoading.swift in Sources */ = {isa = PBXBuildFile; fileRef = 682B271BE95A919EABC79059 /* VocabularyLoading.swift */; };
 		D8A1E344AA5BFB389FE4A9A9 /* StreakTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96848E695756F72E1D072E0B /* StreakTracker.swift */; };
 		D9CCF7F6920187614EE4DAE1 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB6266D8436CE25FD2FA4AD7 /* App.swift */; };
@@ -75,6 +77,7 @@
 		0B5C8E24E7E8FA6FDBD62C2E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		1629131DAAF52FDCA5649F94 /* CommonSentencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonSentencesView.swift; sourceTree = "<group>"; };
 		162BF6F9C7D2A1ACEB2D0412 /* LocalAnalytics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalAnalytics.swift; sourceTree = "<group>"; };
+		167B5BB2BD6D43FC4C7C53AC /* NetworkMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMonitor.swift; sourceTree = "<group>"; };
 		18054931FCBC80FA8741517E /* QASession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QASession.swift; sourceTree = "<group>"; };
 		222F9870EDEB222AD06E4325 /* Langly.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Langly.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		24A91F6E30BEBECFAEFCFBCA /* MatchMadnessViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchMadnessViewModel.swift; sourceTree = "<group>"; };
@@ -112,6 +115,7 @@
 		B7BDCFB7D4C8340A5882BEEB /* AudioModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioModeView.swift; sourceTree = "<group>"; };
 		B85A61ADAFFE6D6A6FD4A04F /* VocabularyWord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyWord.swift; sourceTree = "<group>"; };
 		BB6266D8436CE25FD2FA4AD7 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		C354E44A73363C7252857438 /* BlockDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlockDetailView.swift; sourceTree = "<group>"; };
 		C3E56240FD5A33729E4C17F9 /* IAPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IAPManager.swift; sourceTree = "<group>"; };
 		CF4D569F860F49BA2C2C0EE8 /* MatchMadnessGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MatchMadnessGameView.swift; sourceTree = "<group>"; };
 		D3BD0B85ED1C17A0BE546E8C /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
@@ -147,6 +151,7 @@
 			isa = PBXGroup;
 			children = (
 				B7BDCFB7D4C8340A5882BEEB /* AudioModeView.swift */,
+				C354E44A73363C7252857438 /* BlockDetailView.swift */,
 				CF4D569F860F49BA2C2C0EE8 /* MatchMadnessGameView.swift */,
 				5CEC76CDB0527B02C2510C55 /* VocabularyView.swift */,
 				5238987AA452299EE4138531 /* WordInputView.swift */,
@@ -212,6 +217,7 @@
 				C3E56240FD5A33729E4C17F9 /* IAPManager.swift */,
 				5F1F43F10ABD2D8C7C16D98B /* MockTranslator.swift */,
 				B1141101092FA92F9F5D8D79 /* ModuleRouter.swift */,
+				167B5BB2BD6D43FC4C7C53AC /* NetworkMonitor.swift */,
 				785C786930A9EDF904C5B4FD /* NotificationManager.swift */,
 				24E16A297AA296ADA189EB42 /* TranslationAPIService.swift */,
 				649378190B21F63A02E402E5 /* TranslationSessionProvider.swift */,
@@ -428,6 +434,7 @@
 				8F4DA44AF53D534DE59F91D0 /* AudioModeView.swift in Sources */,
 				A53DC4794A6A0F7B3ECDB0A0 /* AudioModeViewModel.swift in Sources */,
 				79CC165950A15C6663711E0C /* AudioWaveformView.swift in Sources */,
+				D2F4A79B4DD8C77B5FA289BC /* BlockDetailView.swift in Sources */,
 				02481AC825FD095545579CBC /* Color+Hex.swift in Sources */,
 				FD10A1E27FB71F1A2BFEF68A /* CommonSentencesLoading.swift in Sources */,
 				306C515B3A49826D7A76C4B8 /* CommonSentencesView.swift in Sources */,
@@ -443,6 +450,7 @@
 				7FBDBA9E65D73CFAE3C6CA6E /* MockTranslator.swift in Sources */,
 				96AC7C1384F41CE6A9635CC5 /* ModuleProgress.swift in Sources */,
 				259C3EDB577BD285663DDCCD /* ModuleRouter.swift in Sources */,
+				0511FB9E1F38F757C589C814 /* NetworkMonitor.swift in Sources */,
 				1FB79184E4455A63D223FF09 /* NotificationManager.swift in Sources */,
 				1F4B7E60552CF35A89309A6A /* OnboardingView.swift in Sources */,
 				33A4300277E91DA2018104BA /* PronunciationLoading.swift in Sources */,
@@ -558,14 +566,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 2;
-				DEVELOPMENT_TEAM = DW62VTMN2Z;
 				INFOPLIST_FILE = Sources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Langly;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -573,9 +581,8 @@
 				MARKETING_VERSION = 1.1;
 				PRIVACY_MANIFEST_FILE = Sources/PrivacyInfo.xcprivacy;
 				PRODUCT_BUNDLE_IDENTIFIER = com.langly.app;
-				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -585,13 +592,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				DEVELOPMENT_TEAM = DW62VTMN2Z;
-				ENABLE_BITCODE = NO;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 2;
 				INFOPLIST_FILE = Sources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Langly;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -599,7 +607,6 @@
 				MARKETING_VERSION = 1.1;
 				PRIVACY_MANIFEST_FILE = Sources/PrivacyInfo.xcprivacy;
 				PRODUCT_BUNDLE_IDENTIFIER = com.langly.app;
-				PROVISIONING_PROFILE_SPECIFIER = "";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				TARGETED_DEVICE_FAMILY = "1,2";

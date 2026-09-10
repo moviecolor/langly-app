@@ -24,6 +24,9 @@ final class TranslatorManager: ObservableObject {
     /// Whether the mock translator is currently being used (simulator fallback).
     @Published var isUsingMockTranslator: Bool = false
 
+    /// Current connection status description for UI display.
+    @Published var connectionStatus: String = ""
+
     // MARK: - Properties
 
     /// In-memory cache of recent translations.
@@ -45,6 +48,8 @@ final class TranslatorManager: ObservableObject {
 
     init() {
         checkModelStatus()
+        // Start network monitoring on first use.
+        NetworkMonitor.shared.start()
     }
 
     // MARK: - Model Management
@@ -97,7 +102,10 @@ final class TranslatorManager: ObservableObject {
     // MARK: - Translation
 
     /// Translates text from English to Portuguese.
-    /// Priority: cache → Apple Translation framework → MyMemory API → Mock dictionary.
+    /// Priority:
+    /// 1. Cache
+    /// 2. Online: Apple Translation → MyMemory → Google fallback
+    /// 3. Offline: Apple Translation (on-device model) → MockTranslator (with multi-word fallback)
     func translate(_ text: String) async -> String {
         // Check cache first.
         if let cached = cachedTranslations[text] {
@@ -107,34 +115,98 @@ final class TranslatorManager: ObservableObject {
         isTranslating = true
         defer { isTranslating = false }
 
-        // 1. Try Apple's on-device Translation framework.
-        if let session = sessionHolder?.session {
-            do {
-                let response = try await session.translate(text)
-                let translated = response.targetText
-                cachedTranslations[text] = translated
-                isUsingMockTranslator = false
-                return translated
-            } catch {
-                print("[TranslatorManager] Apple Translation failed: \(error.localizedDescription)")
+        let isOnline = NetworkMonitor.shared.isOnline
+
+        if isOnline {
+            // ONLINE PATH: Apple Translation → MyMemory → Google
+            connectionStatus = "Online"
+
+            // 1. Try Apple's on-device Translation framework.
+            if let session = sessionHolder?.session {
+                do {
+                    let response = try await session.translate(text)
+                    let translated = response.targetText
+                    cachedTranslations[text] = translated
+                    isUsingMockTranslator = false
+                    return translated
+                } catch {
+                    print("[TranslatorManager] Apple Translation failed (online): \(error.localizedDescription)")
+                }
             }
+
+            // 2. Try MyMemory free API.
+            let apiResult = await TranslationAPIService.shared.translate(text, from: "en", to: "pt")
+            if apiResult != text {
+                cachedTranslations[text] = apiResult
+                isUsingMockTranslator = false
+                return apiResult
+            }
+        } else {
+            // OFFLINE PATH: Apple Translation (on-device) → Mock with multi-word fallback
+            connectionStatus = "Offline"
+
+            // 1. Try Apple's on-device Translation (works offline if model is downloaded).
+            if let session = sessionHolder?.session {
+                do {
+                    let response = try await session.translate(text)
+                    let translated = response.targetText
+                    cachedTranslations[text] = translated
+                    isUsingMockTranslator = false
+                    return translated
+                } catch {
+                    print("[TranslatorManager] Apple Translation failed (offline): \(error.localizedDescription)")
+                }
+            }
+
+            // 2. Try MockTranslator with multi-word fallback.
+            let mockResult = translateWithMultiWordFallback(text)
+            if mockResult != text {
+                cachedTranslations[text] = mockResult
+                isUsingMockTranslator = true
+                return mockResult
+            }
+
+            isUsingMockTranslator = true
+            return mockResult
         }
 
-        // 2. Try MyMemory free API (works on simulator, no API key needed).
-        let apiResult = await TranslationAPIService.shared.translate(text, from: "en", to: "pt")
-        if apiResult != text {
-            cachedTranslations[text] = apiResult
-            isUsingMockTranslator = false
-            return apiResult
-        }
-
-        // 3. Last resort: built-in mock dictionary.
+        // Final fallback: mock translator (online path reached here).
         isUsingMockTranslator = true
-        let translated = MockTranslator.shared.translate(text)
+        let translated = translateWithMultiWordFallback(text)
         if translated != text {
             cachedTranslations[text] = translated
         }
         return translated
+    }
+
+    /// Mock translation with multi-word fallback:
+    /// If the whole phrase isn't found, try translating each word individually and join.
+    private func translateWithMultiWordFallback(_ text: String) -> String {
+        let result = MockTranslator.shared.translate(text)
+
+        // If MockTranslator returned identity and text has multiple words, try per-word.
+        if result == text {
+            let words = text.split(separator: " ")
+            if words.count > 1 {
+                var translatedWords: [String] = []
+                var anyTranslated = false
+                for word in words {
+                    let wordStr = String(word)
+                    let translatedWord = MockTranslator.shared.translate(wordStr)
+                    if translatedWord != wordStr {
+                        anyTranslated = true
+                        translatedWords.append(translatedWord)
+                    } else {
+                        translatedWords.append(wordStr)
+                    }
+                }
+                if anyTranslated {
+                    return translatedWords.joined(separator: " ")
+                }
+            }
+        }
+
+        return result
     }
 
     /// Translates multiple texts concurrently.

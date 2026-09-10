@@ -10,10 +10,10 @@ enum AppTab: Int, CaseIterable {
 
     var title: String {
         switch self {
-        case .vocabulary: return "Vocabulário"
-        case .commonSentences: return "Frases Comuns"
-        case .pronunciation: return "Pronúncia"
-        case .qa: return "Perguntas e Respostas"
+        case .vocabulary: return "Vocabulary"
+        case .commonSentences: return "Common Sentences"
+        case .pronunciation: return "Pronunciation"
+        case .qa: return "Q&A"
         }
     }
 
@@ -57,7 +57,7 @@ struct MainMenuView: View {
                             .foregroundColor(.primary)
                             .padding(.top, 20)
 
-                        Text("Escolha um módulo para começar a aprender")
+                        Text("Choose a module to start learning")
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                             .padding(.bottom, 8)
@@ -159,14 +159,14 @@ struct MainMenuView: View {
                         .foregroundColor(.primary)
 
                     if isUnlocked {
-                        Text("Toque para abrir")
+                        Text("Tap to open")
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                     } else {
                         HStack(spacing: 4) {
                             Image(systemName: "lock.fill")
                                 .font(.system(size: 10))
-                            Text("Disponível com Langly Premium")
+                            Text("Available with Langly Premium")
                                 .font(.system(size: 12))
                         }
                         .foregroundColor(.secondary)
@@ -259,7 +259,7 @@ struct MainMenuView: View {
                 .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.primary)
 
-            Text("Este módulo faz parte do Langly Premium.\nAssine para desbloquear todos os módulos.")
+            Text("This module is part of Langly Premium.\nSubscribe to unlock all modules.")
                 .font(.system(size: 14))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -269,7 +269,7 @@ struct MainMenuView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "sparkles")
-                    Text("Desbloquear com Langly Premium")
+                    Text("Unlock with Langly Premium")
                         .fontWeight(.semibold)
                 }
                 .foregroundColor(.white)
@@ -367,16 +367,16 @@ struct PaywallView: View {
                         .font(.system(size: 34, weight: .bold))
                         .foregroundColor(.white)
 
-                    Text("Seu trajeto é a sua sala de aula.")
+                    Text("Your commute is your classroom.")
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.85))
 
                     // Benefits card.
                     VStack(alignment: .leading, spacing: 14) {
-                        benefitRow(icon: "infinity", text: "Gameplay ilimitado — sem vidas, sem limites")
-                        benefitRow(icon: "waveform", text: "Listas personalizadas com áudio em loop")
-                        benefitRow(icon: "wifi.slash", text: "Funciona 100% offline")
-                        benefitRow(icon: "nosign", text: "Sem anúncios")
+                        benefitRow(icon: "infinity", text: "Unlimited gameplay — no lives, no limits")
+                        benefitRow(icon: "waveform", text: "Custom word lists with looping audio")
+                        benefitRow(icon: "wifi.slash", text: "Works 100% offline")
+                        benefitRow(icon: "nosign", text: "No ads")
                     }
                     .padding(20)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -402,7 +402,7 @@ struct PaywallView: View {
                                     ProgressView()
                                         .tint(Color(hex: 0x005224))
                                 } else {
-                                    Text("Assinar por \(product.displayPrice)/mês")
+                                    Text("Subscribe for \(product.displayPrice)/month")
                                         .font(.system(size: 18, weight: .bold))
                                 }
                             }
@@ -429,7 +429,7 @@ struct PaywallView: View {
                     Button {
                         Task { await iapManager.restorePurchases() }
                     } label: {
-                        Text("Restaurar Compra")
+                        Text("Restore Purchase")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white.opacity(0.9))
                     }
@@ -437,16 +437,16 @@ struct PaywallView: View {
 
                     // Terms.
                     VStack(spacing: 6) {
-                        Text("A assinatura é renovada automaticamente até ser cancelada. O pagamento é cobrado na sua conta Apple ID na confirmação da compra.")
+                        Text("The subscription renews automatically until cancelled. Payment is charged to your Apple ID account at confirmation of purchase.")
                             .font(.system(size: 11))
                             .multilineTextAlignment(.center)
                         HStack(spacing: 12) {
                             Link(
-                                "Termos de Uso",
+                                "Terms of Use",
                                 destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
                             )
                             Link(
-                                "Privacidade",
+                                "Privacy",
                                 destination: URL(string: "https://moviecolor.github.io/langly-app/")!
                             )
                         }

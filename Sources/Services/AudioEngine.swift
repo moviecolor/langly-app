@@ -90,6 +90,22 @@ final class AudioEngine: NSObject, ObservableObject {
         speakNextInQueue()
     }
 
+    // MARK: - Voice Selection
+
+    /// Returns the best quality pt-BR voice available on the system.
+    private func bestPtBRVoice() -> AVSpeechSynthesisVoice? {
+        let ptVoices = AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language.hasPrefix("pt-B") }
+
+        if let premium = ptVoices.first(where: { $0.quality == .premium }) {
+            return premium
+        }
+        if let enhanced = ptVoices.first(where: { $0.quality == .enhanced }) {
+            return enhanced
+        }
+        return ptVoices.first
+    }
+
     // MARK: - Private
 
     /// Creates a configured speech utterance for the given text.
@@ -108,8 +124,11 @@ final class AudioEngine: NSObject, ObservableObject {
             } else {
                 utterance.pitchMultiplier = 1.15
             }
+        } else if let bestVoice = bestPtBRVoice() {
+            // No user-selected voice — use the best quality pt-BR voice available.
+            utterance.voice = bestVoice
         } else {
-            // Default to Portuguese (Brazil) voice.
+            // Final fallback to system default for the language.
             utterance.voice = AVSpeechSynthesisVoice(language: "pt-BR")
         }
 

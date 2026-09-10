@@ -22,10 +22,10 @@ enum AppModule: String, CaseIterable {
     /// Display name for the module.
     var displayName: String {
         switch self {
-        case .vocabulary: return "Vocabulário"
-        case .commonSentences: return "Frases Comuns"
-        case .pronunciation: return "Pronúncia"
-        case .qa: return "Perguntas e Respostas"
+        case .vocabulary: return "Vocabulary"
+        case .commonSentences: return "Common Sentences"
+        case .pronunciation: return "Pronunciation"
+        case .qa: return "Q&A"
         }
     }
 

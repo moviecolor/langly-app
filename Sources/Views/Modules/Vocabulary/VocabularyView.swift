@@ -14,6 +14,9 @@ struct VocabularyView: View {
     @State private var newBlockName: String = ""
     @State private var mixAllBlocks: Bool = false
     @State private var selectedBlockForInput: UUID?
+    @State private var blockToDelete: WordBlock?
+    @State private var showDeleteBlockConfirmation = false
+    @State private var showBlockLimitAlert = false
 
     var body: some View {
         ZStack {
@@ -72,15 +75,20 @@ struct VocabularyView: View {
                         emptyState
                     } else {
                         ForEach(wordBlocks) { block in
-                            blockCard(block)
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        HapticPattern.impact.trigger()
-                                        deleteBlock(block)
-                                    } label: {
-                                        Label("Delete Block", systemImage: "trash")
-                                    }
+                            NavigationLink {
+                                BlockDetailView(block: block)
+                            } label: {
+                                blockCard(block)
+                            }
+                            .buttonStyle(.plain)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    HapticPattern.impact.trigger()
+                                    deleteBlock(block)
+                                } label: {
+                                    Label("Delete Block", systemImage: "trash")
                                 }
+                            }
                         }
 
                         // Ghost block suggestion.
@@ -122,7 +130,12 @@ struct VocabularyView: View {
                 .textInputAutocapitalization(.words)
             Button("Cancel", role: .cancel) { newBlockName = "" }
             Button("Create") {
-                guard !newBlockName.isEmpty, wordBlocks.count < 10 else { return }
+                guard !newBlockName.isEmpty else { return }
+                if wordBlocks.count >= 10 {
+                    showBlockLimitAlert = true
+                    newBlockName = ""
+                    return
+                }
                 let block = WordBlock(blockName: newBlockName, vocabularyWords: [], isActive: true)
                 modelContext.insert(block)
                 try? modelContext.save()
@@ -130,6 +143,26 @@ struct VocabularyView: View {
             }
         } message: {
             Text("Enter a name for the new word block (max 10 blocks).")
+        }
+        .alert("Block limit reached", isPresented: $showBlockLimitAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Delete a block to create a new one.")
+        }
+        .confirmationDialog(
+            "Delete Block",
+            isPresented: $showDeleteBlockConfirmation,
+            titleVisibility: .visible
+        ) {
+            if let block = blockToDelete {
+                Button("Delete \"\(block.blockName)\"", role: .destructive) {
+                    HapticPattern.impact.trigger()
+                    deleteBlock(block)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently delete this block and all its words.")
         }
     }
 
@@ -231,89 +264,98 @@ struct VocabularyView: View {
         let maxWords = 15
         let progress = Double(activeWords) / Double(maxWords)
 
-        return Button {
-            selectedBlockForInput = block.id
-            showWordInput = true
-        } label: {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    HStack(spacing: 6) {
-                        Image(systemName: block.isActive ? "checkmark.circle.fill" : "circle")
-                            .foregroundStyle(block.isActive ? Color(hex: 0x00D4AA) : .secondary)
-                            .font(.system(size: 14))
-                        Text(block.blockName)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.primary)
-                    }
-
-                    Spacer()
-
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("\(activeWords)/\(maxWords) words")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                        Text("Tap to add words")
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(hex: 0x00D4AA))
-                    }
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: block.isActive ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(block.isActive ? Color(hex: 0x00D4AA) : .secondary)
+                        .font(.system(size: 14))
+                    Text(block.blockName)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.primary)
                 }
 
-                // Progress bar.
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.gray.opacity(0.2))
-                            .frame(height: 6)
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color(hex: 0x00D4AA))
-                            .frame(width: geo.size.width * progress, height: 6)
-                    }
-                }
-                .frame(height: 6)
+                Spacer()
 
-                // English words list — compact tag layout.
-                if !block.vocabularyWords.isEmpty {
-                    let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
-                    LazyVGrid(columns: columns, spacing: 6) {
-                        ForEach(block.vocabularyWords) { word in
-                            Text(word.nativeWord)
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.primary)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 5)
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color(hex: 0x00D4AA).opacity(0.1))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color(hex: 0x00D4AA).opacity(0.2), lineWidth: 0.5)
-                                )
-                        }
-                    }
-                } else {
-                    HStack {
-                        Spacer()
-                        Text("Empty — tap to add words")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary.opacity(0.6))
-                        Spacer()
-                    }
-                    .padding(.vertical, 8)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(activeWords)/\(maxWords) words")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    Text("Tap to view")
+                        .font(.system(size: 10))
+                        .foregroundColor(Color(hex: 0x00D4AA))
                 }
             }
-            .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color.appSurface)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color(hex: 0x00D4AA).opacity(0.2), lineWidth: 1)
-                    )
-            )
+
+            // Progress bar.
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(height: 6)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(hex: 0x00D4AA))
+                        .frame(width: geo.size.width * progress, height: 6)
+                }
+            }
+            .frame(height: 6)
+
+            // English words list — compact tag layout.
+            if !block.vocabularyWords.isEmpty {
+                let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
+                LazyVGrid(columns: columns, spacing: 6) {
+                    ForEach(block.vocabularyWords) { word in
+                        Text(word.nativeWord)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.primary)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 5)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(hex: 0x00D4AA).opacity(0.1))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color(hex: 0x00D4AA).opacity(0.2), lineWidth: 0.5)
+                            )
+                    }
+                }
+            } else {
+                HStack {
+                    Spacer()
+                    Text("Tap to add words")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary.opacity(0.6))
+                    Spacer()
+                }
+                .padding(.vertical, 8)
+            }
         }
-        .buttonStyle(.plain)
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.appSurface)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(hex: 0x00D4AA).opacity(0.2), lineWidth: 1)
+                )
+        )
+        .overlay(alignment: .topTrailing) {
+            // Quick-delete button overlay.
+            Button {
+                blockToDelete = block
+                showDeleteBlockConfirmation = true
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 22, height: 22)
+                    .background(Circle().fill(Color.red.opacity(0.8)))
+            }
+            .offset(x: 8, y: -8)
+            .buttonStyle(.plain)
+        }
     }
 
     // MARK: - Delete Block

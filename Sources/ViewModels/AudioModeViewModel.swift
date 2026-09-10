@@ -77,7 +77,7 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         do {
             let session = AVAudioSession.sharedInstance()
             try session.setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers])
-            try session.setActive(true)
+            try session.setActive(true, options: [])
         } catch {
             print("[AudioModeViewModel] Failed to setup audio session: \(error)")
         }
@@ -168,6 +168,24 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         backgroundTaskID = .invalid
     }
 
+    // MARK: - Voice Selection
+
+    /// Returns the best quality pt-BR voice available on the system.
+    /// Prefers .premium, then .enhanced, then any available voice.
+    private func bestPtBRVoice() -> AVSpeechSynthesisVoice? {
+        let ptVoices = AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language.hasPrefix("pt-B") }
+
+        // Premium first, then enhanced, then any.
+        if let premium = ptVoices.first(where: { $0.quality == .premium }) {
+            return premium
+        }
+        if let enhanced = ptVoices.first(where: { $0.quality == .enhanced }) {
+            return enhanced
+        }
+        return ptVoices.first
+    }
+
     // MARK: - Private
 
     private func buildPlaybackQueue() -> [AudioWord] {
@@ -245,18 +263,27 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         speechUtterance.volume = 1.0
 
         // Use the user-selected voice for Portuguese, system default for English.
-        if utterance.language.hasPrefix("pt"),
-           !selectedVoiceIdentifier.isEmpty,
-           let voice = AVSpeechSynthesisVoice(identifier: selectedVoiceIdentifier) {
-            speechUtterance.voice = voice
-            // Lower pitch for male voice, slightly higher for female.
-            if selectedVoiceGender == "Male" {
-                speechUtterance.pitchMultiplier = 0.5
-            } else {
-                speechUtterance.pitchMultiplier = 1.15
+        if utterance.language.hasPrefix("pt") {
+            if !selectedVoiceIdentifier.isEmpty,
+               let voice = AVSpeechSynthesisVoice(identifier: selectedVoiceIdentifier) {
+                speechUtterance.voice = voice
+                // Lower pitch for male voice, slightly higher for female.
+                if selectedVoiceGender == "Male" {
+                    speechUtterance.pitchMultiplier = 0.5
+                } else {
+                    speechUtterance.pitchMultiplier = 1.15
+                }
+            } else if let bestVoice = bestPtBRVoice() {
+                // No user-selected voice — use the best quality pt-BR voice available.
+                speechUtterance.voice = bestVoice
+            } else if let fallback = AVSpeechSynthesisVoice(language: "pt-BR") {
+                speechUtterance.voice = fallback
             }
-        } else if let voice = AVSpeechSynthesisVoice(language: utterance.language) {
-            speechUtterance.voice = voice
+        } else {
+            // English: use default system voice for en-US.
+            if let voice = AVSpeechSynthesisVoice(language: utterance.language) {
+                speechUtterance.voice = voice
+            }
         }
 
         speechUtterance.postUtteranceDelay = gapSeconds

@@ -69,6 +69,8 @@ targets:
           - UIInterfaceOrientationPortrait
         UIRequiredDeviceCapabilities:
           - arm64
+        UIBackgroundModes:
+          - audio
 
   LanglyTests:
     type: bundle.unit-test

@@ -9,6 +9,7 @@ final class TranslationAPIService {
     static let shared = TranslationAPIService()
 
     private let session: URLSession
+    private let googleSession: URLSession
     private let cache = NSCache<NSString, NSString>()
 
     private init() {
@@ -16,6 +17,13 @@ final class TranslationAPIService {
         config.timeoutIntervalForRequest = 10
         config.waitsForConnectivity = true
         self.session = URLSession(configuration: config)
+
+        // Google fallback gets its own session with its own timeout.
+        let googleConfig = URLSessionConfiguration.default
+        googleConfig.timeoutIntervalForRequest = 10
+        googleConfig.waitsForConnectivity = false
+        self.googleSession = URLSession(configuration: googleConfig)
+
         cache.countLimit = 500
     }
 
@@ -37,6 +45,15 @@ final class TranslationAPIService {
 
         // Try MyMemory API first (free, reliable).
         let result = await translateMyMemory(text: trimmed, from: sourceLang, to: targetLang)
+
+        // If MyMemory returned identity (no translation), try Google fallback.
+        if result.lowercased() == trimmed.lowercased() || result.isEmpty {
+            let googleResult = await translateGoogleLegacy(text: trimmed, from: sourceLang, to: targetLang)
+            if !googleResult.isEmpty && googleResult.lowercased() != trimmed.lowercased() {
+                cache.setObject(googleResult as NSString, forKey: cacheKey)
+                return googleResult
+            }
+        }
 
         // Cache successful translations.
         if result != trimmed {
@@ -97,6 +114,54 @@ final class TranslationAPIService {
         }
 
         return text
+    }
+
+    // MARK: - Google Translate (Legacy, Unofficial)
+
+    /// Google Translate unofficial endpoint fallback.
+    /// Uses the free `translate.googleapis.com` endpoint which requires no API key.
+    /// The response is a nested JSON array: [[["translated","original",...],...],...].
+    private func translateGoogleLegacy(text: String, from sourceLang: String, to targetLang: String) async -> String {
+        let query = text.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? text
+
+        guard let url = URL(string: "https://translate.googleapis.com/translate_a/single?client=gtx&sl=\(sourceLang)&tl=\(targetLang)&dt=t&q=\(query)") else {
+            return ""
+        }
+
+        do {
+            let (data, response) = try await googleSession.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                print("[TranslationAPI] Google Translate returned non-200 status")
+                return ""
+            }
+
+            // Parse the nested array JSON.
+            // Structure: [ [ [ "translated text", "original text", ... ], ... ], ... ]
+            guard let jsonArray = try JSONSerialization.jsonObject(with: data) as? [Any],
+                  let firstArray = jsonArray.first as? [[Any]] else {
+                print("[TranslationAPI] Google Translate: unexpected JSON structure")
+                return ""
+            }
+
+            // Concatenate the first element (translated text) of each segment.
+            var translatedParts: [String] = []
+            for segment in firstArray {
+                if let translatedText = segment.first as? String {
+                    translatedParts.append(translatedText)
+                }
+            }
+
+            let result = translatedParts.joined()
+            if !result.isEmpty && result.lowercased() != text.lowercased() {
+                return result
+            }
+        } catch {
+            print("[TranslationAPI] Google Translate failed: \(error.localizedDescription)")
+        }
+
+        return ""
     }
 }
 
