@@ -13,14 +13,17 @@ final class TranslationAPIService {
     private let cache = NSCache<NSString, NSString>()
 
     private init() {
+        // Never wait-for-connectivity: if the request can't reach the server
+        // quickly, fail fast so the translator can fall back to the mock
+        // dictionary instead of spinning indefinitely.
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 10
-        config.waitsForConnectivity = true
+        config.timeoutIntervalForRequest = 8
+        config.waitsForConnectivity = false
         self.session = URLSession(configuration: config)
 
         // Google fallback gets its own session with its own timeout.
         let googleConfig = URLSessionConfiguration.default
-        googleConfig.timeoutIntervalForRequest = 10
+        googleConfig.timeoutIntervalForRequest = 8
         googleConfig.waitsForConnectivity = false
         self.googleSession = URLSession(configuration: googleConfig)
 

@@ -99,6 +99,14 @@ final class TranslatorManager: ObservableObject {
         isModelDownloaded = false
     }
 
+    /// Whether Apple's on-device Translation framework is safe to use.
+    /// On unsupported devices (e.g. simulator without a translation model) the
+    /// system shows a "translation is not supported" alert if we call it, so
+    /// we only attempt it when LanguageAvailability reported installed/supported.
+    private var canUseAppleTranslation: Bool {
+        isModelDownloaded && isSessionReady && sessionHolder?.session != nil
+    }
+
     // MARK: - Translation
 
     /// Translates text from English to Portuguese.
@@ -106,6 +114,9 @@ final class TranslatorManager: ObservableObject {
     /// 1. Cache
     /// 2. Online: Apple Translation → MyMemory → Google fallback
     /// 3. Offline: Apple Translation (on-device model) → MockTranslator (with multi-word fallback)
+    ///
+    /// The whole attempt is raced against a hard timeout so the UI can never
+    /// spin forever (e.g. a stalled network call).
     func translate(_ text: String) async -> String {
         // Check cache first.
         if let cached = cachedTranslations[text] {
@@ -122,7 +133,7 @@ final class TranslatorManager: ObservableObject {
             connectionStatus = "Online"
 
             // 1. Try Apple's on-device Translation framework.
-            if let session = sessionHolder?.session {
+            if canUseAppleTranslation, let session = sessionHolder?.session {
                 do {
                     let response = try await session.translate(text)
                     let translated = response.targetText
@@ -134,9 +145,11 @@ final class TranslatorManager: ObservableObject {
                 }
             }
 
-            // 2. Try MyMemory free API.
-            let apiResult = await TranslationAPIService.shared.translate(text, from: "en", to: "pt")
-            if apiResult != text {
+            // 2. Try the network APIs, raced against a timeout.
+            let apiResult = await withTimeout(seconds: 8.0) {
+                await TranslationAPIService.shared.translate(text, from: "en", to: "pt")
+            }
+            if let apiResult, apiResult != text {
                 cachedTranslations[text] = apiResult
                 isUsingMockTranslator = false
                 return apiResult
@@ -146,7 +159,7 @@ final class TranslatorManager: ObservableObject {
             connectionStatus = "Offline"
 
             // 1. Try Apple's on-device Translation (works offline if model is downloaded).
-            if let session = sessionHolder?.session {
+            if canUseAppleTranslation, let session = sessionHolder?.session {
                 do {
                     let response = try await session.translate(text)
                     let translated = response.targetText
@@ -177,6 +190,29 @@ final class TranslatorManager: ObservableObject {
             cachedTranslations[text] = translated
         }
         return translated
+    }
+
+    /// Runs an async operation with a hard timeout, returning the first result
+    /// to arrive. If the sleep wins, the operation task is cancelled and nil is
+    /// returned so the caller falls through to the next fallback. URLSession
+    /// requests respond to task cancellation, so a stalled network call cannot
+    /// leave the UI spinner hanging forever.
+    private func withTimeout<T: Sendable>(
+        seconds: TimeInterval,
+        _ operation: @escaping @Sendable () async -> T
+    ) async -> T? {
+        await withTaskGroup(of: T?.self) { group in
+            group.addTask { await operation() }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(seconds))
+                return nil
+            }
+            for await value in group {
+                group.cancelAll()
+                return value
+            }
+            return nil
+        }
     }
 
     /// Mock translation with multi-word fallback:

@@ -227,6 +227,8 @@ final class MockTranslator {
         "what is this": "o que é isso",
         "where is": "onde está",
         "my name is": "meu nome é",
+        "she is beautiful": "ela é bonita",
+        "you are beautiful": "você é bonita",
 
         // Travel & Directions
         "airport": "aeroporto",
