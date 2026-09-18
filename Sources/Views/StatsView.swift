@@ -6,6 +6,13 @@ struct StatsView: View {
     @Query private var analytics: [LocalAnalytics]
     @Query private var trackers: [StreakTracker]
     @Query private var words: [VocabularyWord]
+    @Query private var settings: [AppSettings]
+
+    /// Localized chrome string for the user's home language — "Portuguese"
+    /// renders Brazilian Portuguese, everything else renders English.
+    private func L(_ key: String) -> String {
+        Localization.string(key, homeLanguage: settings.first?.homeLanguage)
+    }
 
     private var stats: LocalAnalytics? { analytics.first }
     private var tracker: StreakTracker? { trackers.first }
@@ -32,7 +39,7 @@ struct StatsView: View {
                     // MARK: - Privacy Notice
                     privacyNotice
                 } else {
-                    Text("No data yet")
+                    Text(L("stats.noData"))
                         .foregroundColor(.secondary)
                         .padding(.top, 60)
                 }
@@ -40,7 +47,7 @@ struct StatsView: View {
             .padding()
         }
         .background(Color.appBackground.ignoresSafeArea())
-        .navigationTitle("Your Stats")
+        .navigationTitle(L("stats.title"))
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -52,19 +59,19 @@ struct StatsView: View {
                 statCard(
                     icon: "calendar",
                     value: "\(stats.daysSinceLaunch)",
-                    label: "Days",
+                    label: L("stats.days"),
                     color: 0x3498DB
                 )
                 statCard(
                     icon: "book.fill",
                     value: "\(stats.totalWordsAdded)",
-                    label: "Words",
+                    label: L("stats.words"),
                     color: 0xFF6B35
                 )
                 statCard(
                     icon: "gamecontroller.fill",
                     value: "\(stats.totalGamesPlayed)",
-                    label: "Games",
+                    label: L("stats.games"),
                     color: 0x9B59B6
                 )
             }
@@ -73,19 +80,19 @@ struct StatsView: View {
                 statCard(
                     icon: "headphones",
                     value: "\(stats.totalAudioSessions)",
-                    label: "Audio",
+                    label: L("stats.audio"),
                     color: 0x00D4AA
                 )
                 statCard(
                     icon: "flame.fill",
                     value: "\(tracker?.currentStreak ?? 0)",
-                    label: "Streak",
+                    label: L("stats.streak"),
                     color: 0xFF4500
                 )
                 statCard(
                     icon: "checkmark.circle.fill",
                     value: "\(stats.totalWordsMastered)",
-                    label: "Mastered",
+                    label: L("stats.mastered"),
                     color: 0x00D4AA
                 )
             }
@@ -122,15 +129,15 @@ struct StatsView: View {
 
     private func learningSection(_ stats: LocalAnalytics) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Learning")
+            Text(L("stats.learning"))
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(.primary)
 
             VStack(spacing: 10) {
-                statRow(label: "Words Added", value: "\(stats.totalWordsAdded)")
-                statRow(label: "Words Reviewed", value: "\(stats.totalWordsReviewed)")
-                statRow(label: "Words Mastered", value: "\(stats.totalWordsMastered)")
-                statRow(label: "Mastery Rate", value: "\(masteryRate(stats))%")
+                statRow(label: L("stats.wordsAdded"), value: "\(stats.totalWordsAdded)")
+                statRow(label: L("stats.wordsReviewed"), value: "\(stats.totalWordsReviewed)")
+                statRow(label: L("stats.wordsMastered"), value: "\(stats.totalWordsMastered)")
+                statRow(label: L("stats.masteryRate"), value: "\(masteryRate(stats))%")
             }
             .padding()
             .background(
@@ -144,17 +151,17 @@ struct StatsView: View {
 
     private func engagementSection(_ stats: LocalAnalytics) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Engagement")
+            Text(L("stats.engagement"))
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(.primary)
 
             VStack(spacing: 10) {
-                statRow(label: "Total Sessions", value: "\(stats.totalSessionCount)")
-                statRow(label: "Total Time", value: stats.formattedTotalTime)
-                statRow(label: "Games Played", value: "\(stats.totalGamesPlayed)")
-                statRow(label: "Best Game Score", value: "\(stats.bestGameScore)")
-                statRow(label: "Audio Sessions", value: "\(stats.totalAudioSessions)")
-                statRow(label: "Longest Streak", value: "\(stats.longestStreak) days")
+                statRow(label: L("stats.totalSessions"), value: "\(stats.totalSessionCount)")
+                statRow(label: L("stats.totalTime"), value: stats.formattedTotalTime)
+                statRow(label: L("stats.gamesPlayed"), value: "\(stats.totalGamesPlayed)")
+                statRow(label: L("stats.bestScore"), value: "\(stats.bestGameScore)")
+                statRow(label: L("stats.audioSessions"), value: "\(stats.totalAudioSessions)")
+                statRow(label: L("stats.longestStreak"), value: String(format: L("stats.daysValue"), stats.longestStreak))
             }
             .padding()
             .background(
@@ -169,14 +176,14 @@ struct StatsView: View {
     private func heatmapSection(_ stats: LocalAnalytics) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("When You Practice")
+                Text(L("stats.whenYouPractice"))
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.primary)
 
                 Spacer()
 
                 if stats.peakHour != nil {
-                    Text("Peak: \(stats.formattedPeakHour)")
+                    Text(String(format: L("stats.peak"), stats.formattedPeakHour))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(Color(hex: 0x00D4AA))
                 }
@@ -201,7 +208,7 @@ struct StatsView: View {
                 }
             }
 
-            Text("Each cell = 1 hour of the day. Darker = more practice.")
+            Text(L("stats.heatmapHint"))
                 .font(.caption)
                 .foregroundColor(.secondary.opacity(0.7))
         }
@@ -216,14 +223,14 @@ struct StatsView: View {
 
     private func difficultySection(_ stats: LocalAnalytics) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Tricky Words")
+            Text(L("stats.trickyWords"))
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(.primary)
 
             let difficult = stats.difficultWords(limit: 5)
 
             if difficult.isEmpty {
-                Text("No errors tracked yet. Play some games to see which words trip you up!")
+                Text(L("stats.noErrors"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .padding(.vertical, 8)
@@ -241,7 +248,7 @@ struct StatsView: View {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.caption)
                                     .foregroundColor(.red.opacity(0.7))
-                                Text("\(item.errors) errors")
+                                Text(String(format: L("stats.errorsValue"), item.errors))
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -297,10 +304,10 @@ struct StatsView: View {
                 .foregroundColor(Color(hex: 0x00D4AA))
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("100% Private")
+                Text(L("stats.privacyTitle"))
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.primary)
-                Text("All data stays on your device. Nothing is sent anywhere.")
+                Text(L("stats.privacyBody"))
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
@@ -322,5 +329,5 @@ struct StatsView: View {
     NavigationStack {
         StatsView()
     }
-    .modelContainer(for: [LocalAnalytics.self, StreakTracker.self])
+    .modelContainer(for: [LocalAnalytics.self, StreakTracker.self, AppSettings.self])
 }

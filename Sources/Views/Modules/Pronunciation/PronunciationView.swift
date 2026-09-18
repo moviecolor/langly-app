@@ -1,8 +1,16 @@
 import SwiftUI
+import SwiftData
 
 /// Pronunciation module — "Coming Soon" page with loading graphic.
 struct PronunciationView: View {
     @EnvironmentObject var iapManager: IAPManager
+    @Query private var settings: [AppSettings]
+
+    /// Localized chrome string for the user's home language — "Portuguese"
+    /// renders Brazilian Portuguese, everything else renders English.
+    private func L(_ key: String) -> String {
+        Localization.string(key, homeLanguage: settings.first?.homeLanguage)
+    }
 
     var body: some View {
         ZStack {
@@ -25,7 +33,7 @@ struct PronunciationView: View {
             // Content: description at top, badge at bottom.
             VStack {
                 // Description — pinned to the top.
-                Text("Practice speaking with real-time feedback and improve your accent. Unlock this module when it's ready!")
+                Text(L("module.pronunciation.body"))
                     .font(.subheadline)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -36,7 +44,7 @@ struct PronunciationView: View {
 
                 // Coming Soon badge + title — pinned to the very bottom.
                 VStack(spacing: 10) {
-                    Text("COMING SOON")
+                    Text(L("module.comingSoon"))
                         .font(.system(size: 14, weight: .heavy))
                         .foregroundColor(.white)
                         .tracking(3)
@@ -47,7 +55,7 @@ struct PronunciationView: View {
                                 .fill(Color.black.opacity(0.6))
                         )
 
-                    Text("Pronunciation")
+                    Text(L("module.pronunciation"))
                         .font(.title.bold())
                         .foregroundColor(.white)
                 }
@@ -55,7 +63,7 @@ struct PronunciationView: View {
             }
         }
         .ignoresSafeArea()
-        .navigationTitle("Pronunciation")
+        .navigationTitle(L("module.pronunciation"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
     }
@@ -66,4 +74,5 @@ struct PronunciationView: View {
         PronunciationView()
             .environmentObject(IAPManager())
     }
+    .modelContainer(for: AppSettings.self)
 }

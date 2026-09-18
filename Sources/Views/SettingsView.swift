@@ -24,6 +24,14 @@ struct SettingsView: View {
         "English", "Portuguese"
     ]
 
+    /// Localized chrome string for the user's home language — "Portuguese"
+    /// renders Brazilian Portuguese, everything else renders English. Reads the
+    /// persisted row (not the in-flight picker selection) so chrome stays
+    /// stable while the user edits the pickers.
+    private func L(_ key: String) -> String {
+        Localization.string(key, homeLanguage: settings.first?.homeLanguage)
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -61,11 +69,11 @@ struct SettingsView: View {
                     .padding()
                 }
             }
-            .navigationTitle("Settings")
+            .navigationTitle(L("settings.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                    Button(L("settings.done")) {
                         saveSettings()
                         dismiss()
                     }
@@ -87,17 +95,17 @@ struct SettingsView: View {
 
     private var languageSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Languages")
+            Text(L("settings.languages"))
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.primary)
 
             // Home language.
             VStack(alignment: .leading, spacing: 8) {
-                Text("Home Language (your language)")
+                Text(L("settings.homeLanguage"))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.secondary)
 
-                Picker("Home Language", selection: $homeLanguage) {
+                Picker(L("settings.homeLanguage"), selection: $homeLanguage) {
                     ForEach(availableLanguages, id: \.self) { lang in
                         Text(lang).tag(lang)
                     }
@@ -112,11 +120,11 @@ struct SettingsView: View {
 
             // Target language.
             VStack(alignment: .leading, spacing: 8) {
-                Text("Language to Learn")
+                Text(L("settings.targetLanguage"))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.secondary)
 
-                Picker("Target Language", selection: $targetLanguage) {
+                Picker(L("settings.targetLanguage"), selection: $targetLanguage) {
                     ForEach(availableLanguages, id: \.self) { lang in
                         Text(lang).tag(lang)
                     }
@@ -135,7 +143,7 @@ struct SettingsView: View {
 
     private var audioSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Audio Playback")
+            Text(L("settings.audio"))
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.primary)
 
@@ -145,13 +153,13 @@ struct SettingsView: View {
                     Image(systemName: "waveform")
                         .font(.caption)
                         .foregroundColor(Color(hex: 0x00D4AA))
-                    Text("Portuguese Voice")
+                    Text(L("settings.portugueseVoice"))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.secondary)
                 }
 
                 if ptVoices.isEmpty {
-                    Text("No Portuguese voice found")
+                    Text(L("settings.noVoiceFound"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .padding(12)
@@ -161,7 +169,7 @@ struct SettingsView: View {
                         )
                 } else {
                     // Male voices — always show section, use default voice as fallback.
-                    Text("Male")
+                    Text(L("settings.gender.male"))
                         .font(.caption.bold())
                         .foregroundColor(.secondary)
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -177,7 +185,7 @@ struct SettingsView: View {
                     }
 
                     // Female voices — always show section.
-                    Text("Female")
+                    Text(L("settings.gender.female"))
                         .font(.caption.bold())
                         .foregroundColor(.secondary)
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -194,7 +202,7 @@ struct SettingsView: View {
 
                     // Other/unspecified voices.
                     if !otherVoices.isEmpty {
-                        Text("Other")
+                        Text(L("settings.gender.other"))
                             .font(.caption.bold())
                             .foregroundColor(.secondary)
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -207,7 +215,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Text("Download higher-quality voices in Settings → Accessibility → Spoken Content → Voices")
+                Text(L("settings.voiceHint"))
                     .font(.caption)
                     .foregroundColor(.secondary.opacity(0.7))
 
@@ -219,7 +227,7 @@ struct SettingsView: View {
                         HStack(spacing: 8) {
                             Image(systemName: isVoiceTesting ? "stop.circle.fill" : "play.circle.fill")
                                 .font(.title3)
-                            Text(isVoiceTesting ? "Playing..." : "Test Selected Voice")
+                            Text(isVoiceTesting ? L("settings.playing") : L("settings.testVoice"))
                                 .font(.subheadline.bold())
                         }
                         .foregroundColor(.white)
@@ -236,7 +244,7 @@ struct SettingsView: View {
             // Playback gap.
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Silence Gap Between Words")
+                    Text(L("settings.silenceGap"))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.secondary)
 
@@ -254,11 +262,11 @@ struct SettingsView: View {
             // Loop toggle.
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Continuous Loop")
+                    Text(L("settings.loop"))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.secondary)
 
-                    Text("Repeats the word list continuously")
+                    Text(L("settings.loopDetail"))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary.opacity(0.7))
                 }
@@ -350,7 +358,7 @@ struct SettingsView: View {
 
                 HStack(spacing: 4) {
                     if !gender.isEmpty {
-                        Text(gender)
+                        Text(genderDisplayName(gender))
                             .font(.caption2)
                     }
                     Text(voiceQualityLabel(voice.quality))
@@ -379,12 +387,22 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
+    /// Display-only gender label for voice chips (the raw "Male"/"Female"/
+    /// "Unknown" value is still what gets persisted and matched upstream).
+    private func genderDisplayName(_ gender: String) -> String {
+        switch gender {
+        case "Male": return L("settings.gender.male")
+        case "Female": return L("settings.gender.female")
+        default: return L("settings.gender.other")
+        }
+    }
+
     private func voiceQualityLabel(_ quality: AVSpeechSynthesisVoiceQuality) -> String {
         switch quality {
-        case .premium: return "premium"
-        case .enhanced: return "enhanced"
-        case .default: return "default"
-        default: return "compact"
+        case .premium: return L("settings.voiceQuality.premium")
+        case .enhanced: return L("settings.voiceQuality.enhanced")
+        case .default: return L("settings.voiceQuality.default")
+        default: return L("settings.voiceQuality.compact")
         }
     }
 
@@ -392,18 +410,18 @@ struct SettingsView: View {
 
     private var appearanceSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Appearance")
+            Text(L("settings.appearance"))
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.primary)
 
             // Dark mode toggle.
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Dark Mode")
+                    Text(L("settings.darkMode"))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.secondary)
 
-                    Text("Toggle between light and dark moss green")
+                    Text(L("settings.darkModeDetail"))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary.opacity(0.7))
                 }
@@ -426,7 +444,7 @@ struct SettingsView: View {
 
     private var aboutSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("About")
+            Text(L("settings.about"))
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.primary)
 
@@ -435,7 +453,7 @@ struct SettingsView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.primary)
 
-                Text("Your personal language learning assistant. Add the words you want to learn, practice with matching games, and memorize with audio repetition.")
+                Text(L("settings.aboutBody"))
                     .font(.system(size: 13))
                     .foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -452,7 +470,7 @@ struct SettingsView: View {
 
     private var howToSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("How to Use")
+            Text(L("settings.howTo"))
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.primary)
 
@@ -478,7 +496,7 @@ struct SettingsView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "envelope.fill")
                             .font(.system(size: 14))
-                        Text("Support: support@langly.app")
+                        Text(L("settings.support"))
                             .font(.system(size: 14, weight: .medium))
                     }
                     .foregroundColor(Color(hex: 0x00D4AA))
@@ -493,14 +511,7 @@ struct SettingsView: View {
     }
 
     private var howToSteps: [String] {
-        [
-            "Tap a word block to start playing",
-            "Create custom blocks — up to 150 words across 10 blocks",
-            "Play Mix N Match to lock in vocabulary",
-            "Use Audio Mode on your commute — audio repeats until memorized",
-            "Everything works offline — your data stays on your device",
-            "Need help? Email support@langly.app"
-        ]
+        (1...6).map { L("settings.howTo\($0)") }
     }
 
     // MARK: - Save Toast
@@ -509,7 +520,7 @@ struct SettingsView: View {
         VStack {
             Spacer()
 
-            Text("Settings Saved!")
+            Text(L("settings.saved"))
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(.white)
                 .padding(.horizontal, 24)

@@ -1,8 +1,16 @@
 import SwiftUI
+import SwiftData
 
 /// Q&A module — "Coming Soon" page with loading graphic.
 struct QAView: View {
     @EnvironmentObject var iapManager: IAPManager
+    @Query private var settings: [AppSettings]
+
+    /// Localized chrome string for the user's home language — "Portuguese"
+    /// renders Brazilian Portuguese, everything else renders English.
+    private func L(_ key: String) -> String {
+        Localization.string(key, homeLanguage: settings.first?.homeLanguage)
+    }
 
     var body: some View {
         ZStack {
@@ -25,7 +33,7 @@ struct QAView: View {
             // Content: description at top, badge at bottom.
             VStack {
                 // Description — pinned to the top.
-                Text("Engage in interactive conversations and test your language knowledge. Unlock this module when it's ready!")
+                Text(L("module.qa.body"))
                     .font(.subheadline)
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
@@ -36,7 +44,7 @@ struct QAView: View {
 
                 // Coming Soon badge + title — pinned to the very bottom.
                 VStack(spacing: 10) {
-                    Text("COMING SOON")
+                    Text(L("module.comingSoon"))
                         .font(.system(size: 14, weight: .heavy))
                         .foregroundColor(.white)
                         .tracking(3)
@@ -47,7 +55,7 @@ struct QAView: View {
                                 .fill(Color.black.opacity(0.6))
                         )
 
-                    Text("Q&A")
+                    Text(L("module.qa"))
                         .font(.title.bold())
                         .foregroundColor(.white)
                 }
@@ -55,7 +63,7 @@ struct QAView: View {
             }
         }
         .ignoresSafeArea()
-        .navigationTitle("Q&A")
+        .navigationTitle(L("module.qa"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
     }
@@ -66,4 +74,5 @@ struct QAView: View {
         QAView()
             .environmentObject(IAPManager())
     }
+    .modelContainer(for: AppSettings.self)
 }

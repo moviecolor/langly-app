@@ -7,6 +7,13 @@ struct VocabularyView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var wordBlocks: [WordBlock]
     @Query private var vocabularyWords: [VocabularyWord]
+    @Query private var settings: [AppSettings]
+
+    /// Localized chrome string for the user's home language — "Portuguese"
+    /// renders Brazilian Portuguese, everything else renders English.
+    private func L(_ key: String) -> String {
+        Localization.string(key, homeLanguage: settings.first?.homeLanguage)
+    }
 
     @State private var selectedMode: VocabularyMode?
     @State private var showWordInput = false
@@ -33,7 +40,7 @@ struct VocabularyView: View {
                             icon: "gamecontroller.fill",
                             iconGradientColors: [Color(hex: 0xFF6B35), Color(hex: 0xFF8F5E)],
                              title: "Mix N Match",
-                            subtitle: "Match English and Portuguese pairs before time runs out",
+                            subtitle: L("vocab.mixNMatch.subtitle"),
                             accentColors: [Color(hex: 0xFF6B35).opacity(0.4), Color(hex: 0x00D4AA).opacity(0.3)],
                             action: { selectedMode = .matchMadness }
                         )
@@ -44,8 +51,8 @@ struct VocabularyView: View {
                         FeatureCardButton(
                             icon: "shuffle",
                             iconGradientColors: [Color(hex: 0x9B59B6), Color(hex: 0x8E44AD)],
-                            title: "Mix All Blocks",
-                            subtitle: "Combine words from all blocks into one game",
+                            title: L("vocab.mixAllBlocks"),
+                            subtitle: L("vocab.mixAllBlocks.subtitle"),
                             accentColors: [Color(hex: 0x9B59B6).opacity(0.4), Color(hex: 0x00D4AA).opacity(0.3)],
                             accessory: .toggle(isOn: mixAllBlocks, activeColor: Color(hex: 0x9B59B6)),
                             action: {
@@ -60,8 +67,8 @@ struct VocabularyView: View {
                         FeatureCardButton(
                             icon: "speaker.wave.3.fill",
                             iconGradientColors: [Color(hex: 0x3498DB), Color(hex: 0x2980B9)],
-                            title: "Audio Mode",
-                            subtitle: "Listen on repeat, memorize, and speak out loud. Set repeats and gap in settings.",
+                            title: L("vocab.audioMode"),
+                            subtitle: L("vocab.audioMode.subtitle"),
                             accentColors: [Color(hex: 0x3498DB).opacity(0.4), Color(hex: 0x00D4AA).opacity(0.3)],
                             action: { selectedMode = .audioMode }
                         )
@@ -86,7 +93,7 @@ struct VocabularyView: View {
                                     HapticPattern.impact.trigger()
                                     deleteBlock(block)
                                 } label: {
-                                    Label("Delete Block", systemImage: "trash")
+                                    Label(L("vocab.deleteBlock"), systemImage: "trash")
                                 }
                             }
                         }
@@ -98,7 +105,7 @@ struct VocabularyView: View {
                 .padding()
             }
         }
-        .navigationTitle("Vocabulary")
+        .navigationTitle(L("module.vocabulary"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -125,11 +132,11 @@ struct VocabularyView: View {
         .sheet(isPresented: $showWordInput) {
             WordInputView(preselectedBlockID: selectedBlockForInput)
         }
-        .alert("New Word Block", isPresented: $showNewBlockAlert) {
-            TextField("Block name", text: $newBlockName)
+        .alert(L("vocab.newBlockTitle"), isPresented: $showNewBlockAlert) {
+            TextField(L("vocab.blockName"), text: $newBlockName)
                 .textInputAutocapitalization(.words)
-            Button("Cancel", role: .cancel) { newBlockName = "" }
-            Button("Create") {
+            Button(L("vocab.cancel"), role: .cancel) { newBlockName = "" }
+            Button(L("vocab.create")) {
                 guard !newBlockName.isEmpty else { return }
                 if wordBlocks.count >= 10 {
                     showBlockLimitAlert = true
@@ -142,27 +149,27 @@ struct VocabularyView: View {
                 newBlockName = ""
             }
         } message: {
-            Text("Enter a name for the new word block (max 10 blocks).")
+            Text(L("vocab.newBlockMessage"))
         }
-        .alert("Block limit reached", isPresented: $showBlockLimitAlert) {
-            Button("OK", role: .cancel) {}
+        .alert(L("vocab.blockLimitTitle"), isPresented: $showBlockLimitAlert) {
+            Button(L("vocab.ok"), role: .cancel) {}
         } message: {
-            Text("Delete a block to create a new one.")
+            Text(L("vocab.blockLimitMessage"))
         }
         .confirmationDialog(
-            "Delete Block",
+            L("vocab.deleteBlock"),
             isPresented: $showDeleteBlockConfirmation,
             titleVisibility: .visible
         ) {
             if let block = blockToDelete {
-                Button("Delete \"\(block.blockName)\"", role: .destructive) {
+                Button(String(format: L("vocab.deleteBlockConfirm"), block.blockName), role: .destructive) {
                     HapticPattern.impact.trigger()
                     deleteBlock(block)
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            Button(L("vocab.cancel"), role: .cancel) {}
         } message: {
-            Text("This will permanently delete this block and all its words.")
+            Text(L("vocab.deleteBlockMessage"))
         }
     }
 
@@ -184,11 +191,11 @@ struct VocabularyView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("Add Word Block")
+                    Text(L("vocab.addBlock"))
                         .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.primary)
 
-                    Text("Create a new block to organize your vocabulary")
+                    Text(L("vocab.addBlock.subtitle"))
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.secondary)
                 }
@@ -216,9 +223,9 @@ struct VocabularyView: View {
 
     private var blockSummary: some View {
         HStack(spacing: 12) {
-            summaryCard(icon: "square.stack.3d.down.right.fill", label: "Blocks", value: "\(wordBlocks.count)/10")
-            summaryCard(icon: "character.book.closed.fill", label: "Words", value: "\(vocabularyWords.count)")
-            summaryCard(icon: "checkmark.circle.fill", label: "Mastered", value: "\(vocabularyWords.filter { $0.masteryLevel == .mastered }.count)")
+            summaryCard(icon: "square.stack.3d.down.right.fill", label: L("vocab.blocks"), value: "\(wordBlocks.count)/10")
+            summaryCard(icon: "character.book.closed.fill", label: L("vocab.words"), value: "\(vocabularyWords.count)")
+            summaryCard(icon: "checkmark.circle.fill", label: L("vocab.mastered"), value: "\(vocabularyWords.filter { $0.masteryLevel == .mastered }.count)")
         }
     }
 
@@ -246,9 +253,9 @@ struct VocabularyView: View {
             Image(systemName: "book")
                 .font(.system(size: 40))
                 .foregroundColor(.secondary.opacity(0.5))
-            Text("No word blocks yet")
+            Text(L("vocab.emptyTitle"))
                 .font(.system(size: 16, weight: .bold))
-            Text("Tap \"Add Word Block\" to create your first block,\nthen add words to start learning.")
+            Text(L("vocab.emptyBody"))
                 .font(.system(size: 13))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -278,10 +285,10 @@ struct VocabularyView: View {
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("\(activeWords)/\(maxWords) words")
+                    Text(String(format: L("vocab.wordsCount"), activeWords, maxWords))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
-                    Text("Tap to view")
+                    Text(L("vocab.tapToView"))
                         .font(.system(size: 10))
                         .foregroundColor(Color(hex: 0x00D4AA))
                 }
@@ -324,7 +331,7 @@ struct VocabularyView: View {
             } else {
                 HStack {
                     Spacer()
-                    Text("Tap to add words")
+                    Text(L("vocab.tapToAddWords"))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary.opacity(0.6))
                     Spacer()
@@ -382,11 +389,11 @@ struct VocabularyView: View {
                     .font(.system(size: 28))
                     .foregroundStyle(Color(hex: 0x00D4AA).opacity(0.5))
 
-                Text("Add a New Block")
+                Text(L("vocab.ghostBlock"))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.secondary)
 
-                Text("Create another block to organize\nyour growing vocabulary")
+                Text(L("vocab.ghostBlock.subtitle"))
                     .font(.system(size: 11))
                     .foregroundColor(.secondary.opacity(0.6))
                     .multilineTextAlignment(.center)

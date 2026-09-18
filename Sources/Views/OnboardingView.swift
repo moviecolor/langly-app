@@ -14,6 +14,12 @@ struct OnboardingView: View {
 
     private let synthesizer = AVSpeechSynthesizer()
 
+    /// Localized chrome string for the user's home language — "Portuguese"
+    /// renders Brazilian Portuguese, everything else renders English.
+    private func L(_ key: String) -> String {
+        Localization.string(key, homeLanguage: settings.first?.homeLanguage)
+    }
+
     /// Sample words for the "hear it" preview — one entry per supported
     /// direction, keyed by the language the user is learning.
     private let sampleWords: [String: (native: String, translated: String, voiceCode: String)] = [
@@ -100,15 +106,15 @@ struct OnboardingView: View {
         VStack(spacing: 24) {
             Spacer()
 
-            Text("4 Learning Modules")
+            Text(L("onboarding.modules.title"))
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.primary)
 
             VStack(spacing: 16) {
-                moduleRow(icon: "character.book.closed.fill", title: "Vocabulary", subtitle: "Build your word bank", color: 0xFF6B35)
-                moduleRow(icon: "bubble.left.and.bubble.right.fill", title: "Common Sentences", subtitle: "Learn everyday phrases", color: 0xFF69B4)
-                moduleRow(icon: "mic.fill", title: "Pronunciation", subtitle: "Master your accent", color: 0xB57EDC)
-                moduleRow(icon: "questionmark.circle.fill", title: "Q&A", subtitle: "Practice conversations", color: 0xCCFF00)
+                moduleRow(icon: "character.book.closed.fill", title: L("module.vocabulary"), subtitle: L("onboarding.modules.vocabulary"), color: 0xFF6B35)
+                moduleRow(icon: "bubble.left.and.bubble.right.fill", title: L("module.commonSentences"), subtitle: L("onboarding.modules.commonSentences"), color: 0xFF69B4)
+                moduleRow(icon: "mic.fill", title: L("module.pronunciation"), subtitle: L("onboarding.modules.pronunciation"), color: 0xB57EDC)
+                moduleRow(icon: "questionmark.circle.fill", title: L("module.qa"), subtitle: L("onboarding.modules.qa"), color: 0xCCFF00)
             }
 
             Spacer()
@@ -168,11 +174,11 @@ struct OnboardingView: View {
                 )
 
             VStack(spacing: 12) {
-                Text("Start Adding Words")
+                Text(L("onboarding.addWords.title"))
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.primary)
 
-                Text("Tap the + button to add your first words. We'll auto-translate them for you!")
+                Text(L("onboarding.addWords.body"))
                     .font(.system(size: 15))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -210,7 +216,7 @@ struct OnboardingView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("\(sample.native) → \(sample.translated)")
                                     .font(.subheadline.bold())
-                                Text("Tap to hear it")
+                                Text(L("onboarding.tapToHear"))
                                     .font(.caption)
                                     .opacity(0.7)
                             }
@@ -314,11 +320,15 @@ struct OnboardingView: View {
                         )
                     )
 
-                Text("You're All Set!")
+                Text(L("onboarding.getStarted.title"))
                     .font(.system(size: 28, weight: .bold))
                     .foregroundColor(.primary)
 
-                Text("Start learning \(selectedLanguage.lowercased()) today. Your progress is saved locally and stays private.")
+                // Display-only language name (the machine value stays as-is).
+                let displayLanguageName = selectedLanguage == "English"
+                    ? L("language.name.english")
+                    : L("language.name.portuguese")
+                Text(String(format: L("onboarding.getStarted.body"), displayLanguageName.lowercased()))
                     .font(.system(size: 15))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -362,7 +372,7 @@ struct OnboardingView: View {
                     showMainApp = true
                 }
             } label: {
-                Text(currentPage < 3 ? "Continue" : "Start Learning")
+                Text(currentPage < 3 ? L("onboarding.continue") : L("onboarding.startLearning"))
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
@@ -383,7 +393,7 @@ struct OnboardingView: View {
                 Button {
                     showMainApp = true
                 } label: {
-                    Text("Skip")
+                    Text(L("onboarding.skip"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }

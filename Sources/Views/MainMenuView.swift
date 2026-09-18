@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import StoreKit
 
 /// App tab enumeration for the main menu.
@@ -8,12 +9,13 @@ enum AppTab: Int, CaseIterable {
     case pronunciation = 2
     case qa = 3
 
-    var title: String {
+    /// Localization key for the tab/module display title.
+    var titleKey: String {
         switch self {
-        case .vocabulary: return "Vocabulary"
-        case .commonSentences: return "Common Sentences"
-        case .pronunciation: return "Pronunciation"
-        case .qa: return "Q&A"
+        case .vocabulary: return "module.vocabulary"
+        case .commonSentences: return "module.commonSentences"
+        case .pronunciation: return "module.pronunciation"
+        case .qa: return "module.qa"
         }
     }
 
@@ -39,10 +41,17 @@ enum AppTab: Int, CaseIterable {
 /// Modules page — shows all modules, Vocabulary is active, others locked.
 struct MainMenuView: View {
     @EnvironmentObject var iapManager: IAPManager
+    @Query private var settings: [AppSettings]
     @State private var showSettings = false
     @State private var showAchievements = false
     @State private var showStats = false
     @State private var showPaywall = false
+
+    /// Localized chrome string for the user's home language — "Portuguese"
+    /// renders Brazilian Portuguese, everything else renders English.
+    private func L(_ key: String) -> String {
+        Localization.string(key, homeLanguage: settings.first?.homeLanguage)
+    }
 
     var body: some View {
         NavigationStack {
@@ -57,7 +66,7 @@ struct MainMenuView: View {
                             .foregroundColor(.primary)
                             .padding(.top, 20)
 
-                        Text("Choose a module to start learning")
+                        Text(L("menu.subtitle"))
                             .font(.system(size: 14))
                             .foregroundColor(.secondary)
                             .padding(.bottom, 8)
@@ -154,19 +163,19 @@ struct MainMenuView: View {
 
                 // Text.
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(tab.title)
+                    Text(L(tab.titleKey))
                         .font(.system(size: 17, weight: .bold))
                         .foregroundColor(.primary)
 
                     if isUnlocked {
-                        Text("Tap to open")
+                        Text(L("menu.tapToOpen"))
                             .font(.system(size: 12))
                             .foregroundColor(.secondary)
                     } else {
                         HStack(spacing: 4) {
                             Image(systemName: "lock.fill")
                                 .font(.system(size: 10))
-                            Text("Available with Langly Premium")
+                            Text(L("menu.premiumLocked"))
                                 .font(.system(size: 12))
                         }
                         .foregroundColor(.secondary)
@@ -255,11 +264,11 @@ struct MainMenuView: View {
                 .font(.system(size: 40))
                 .foregroundColor(.secondary.opacity(0.5))
 
-            Text(tab.title)
+            Text(L(tab.titleKey))
                 .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.primary)
 
-            Text("This module is part of Langly Premium.\nSubscribe to unlock all modules.")
+            Text(L("menu.lockedMessage"))
                 .font(.system(size: 14))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -269,7 +278,7 @@ struct MainMenuView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "sparkles")
-                    Text("Unlock with Langly Premium")
+                    Text(L("menu.unlockPremium"))
                         .fontWeight(.semibold)
                 }
                 .foregroundColor(.white)
@@ -287,7 +296,7 @@ struct MainMenuView: View {
             .padding(.top, 8)
         }
         .padding(.horizontal, 24)
-        .navigationTitle(tab.title)
+        .navigationTitle(L(tab.titleKey))
         .navigationBarTitleDisplayMode(.inline)
     }
 }
@@ -295,6 +304,7 @@ struct MainMenuView: View {
 #Preview {
     MainMenuView()
         .environmentObject(IAPManager())
+        .modelContainer(for: AppSettings.self)
 }
 
 // MARK: - Paywall
@@ -303,6 +313,13 @@ struct MainMenuView: View {
 struct PaywallView: View {
     @EnvironmentObject var iapManager: IAPManager
     @Environment(\.dismiss) private var dismiss
+    @Query private var settings: [AppSettings]
+
+    /// Localized chrome string for the user's home language — "Portuguese"
+    /// renders Brazilian Portuguese, everything else renders English.
+    private func L(_ key: String) -> String {
+        Localization.string(key, homeLanguage: settings.first?.homeLanguage)
+    }
 
     /// The Langly Premium subscription product, when loaded.
     private var product: Product? {
@@ -367,16 +384,16 @@ struct PaywallView: View {
                         .font(.system(size: 34, weight: .bold))
                         .foregroundColor(.white)
 
-                    Text("Your commute is your classroom.")
+                    Text(L("paywall.subtitle"))
                         .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.85))
 
                     // Benefits card.
                     VStack(alignment: .leading, spacing: 14) {
-                        benefitRow(icon: "infinity", text: "Unlimited gameplay — no lives, no limits")
-                        benefitRow(icon: "waveform", text: "Custom word lists with looping audio")
-                        benefitRow(icon: "wifi.slash", text: "Works 100% offline")
-                        benefitRow(icon: "nosign", text: "No ads")
+                        benefitRow(icon: "infinity", text: L("paywall.benefit.unlimited"))
+                        benefitRow(icon: "waveform", text: L("paywall.benefit.wordLists"))
+                        benefitRow(icon: "wifi.slash", text: L("paywall.benefit.offline"))
+                        benefitRow(icon: "nosign", text: L("paywall.benefit.noAds"))
                     }
                     .padding(20)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -402,7 +419,7 @@ struct PaywallView: View {
                                     ProgressView()
                                         .tint(Color(hex: 0x005224))
                                 } else {
-                                    Text("Subscribe for \(product.displayPrice)/month")
+                                    Text(String(format: L("paywall.subscribe"), product.displayPrice))
                                         .font(.system(size: 18, weight: .bold))
                                 }
                             }
@@ -429,7 +446,7 @@ struct PaywallView: View {
                     Button {
                         Task { await iapManager.restorePurchases() }
                     } label: {
-                        Text("Restore Purchase")
+                        Text(L("paywall.restore"))
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white.opacity(0.9))
                     }
@@ -437,16 +454,16 @@ struct PaywallView: View {
 
                     // Terms.
                     VStack(spacing: 6) {
-                        Text("The subscription renews automatically until cancelled. Payment is charged to your Apple ID account at confirmation of purchase.")
+                        Text(L("paywall.termsBody"))
                             .font(.system(size: 11))
                             .multilineTextAlignment(.center)
                         HStack(spacing: 12) {
                             Link(
-                                "Terms of Use",
+                                L("paywall.termsOfUse"),
                                 destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
                             )
                             Link(
-                                "Privacy",
+                                L("paywall.privacy"),
                                 destination: URL(string: "https://moviecolor.github.io/langly-app/")!
                             )
                         }
