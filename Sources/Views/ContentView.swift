@@ -7,6 +7,7 @@ struct ContentView: View {
     @State private var showLaunch = true
     @State private var sessionHolder = TranslationSessionHolder()
     @Environment(\.modelContext) private var modelContext
+    @Query private var appSettings: [AppSettings]
 
     var body: some View {
         ZStack {
@@ -51,6 +52,14 @@ struct ContentView: View {
             let granted = await NotificationManager.shared.requestPermission()
             if granted {
                 NotificationManager.shared.scheduleDailyReminder(hour: 19, minute: 0)
+            }
+
+            // Sync the translator direction with the persisted settings — the
+            // settings row isn't guaranteed to be fetchable at view construction
+            // time, so this runs once the query has resolved. For users whose
+            // home language is Portuguese this flips the direction to PT→EN.
+            if let settings = appSettings.first {
+                translatorManager.updateDirection(from: settings)
             }
         }
     }

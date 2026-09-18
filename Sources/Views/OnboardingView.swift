@@ -14,18 +14,11 @@ struct OnboardingView: View {
 
     private let synthesizer = AVSpeechSynthesizer()
 
-    private let languages = ["Portuguese", "Spanish", "French", "German", "Italian", "Japanese", "Korean", "Chinese"]
-
-    /// Sample words for language preview.
+    /// Sample words for the "hear it" preview — one entry per supported
+    /// direction, keyed by the language the user is learning.
     private let sampleWords: [String: (native: String, translated: String, voiceCode: String)] = [
         "Portuguese": ("Hello", "Olá", "pt-BR"),
-        "Spanish": ("Hello", "Hola", "es-ES"),
-        "French": ("Hello", "Bonjour", "fr-FR"),
-        "German": ("Hello", "Hallo", "de-DE"),
-        "Italian": ("Hello", "Ciao", "it-IT"),
-        "Japanese": ("Hello", "こんにちは", "ja-JP"),
-        "Korean": ("Hello", "안녕하세요", "ko-KR"),
-        "Chinese": ("Hello", "你好", "zh-CN")
+        "English": ("Olá", "Hello", "en-US")
     ]
 
     var body: some View {
@@ -185,19 +178,26 @@ struct OnboardingView: View {
                     .multilineTextAlignment(.center)
             }
 
-            // Language selector with preview.
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Learning Language")
+            // Who are you? — two large direction cards that set the translation
+            // direction (home language → learning language).
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Who Are You?")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.secondary)
 
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(languages, id: \.self) { lang in
-                            languageChip(lang)
-                        }
-                    }
-                }
+                languageCard(
+                    flag: "🇺🇸",
+                    title: "I speak English",
+                    subtitle: "Learn Portuguese",
+                    language: "Portuguese"
+                )
+
+                languageCard(
+                    flag: "🇧🇷",
+                    title: "Eu falo Português",
+                    subtitle: "Aprenda Inglês",
+                    language: "English"
+                )
 
                 // Preview button.
                 if let sample = sampleWords[selectedLanguage] {
@@ -232,20 +232,50 @@ struct OnboardingView: View {
         .padding(.horizontal, 32)
     }
 
-    private func languageChip(_ lang: String) -> some View {
-        Button {
+    /// A large selectable direction card. The selected card shows an accent border.
+    private func languageCard(
+        flag: String,
+        title: String,
+        subtitle: String,
+        language: String
+    ) -> some View {
+        let isSelected = selectedLanguage == language
+        return Button {
             HapticPattern.selection.trigger()
-            selectedLanguage = lang
+            selectedLanguage = language
         } label: {
-            Text(lang)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(selectedLanguage == lang ? .white : .primary)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(selectedLanguage == lang ? Color(hex: 0x00D4AA) : Color.appSurface)
-                )
+            HStack(spacing: 16) {
+                Text(flag)
+                    .font(.system(size: 36))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.primary)
+
+                    Text(subtitle)
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22))
+                    .foregroundColor(isSelected ? Color(hex: 0x00D4AA) : Color.gray.opacity(0.35))
+            }
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.appSurface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(
+                                isSelected ? Color(hex: 0x00D4AA) : Color.gray.opacity(0.15),
+                                lineWidth: isSelected ? 2 : 1
+                            )
+                    )
+            )
         }
         .buttonStyle(.plain)
     }
@@ -321,9 +351,11 @@ struct OnboardingView: View {
                         currentPage += 1
                     }
                 } else {
-                    // Save language preference and dismiss.
+                    // Save the user's identity (home language) and learning
+                    // direction, then dismiss.
                     if let settings = settings.first {
                         settings.targetLanguage = selectedLanguage
+                        settings.homeLanguage = selectedLanguage == "English" ? "Portuguese" : "English"
                         settings.hasCompletedOnboarding = true
                         try? modelContext.save()
                     }

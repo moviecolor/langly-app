@@ -3,7 +3,9 @@ import SwiftUI
 @preconcurrency import Translation
 
 /// Manages on-device translation using Apple's native Translation framework.
-/// Targets Portuguese (Brazil) as the default target language.
+/// The translation direction is derived from AppSettings (homeLanguage →
+/// targetLanguage): an English speaker gets English→Portuguese, a Portuguese
+/// speaker gets Portuguese→English.
 ///
 /// The Translation framework requires a TranslationSession obtained via SwiftUI.
 /// A hidden TranslationSessionView must be present in the view hierarchy.
@@ -46,15 +48,61 @@ final class TranslatorManager: ObservableObject {
     /// Shared session holder — set by TranslationSessionView.
     var sessionHolder: TranslationSessionHolder?
 
-    let sourceLanguage = Locale.Language(identifier: "en")
-    let targetLanguage = Locale.Language(identifier: "pt")
+    /// BCP-47 source locale code (e.g. "en" or "pt"), derived from AppSettings.
+    private(set) var sourceLanguageCode: String
+
+    /// BCP-47 target locale code (e.g. "pt" or "en"), derived from AppSettings.
+    private(set) var targetLanguageCode: String
+
+    /// Source language for translation sessions, derived from AppSettings.
+    @Published private(set) var sourceLanguage: Locale.Language
+
+    /// Target language for translation sessions, derived from AppSettings.
+    @Published private(set) var targetLanguage: Locale.Language
 
     // MARK: - Initialization
 
-    init() {
+    /// Creates the translator with the direction stored in `settings`.
+    /// When no settings are provided (or the language names are unknown), the
+    /// original English→Portuguese default is preserved.
+    init(settings: AppSettings? = nil) {
+        let homeName = settings?.homeLanguage ?? "English"
+        let targetName = settings?.targetLanguage ?? "Portuguese"
+        sourceLanguageCode = Self.localeCode(forLanguageName: homeName) ?? "en"
+        targetLanguageCode = Self.localeCode(forLanguageName: targetName) ?? "pt"
+        sourceLanguage = Locale.Language(identifier: sourceLanguageCode)
+        targetLanguage = Locale.Language(identifier: targetLanguageCode)
         checkModelStatus()
         // Start network monitoring on first use.
         NetworkMonitor.shared.start()
+    }
+
+    /// Maps a stored AppSettings language name to its BCP-47 locale code.
+    /// Only the two supported languages have entries; unknown names fall back
+    /// to the original English→Portuguese default.
+    private static func localeCode(forLanguageName name: String) -> String? {
+        switch name {
+        case "English": return "en"
+        case "Portuguese": return "pt"
+        default: return nil
+        }
+    }
+
+    /// Re-derives the translation direction from the persisted AppSettings.
+    /// Called once the settings row is available so the translator honors the
+    /// stored home/target languages instead of the built-in defaults.
+    func updateDirection(from settings: AppSettings) {
+        let newSourceCode = Self.localeCode(forLanguageName: settings.homeLanguage) ?? "en"
+        let newTargetCode = Self.localeCode(forLanguageName: settings.targetLanguage) ?? "pt"
+        guard newSourceCode != sourceLanguageCode || newTargetCode != targetLanguageCode else { return }
+        sourceLanguageCode = newSourceCode
+        targetLanguageCode = newTargetCode
+        sourceLanguage = Locale.Language(identifier: newSourceCode)
+        targetLanguage = Locale.Language(identifier: newTargetCode)
+        // A flipped direction invalidates cached translations.
+        clearCache()
+        // Re-probe model availability for the new language pair.
+        checkModelStatus()
     }
 
     // MARK: - Model Management
@@ -139,7 +187,8 @@ final class TranslatorManager: ObservableObject {
 
     // MARK: - Translation
 
-    /// Translates text from English to Portuguese.
+    /// Translates text from homeLanguage to targetLanguage (the direction is
+    /// derived from AppSettings).
     /// Priority:
     /// 1. Cache
     /// 2. Online: Apple Translation → MyMemory → Google fallback
@@ -176,8 +225,12 @@ final class TranslatorManager: ObservableObject {
             }
 
             // 2. Try the network APIs, raced against a timeout.
+            // Capture the codes as local constants so the @Sendable closure
+            // never captures the (MainActor-isolated) manager itself.
+            let fromCode = sourceLanguageCode
+            let toCode = targetLanguageCode
             let apiResult = await withTimeout(seconds: 8.0) {
-                await TranslationAPIService.shared.translate(text, from: "en", to: "pt")
+                await TranslationAPIService.shared.translate(text, from: fromCode, to: toCode)
             }
             if let apiResult, apiResult != text {
                 cachedTranslations[text] = apiResult

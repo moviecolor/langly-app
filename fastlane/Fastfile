@@ -1,0 +1,10 @@
+default_platform(:ios)
+
+lane :ui do
+  apps = get_apps
+  apps.each { |a| UI.message("#{a.bundle_id} | #{a.name} | live: #{a.live_version ? a.live_version.version : 'none'} | tf: #{a.testflight_version ? a.testflight_version.version : 'none'}") }
+end
+
+lane :bump_upload do
+  # placeholder — real upload lane comes after archive
+end
