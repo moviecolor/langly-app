@@ -34,10 +34,19 @@ struct ContentView: View {
             #endif
         }
         .task {
-            await iapManager.restorePurchases()
+            // Local, deterministic seeding FIRST — never gate local data behind
+            // a StoreKit network query. `restorePurchases()` (below) can hang
+            // for 10+ seconds on the simulator when the App Store is slow, and
+            // would otherwise delay first-launch vocabulary seeding.
             seedStarterVocabulary()
             seedStreakTracker()
             seedAnalytics()
+
+            // Premium entitlement refresh is already kicked off in
+            // IAPManager.init(); this second nudge is fire-and-forget so it can
+            // never block the launch task.
+            Task { await iapManager.restorePurchases() }
+
             // Request notification permission and schedule daily reminder.
             let granted = await NotificationManager.shared.requestPermission()
             if granted {

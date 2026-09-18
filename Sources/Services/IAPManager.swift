@@ -111,16 +111,55 @@ final class IAPManager: ObservableObject {
     // MARK: - Entitlements
 
     /// Recomputes `isPremiumActive` from `Transaction.currentEntitlements`.
+    ///
+    /// Wrapped in a 5s hard timeout: on the simulator (or a slow/offline App
+    /// Store connection) this async sequence can stall indefinitely. The
+    /// timeout guarantees the main actor is never blocked; a timed-out refresh
+    /// deliberately keeps the previous `isPremiumActive` value so a paying user
+    /// is never demoted by a flaky network check.
     func refreshEntitlements() async {
-        var active = false
-        for await result in Transaction.currentEntitlements {
-            guard case .verified(let transaction) = result else { continue }
-            if transaction.productID == Self.premiumMonthlyID {
-                active = true
+        let found = await withTimeout(seconds: 5) {
+            var active = false
+            for await result in Transaction.currentEntitlements {
+                guard case .verified(let transaction) = result else { continue }
+                if transaction.productID == Self.premiumMonthlyID {
+                    active = true
+                    break
+                }
             }
+            return active
         }
-        isPremiumActive = active
-        print("[IAPManager] isPremiumActive = \(active)")
+
+        if let found, found {
+            isPremiumActive = true
+            print("[IAPManager] isPremiumActive = true")
+        } else if let found, !found {
+            isPremiumActive = false
+            print("[IAPManager] isPremiumActive = false")
+        } else {
+            // Timed out — keep previous state, never demote a paying user.
+            print("[IAPManager] entitlement refresh timed out; keeping isPremiumActive = \(isPremiumActive)")
+        }
+    }
+
+    /// Runs an async operation with a hard timeout, mirroring the pattern in
+    /// TranslatorManager. Returns nil if the sleep wins (operation cancelled).
+    private func withTimeout<T: Sendable>(
+        seconds: TimeInterval,
+        _ operation: @escaping @Sendable () async -> T
+    ) async -> T? {
+        await withTaskGroup(of: T?.self) { group in
+            group.addTask { await operation() }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(seconds))
+                return nil
+            }
+            for await value in group {
+                group.cancelAll()
+                return value
+            }
+            return nil
+        }
     }
 
     // MARK: - Accessors
