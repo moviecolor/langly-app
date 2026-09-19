@@ -1,57 +1,37 @@
 # SESSION_HANDOFF.md
-**Date:** 2026-08-21
-**Branch:** master
-**Remote:** github.com/moviecolor/langly-app.git
+**Date:** 2026-09-19 (SAVE ALL NOW)
+**Branch:** master-1.2
+**Remotes:** `github` = moviecolor/langly-app.git · `backup` = /Volumes/THUNDER/OpenCode BACKUP of 16tb/LANGLY_PROJECT
 
-## Current State
-**Langly EN (com.langly.app) — READY_FOR_SALE at version 1.0.** Already approved and live on App Store.
+## Current State — Langly 1.2 (1) is IN TESTFLIGHT ✅
+- Build **1.2 (1)** (`0537c4c8-9c72-4533-9fb8-63ea2414f582`) uploaded, processed, VALID.
+- Internal beta group **"Langly Internal"** (`5faeb740-7617-4db2-ac81-75c7327057ad`) exists with build attached; tester **Ryan Wuckert (rynow@mac.com)** added → **visible + installable in TestFlight** (confirmed working by user).
+- App Store versions: **1.0** and **1.1** are READY_FOR_SALE (live). **1.2 does NOT exist as an App Store version yet** — must be created before App Review submission.
 
-**Langly PT-BR (com.langly.app.pt) — version 1.1 SUBMITTED FOR REVIEW.**
-- Build uploaded + submitted with English + Portuguese What's New text.
-- Subscription: Langly Premium $8.99/month (USA), R$ 26,90/month (Brazil).
-- Waiting for Apple review.
+## Signed/shipped today (one-time fixes, no longer blockers)
+- Fresh **Apple Distribution cert** `S6B546669G` minted via `fastlane cert` (old certs expired) + App Store provisioning profile via `fastlane sigh` → both installed locally.
+- Fixed `DEVELOPMENT_TEAM` in pbxproj + project.yml: `69A6DE78DA` (wrong, issuer ID) → **`DW62VTMN2Z`**.
+- Fixed orientations: all 4 declared (iPad multitasking) — device family stays `"1,2"`.
+- Fastfile `beta` lane wires ASC API key (`87CV539PA4`) into upload.
+- `.appstoreconnect/` (private key) gitignored + removed from repo.
 
-### Monetization — Langly Premium Subscription
-- **Subscription:** `com.langly.app.premium.monthly` (Apple product ID: `6799106330`)
-- **Price:** USA **$8.99/month** | Brazil **R$ 26,90/month**
-- **Group:** "Langly Premium" (`22293861`)
-- **Code status:** IAPManager, ModuleRouter, MainMenuView (PaywallView), SettingsView all updated
-- **Build:** Passed strict concurrency + warnings-as-errors
+## How to resume / push 1.2 to App Review (ONE command once tested)
+```bash
+cd /Volumes/16TB_LARGE_NVME/OpenCODE_Projects/LANGLY_PROJECT
+python3 scripts/submit_release.py --dry-run   # preview
+python3 scripts/submit_release.py --yes       # actually create version 1.2, attach build, set What's New, submit
+```
+Script: creates appStoreVersion 1.2, attaches build, upserts en-US + pt-BR What's New (from RELEASE_NOTES_LANGLY_1.2.md), copies review detail from 1.1, submits via `appStoreVersionSubmissions`.
 
-## What Was Accomplished (Aug 21 session)
-- Resolved App Store Connect Portuguese (Brazil) "What's New" required field error
-- Filled in both English and Portuguese What's New text on version 1.1
-- Successfully submitted Langly PT-BR v1.1 for App Store review
-- All changes committed + local backup created
+## Credentials (all local, never push)
+- ASC API: `~/.appstoreconnect/keys/AuthKey_87CV539PA4.p8` + `fastlane_api_key.json` (key `87CV539PA4`, issuer `69a6de78-dca8-47e3-e053-5b8c7c11a4d1`, `in_house: false`).
+- Team ID `DW62VTMN2Z` · Apple ID `Rynow@mac.com` · ASC app `6794917761` · bundle `com.langly.app`.
 
-## What Was Accomplished (Previous Sessions)
-- Subscription code rewritten: one-time IAPs → auto-renewable Langly Premium
-- PaywallView added inside MainMenuView.swift (green gradient, gold diamond, 4 benefits, live StoreKit price)
-- Locked modules route to paywall via fullScreenCover
-- SettingsView: "Como Usar" section + support email
-- AppStoreMetadata.md updated to subscription model
-- Langly_Overview.md, SUBMISSION_CHECKLIST.md updated
-- App Store Upload — English (com.langly.app) ✅ READY_FOR_SALE
-- App Store Upload — PT-BR (com.langly.app.pt) v1.1 — SUBMITTED FOR REVIEW
+## References
+- `TESTFLIGHT_PLAYBOOK.md` (root) — full TestFlight/upload playbook + 2026-09-19 blocker fixes.
+- Global index: `~/.config/opencode/PLAYBOOKS.md` (points everywhere).
+- Teacher proposal draft: `Marketing the app/Teacher Proposal - Langly beta WhatsApp draft.odt`.
+- Pending: teacher's Apple ID email → external beta group + Beta App Review invite (~1–2 days).
 
-## Key Decisions
-- English and PT-BR are completely separate Xcode projects in separate folders
-- Privacy policy hosted at: https://moviecolor.github.io/langly-app/
-- Pricing: Free (7-day trial) + Langly Premium $8.99/month
-- Single subscription unlocks all modules (no per-module IAPs)
-- PaywallView lives inside MainMenuView.swift (avoids pbxproj edits)
-
-## Configuration
-- Developer: Ryan Wuckert (Team ID: DW62VTMN2Z, Apple ID: Rynow@mac.com)
-- ASC IDs: Langly `6794917761`, LanglyPT `6794930762`, subscription `6799106330`, group `22293861`
-- ASC key: `/Users/mo-ry/.appstoreconnect/keys/AuthKey_87CV539PA4.p8`
-
-## Next Steps / Pending
-1. Wait for Apple review of PT-BR v1.1
-2. If approved: Langly Premium subscription goes live in Brazil
-3. Capture paywall screenshots for ASC subscription review (may still be needed)
-4. If rejected: check resolution center for details + fix
-5. Consider adding same subscription to EN app (currently free 1.0)
-
-## How to Resume
-> "Langly PT-BR v1.1 submitted for App Store review. EN v1.0 live. Waiting on Apple. Subscription code complete in both repos."
+## Commit trail today
+`579367f` fix(release): Langly 1.2 (1) ships to TestFlight · `26b2449` docs(release): TESTFLIGHT_PLAYBOOK · + this SAVE.

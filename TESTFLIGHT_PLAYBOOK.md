@@ -54,7 +54,27 @@ The `beta` lane (in `fastlane/Fastfile`) does:
 
 ---
 
-## 4. Version bumps (how 1.2 became 1.2 (1))
+## 4. Once tested: push 1.2 to App Review (instant, API-driven)
+
+The 1.2 build exists in TestFlight, but **App Store Connect has NO appStoreVersion "1.2" yet** (only 1.0/1.1 are live). To submit for review:
+
+```bash
+python3 scripts/submit_release.py --dry-run   # preview (safe)
+python3 scripts/submit_release.py --yes       # create 1.2 version → attach build → set What's New (en+pt) → submit
+```
+
+What the script does (verified against ASC API):
+1. Creates `appStoreVersion` 1.2 (POST `/v1/appStoreVersions`)
+2. Attaches build `0537c4c8-9c72-4533-9fb8-63ea2414f582` (1.2 (1))
+3. Upserts `appStoreVersionLocalizations` en-US + pt-BR with What's New (text from `RELEASE_NOTES_LANGLY_1.2.md`)
+4. Creates `appStoreReviewDetail` for 1.2 (copies values from the 1.1 version) if missing
+5. Submits via `POST /v1/appStoreVersionSubmissions`
+
+If that ever 403s, create/submit via App Store Connect web UI: **App Store → Langly → iOS App → 1.2 → Submit for Review** (build 1 attached, What's New already documented in `RELEASE_NOTES_LANGLY_1.2.md`).
+
+---
+
+## 5. Version bumps (how 1.2 became 1.2 (1))
 
 - `project.yml` sets `MARKETING_VERSION` (currently `1.2`) and `CURRENT_PROJECT_VERSION` (currently `1`).
 - `GENERATE_INFOPLIST_FILE: YES` + `INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)` — the build gets version from build settings, so bump by editing `project.yml` (or running `xcodegen`), then `bundle exec fastlane beta`.
@@ -62,7 +82,7 @@ The `beta` lane (in `fastlane/Fastfile`) does:
 
 ---
 
-## 5. After upload: getting it to testers
+## 6. After upload: getting it to testers
 
 - **Internal testers** (your Apple account — e.g. Ryan's own iPhone): happens automatically via `upload_to_testflight` (this run: "Successfully distributed build to Internal testers").
 - **External testers** (e.g. the Portuguese teacher): add them in App Store Connect **Beta → External testing** or via the ASC API key:
