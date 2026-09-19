@@ -579,6 +579,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				DEVELOPMENT_TEAM = DW62VTMN2Z;
 				INFOPLIST_KEY_CFBundleDisplayName = Langly;
 				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
@@ -587,7 +588,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UIBackgroundModes = audio;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -609,6 +610,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
+				DEVELOPMENT_TEAM = DW62VTMN2Z;
 				INFOPLIST_KEY_CFBundleDisplayName = Langly;
 				INFOPLIST_KEY_CFBundleShortVersionString = "$(MARKETING_VERSION)";
 				INFOPLIST_KEY_CFBundleVersion = "$(CURRENT_PROJECT_VERSION)";
@@ -617,7 +619,7 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UIBackgroundModes = audio;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
