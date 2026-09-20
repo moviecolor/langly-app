@@ -2,7 +2,8 @@ import SwiftUI
 import SwiftData
 
 /// Match Madness game view — dual-column word matching game.
-/// Players match English words with their Portuguese translations within 1:45.
+/// Players match words between their home and target languages within 1:45;
+/// the home language is always shown on the left column.
 struct MatchMadnessGameView: View {
     @StateObject private var viewModel = MatchMadnessViewModel()
     @Environment(\.modelContext) private var modelContext
@@ -10,6 +11,7 @@ struct MatchMadnessGameView: View {
     @Query private var wordBlocks: [WordBlock]
     @Query private var trackers: [StreakTracker]
     @Query private var analytics: [LocalAnalytics]
+    @Query private var settings: [AppSettings]
     let mixAllBlocks: Bool
 
     init(mixAllBlocks: Bool = false) {
@@ -54,6 +56,8 @@ struct MatchMadnessGameView: View {
           .navigationTitle("Mix N Match")
         .navigationBarTitleDisplayMode(.inline)
         .task {
+            // Home language drives column direction (home language on the left).
+            viewModel.homeLanguage = settings.first?.homeLanguage ?? "English"
             if mixAllBlocks {
                 viewModel.loadAllBlocks(from: wordBlocks)
             } else {
@@ -139,7 +143,7 @@ struct MatchMadnessGameView: View {
         HStack(spacing: 20) {
             // Left column.
             VStack(spacing: 10) {
-                Text("Column A")
+                Text(columnHeader(for: .left))
                     .font(.caption.bold())
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
@@ -151,7 +155,7 @@ struct MatchMadnessGameView: View {
 
             // Right column.
             VStack(spacing: 10) {
-                Text("Column B")
+                Text(columnHeader(for: .right))
                     .font(.caption.bold())
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
@@ -161,6 +165,15 @@ struct MatchMadnessGameView: View {
                 }
             }
         }
+    }
+
+    /// Column header label honoring the learner's direction:
+    /// PT→EN learners see "Portuguese" on the left and "English" on the right.
+    private func columnHeader(for column: ColumnSide) -> String {
+        if viewModel.homeLanguage == "Portuguese" {
+            return column == .left ? "Portuguese" : "English"
+        }
+        return column == .left ? "Column A" : "Column B"
     }
 
     /// Individual word button with selection/match/wrong states.
@@ -432,6 +445,6 @@ private enum ColumnSide {
 #Preview {
     NavigationStack {
         MatchMadnessGameView()
-            .modelContainer(for: [WordBlock.self, VocabularyWord.self], inMemory: true)
+            .modelContainer(for: [WordBlock.self, VocabularyWord.self, AppSettings.self], inMemory: true)
     }
 }

@@ -1,7 +1,7 @@
 default_platform(:ios)
 
-EN_NEWS = "Subscription update — Langly Premium now available."
-PT_NEWS = "Atualização por assinatura — Langly Premium agora disponível."
+EN_NEWS = "Direction fixes for Portuguese learners: PT→EN audio mode and word lists now show Portuguese-first, Match Madness puts the home language on the left column, and audio playback continues while the screen sleeps."
+PT_NEWS = "Correções de direção para quem aprende português: o modo de áudio e as listas de palavras agora mostram português primeiro em PT→EN, o Jogo da Memória coloca a língua principal na coluna esquerda, e o áudio continua tocando enquanto a tela dorme."
 
 lane :beta do
   api_key = app_store_connect_api_key(

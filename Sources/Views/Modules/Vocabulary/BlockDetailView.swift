@@ -7,6 +7,7 @@ struct BlockDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var translator: TranslatorManager
+    @Query private var settings: [AppSettings]
 
     let block: WordBlock
 
@@ -17,13 +18,17 @@ struct BlockDetailView: View {
     @State private var editMode: EditMode = .inactive
 
     var body: some View {
-        List {
+        // Seed data stores native = English, translated = Portuguese. PT→EN
+        // learners see their language as the primary line, English as caption.
+        let isPTtoEN = settings.first?.homeLanguage == "Portuguese"
+
+        return List {
             ForEach(block.vocabularyWords) { word in
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(word.nativeWord)
+                        Text(isPTtoEN ? word.translatedWord : word.nativeWord)
                             .font(.subheadline.bold())
-                        Text(word.translatedWord)
+                        Text(isPTtoEN ? word.nativeWord : word.translatedWord)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }

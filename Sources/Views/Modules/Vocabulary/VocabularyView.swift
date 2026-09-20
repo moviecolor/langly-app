@@ -271,6 +271,10 @@ struct VocabularyView: View {
         let maxWords = 15
         let progress = Double(activeWords) / Double(maxWords)
 
+        // Seed data stores native = English, translated = Portuguese. PT→EN
+        // learners see their language front-first, so swap the displayed word.
+        let isPTtoEN = settings.first?.homeLanguage == "Portuguese"
+
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
                 HStack(spacing: 6) {
@@ -307,12 +311,13 @@ struct VocabularyView: View {
             }
             .frame(height: 6)
 
-            // English words list — compact tag layout.
+            // Words list — compact tag layout. Front word follows the learning
+            // direction (Portuguese for PT→EN learners, English otherwise).
             if !block.vocabularyWords.isEmpty {
                 let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
                 LazyVGrid(columns: columns, spacing: 6) {
                     ForEach(block.vocabularyWords) { word in
-                        Text(word.nativeWord)
+                        Text(isPTtoEN ? word.translatedWord : word.nativeWord)
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(.primary)
                             .padding(.horizontal, 8)

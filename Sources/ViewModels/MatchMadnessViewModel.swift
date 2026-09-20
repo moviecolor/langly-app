@@ -21,7 +21,8 @@ struct MatchWord: Identifiable, Equatable, Hashable {
 }
 
 /// ViewModel for the Match Madness game mode.
-/// Manages 8 English words (left) + 8 Portuguese words (right), matching by selection.
+/// Manages word pairs between the home and target languages (up to 8 on the board,
+/// matching by selection; home language on the left, target language on the right).
 @MainActor
 final class MatchMadnessViewModel: ObservableObject {
     // MARK: - Published State
@@ -72,6 +73,11 @@ final class MatchMadnessViewModel: ObservableObject {
     @Published var lastWrongWord: String? = nil
 
     // MARK: - Properties
+
+    /// Learner's home language. Drives column direction: the home language is
+    /// always shown on the left ("from") column and the target on the right.
+    /// Set from the view before calling `startGame()`.
+    var homeLanguage: String = "English"
 
     /// All available vocabulary words from active blocks.
     private var allWords: [VocabularyWord] = []
@@ -258,6 +264,27 @@ final class MatchMadnessViewModel: ObservableObject {
 
     static let maxBoardWords = 8
 
+    /// Maps a seeded VocabularyWord to a MatchWord honoring the learner's
+    /// language direction. For PT→EN learners the Portuguese text (stored as
+    /// `translatedWord`) is placed in the `nativeWord` field so it renders on
+    /// the left column, and the English text (`nativeWord`) in the
+    /// `translatedWord` field for the right column. Matching is unaffected
+    /// because match checks rely on `blockIndex`, not the text fields.
+    private func directionalWord(_ word: VocabularyWord, blockIndex: Int) -> MatchWord {
+        if homeLanguage == "Portuguese" {
+            return MatchWord(
+                nativeWord: word.translatedWord,
+                translatedWord: word.nativeWord,
+                blockIndex: blockIndex
+            )
+        }
+        return MatchWord(
+            nativeWord: word.nativeWord,
+            translatedWord: word.translatedWord,
+            blockIndex: blockIndex
+        )
+    }
+
     /// Randomly swaps nativeWord ↔ translatedWord with 50% probability for jumble mode.
     private func flipWord(_ word: MatchWord) -> MatchWord {
         Bool.random()
@@ -283,23 +310,11 @@ final class MatchMadnessViewModel: ObservableObject {
         let boardWords = Array(shuffled.prefix(boardCount))
         let reservePool = Array(shuffled.dropFirst(boardCount))
 
-        // Create MatchWord instances for the board.
-        let matchWords = boardWords.map {
-            MatchWord(
-                nativeWord: $0.nativeWord,
-                translatedWord: $0.translatedWord,
-                blockIndex: $0.wordBlockIndex
-            )
-        }
+        // Create MatchWord instances for the board (direction-aware).
+        let matchWords = boardWords.map { directionalWord($0, blockIndex: $0.wordBlockIndex) }
 
-        // Create MatchWord instances for the reserve.
-        reserveWords = reservePool.map {
-            MatchWord(
-                nativeWord: $0.nativeWord,
-                translatedWord: $0.translatedWord,
-                blockIndex: $0.wordBlockIndex
-            )
-        }
+        // Create MatchWord instances for the reserve (direction-aware).
+        reserveWords = reservePool.map { directionalWord($0, blockIndex: $0.wordBlockIndex) }
 
         if isJumbleEnabled {
             // JUMBLE MODE: all words in both columns. Each word is randomly

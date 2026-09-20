@@ -404,7 +404,7 @@ struct WordInputView: View {
 #Preview {
     WordInputView(preselectedBlockID: nil)
         .environmentObject(TranslatorManager())
-        .modelContainer(for: [WordBlock.self, VocabularyWord.self], inMemory: true)
+        .modelContainer(for: [WordBlock.self, VocabularyWord.self, AppSettings.self], inMemory: true)
 }
 
 // MARK: - Isolated Subviews
@@ -631,6 +631,8 @@ private struct BlockSelectorSection: View {
 /// NOT on every keystroke. Word objects are fetched on demand (see `onExpand`);
 /// the list shows a lightweight COUNT until the user expands it.
 private struct WordListSection: View {
+    @Query private var settings: [AppSettings]
+
     let words: [VocabularyWord]
     let totalCount: Int
     let isLoaded: Bool
@@ -722,12 +724,16 @@ private struct WordListSection: View {
     }
 
     private func wordRow(_ word: VocabularyWord) -> some View {
-        HStack {
+        // Seed data stores native = English, translated = Portuguese. PT→EN
+        // learners see their language as the primary line, English as caption.
+        let isPTtoEN = settings.first?.homeLanguage == "Portuguese"
+
+        return HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(word.nativeWord)
+                Text(isPTtoEN ? word.translatedWord : word.nativeWord)
                     .font(.subheadline.bold())
 
-                Text(word.translatedWord)
+                Text(isPTtoEN ? word.nativeWord : word.translatedWord)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

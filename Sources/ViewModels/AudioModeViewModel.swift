@@ -61,8 +61,9 @@ final class AudioModeViewModel: NSObject, ObservableObject {
     /// User-selected voice gender for pitch adjustment.
     var selectedVoiceGender: String = ""
 
-    /// Background task identifier for audio.
-    private var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
+    /// Home language of the learner ("English" or "Portuguese").
+    /// Determines which word of each pair is spoken first (front) in audio mode.
+    var homeLanguage: String = "English"
 
     // MARK: - Initialization
 
@@ -77,7 +78,7 @@ final class AudioModeViewModel: NSObject, ObservableObject {
     private func setupAudioSession() {
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers])
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try session.setActive(true, options: [])
         } catch {
             print("[AudioModeViewModel] Failed to setup audio session: \(error)")
@@ -124,7 +125,6 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         progressIndex = 1
         playbackState = .playing
 
-        beginBackgroundTask()
         speakCurrentWordPair()
     }
 
@@ -134,7 +134,6 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         playbackState = .stopped
         currentWord = nil
         currentUtteranceType = ""
-        endBackgroundTask()
     }
 
     func pausePlayback() {
@@ -148,25 +147,6 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         synthesizer.continueSpeaking()
         playbackState = .playing
         wasManuallyStopped = false
-        beginBackgroundTask()
-    }
-
-    // MARK: - Background Task Management
-
-    private func beginBackgroundTask() {
-        guard backgroundTaskID == .invalid else { return }
-        backgroundTaskID = UIApplication.shared.beginBackgroundTask { [weak self] in
-            // System is asking us to end the background task.
-            Task { @MainActor [weak self] in
-                self?.endBackgroundTask()
-            }
-        }
-    }
-
-    private func endBackgroundTask() {
-        guard backgroundTaskID != .invalid else { return }
-        UIApplication.shared.endBackgroundTask(backgroundTaskID)
-        backgroundTaskID = .invalid
     }
 
     // MARK: - Voice Selection
@@ -229,7 +209,6 @@ final class AudioModeViewModel: NSObject, ObservableObject {
                 playbackState = .stopped
                 currentWord = nil
                 currentUtteranceType = ""
-                endBackgroundTask()
             }
             return
         }
@@ -240,10 +219,19 @@ final class AudioModeViewModel: NSObject, ObservableObject {
         currentWord = word
         progressIndex = queueIndex + 1
 
-        // Build utterance sequence: native once, then translated N times.
-        pendingUtterances = [(word.nativeWord, "en-US", "English")]
-        for _ in 0..<repetitions {
-            pendingUtterances.append((word.translatedWord, "pt-BR", "Portuguese"))
+        // Build utterance sequence: home-language word first (front), then the
+        // translation N times. Seed data stores English as nativeWord / Portuguese
+        // as translatedWord, so a PT→EN learner hears the Portuguese word first.
+        if homeLanguage == "Portuguese" {
+            pendingUtterances = [(word.translatedWord, "pt-BR", "Portuguese")]
+            for _ in 0..<repetitions {
+                pendingUtterances.append((word.nativeWord, "en-US", "English"))
+            }
+        } else {
+            pendingUtterances = [(word.nativeWord, "en-US", "English")]
+            for _ in 0..<repetitions {
+                pendingUtterances.append((word.translatedWord, "pt-BR", "Portuguese"))
+            }
         }
 
         utteranceIndex = 0
@@ -261,7 +249,6 @@ final class AudioModeViewModel: NSObject, ObservableObject {
                 playbackState = .stopped
                 currentWord = nil
                 currentUtteranceType = ""
-                endBackgroundTask()
             }
             return
         }
@@ -326,7 +313,6 @@ extension AudioModeViewModel: AVSpeechSynthesizerDelegate {
                 self.playbackState = .stopped
                 self.currentWord = nil
                 self.currentUtteranceType = ""
-                self.endBackgroundTask()
             }
         }
     }

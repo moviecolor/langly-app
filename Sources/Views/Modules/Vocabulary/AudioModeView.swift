@@ -76,6 +76,17 @@ struct AudioModeView: View {
             viewModel.selectedVoiceGender = savedGender
             // Restore the shuffle preference from the last session.
             viewModel.shuffleEnabled = shufflePersisted
+            // Direction-aware playback: PT→EN learners hear the Portuguese word first.
+            viewModel.homeLanguage = settings.first?.homeLanguage ?? "English"
+        }
+        .onAppear {
+            // Reset the idle timer so the screen can sleep while audio plays.
+            // Playback continues in the background via the .playback audio session.
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+        .onDisappear {
+            // Reset again on leave — the idle timer should stay enabled for audio apps.
+            UIApplication.shared.isIdleTimerDisabled = false
         }
         .onChange(of: viewModel.shuffleEnabled) { _, newValue in
             shufflePersisted = newValue
@@ -102,7 +113,12 @@ struct AudioModeView: View {
     private var currentWordDisplay: some View {
         VStack(spacing: 12) {
             if let word = viewModel.currentWord {
-                Text(word.nativeWord)
+                // Direction-aware: PT→EN learners see the Portuguese word as the
+                // primary (top) line and English as the secondary (bottom) line.
+                let primaryWord = viewModel.homeLanguage == "Portuguese" ? word.translatedWord : word.nativeWord
+                let secondaryWord = viewModel.homeLanguage == "Portuguese" ? word.nativeWord : word.translatedWord
+
+                Text(primaryWord)
                     .font(.title2.bold())
                     .foregroundStyle(Color(hex: 0x00D4AA))
                     .id("native-\(word.id)")
@@ -114,7 +130,7 @@ struct AudioModeView: View {
                     color: Color(hex: 0xFF6B35)
                 )
 
-                Text(word.translatedWord)
+                Text(secondaryWord)
                     .font(.title)
                     .foregroundStyle(Color(hex: 0xFF6B35))
                     .id("translated-\(word.id)")

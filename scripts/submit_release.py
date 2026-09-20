@@ -11,7 +11,7 @@ Requirements: ~/.appstoreconnect/keys/fastlane_api_key.json (ASC API key),
 import json, sys, time, urllib.request, base64
 
 APP_ID = "6794917761"
-BUILD_ID = "0537c4c8-9c72-4533-9fb8-63ea2414f582"  # Langly 1.2 (1)
+BUILD_ID = "d882019a-46c5-4027-83c5-88aff627e3d8"  # Langly 1.2 (2)
 VERSION = "1.2"
 DRY = "--yes" not in sys.argv
 cfg = json.load(open("/Users/mo-ry/.appstoreconnect/keys/fastlane_api_key.json"))
