@@ -5,7 +5,8 @@ here, it didn't happen. Snapshots live in `RELEASES/` (gitignored, local-only).
 
 | Date | Version | Build | ASC Build ID | Notes | Source commit |
 |------|---------|-------|--------------|-------|---------------|
-| 2026-09-24 | 1.2 | 3 | `8800045f-a5a6-42e5-a223-8d39996868ee` | Background-audio fix: UIBackgroundModes=[audio] added to Info.plist (was silently missing) | `fix/l1.2-phone-bugs` |
+| 2026-09-24 | 1.2 | 3 | `8800045f-a5a6-42e5-a223-8d39996868ee` | Background-audio fix: UIBackgroundModes=[audio] added to Info.plist (was silently missing). **Audio-on-screen-lock CONFIRMED WORKING on device 2026-09-24.** | `fix/l1.2-phone-bugs` |
+| 2026-09-24 | 1.2 | 3 | `8800045f-a5a6-42e5-a223-8d39996868ee` | Screenshots inherited from 1.1 (all COMPLETE); What's New corrected to direction+audio fixes (was stale "Premium subscription" text); 1.2 version object created on ASC (PREPARE_FOR_SUBMISSION); build attached to Langly Internal group | `fix/l1.2-phone-bugs` |
 | 2026-09-19 | 1.2 | 2 | `d882019a-46c5-4027-83c5-88aff627e3d8` | Direction fixes (PT→EN word order, Match Madness columns, audio + screen sleep) | `fix/l1.2-phone-bugs` |
 
 ## Historical (pre-ledger, reconstructed from ASC)
