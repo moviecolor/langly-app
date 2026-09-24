@@ -1,6 +1,6 @@
 # Langly — TestFlight / App Store Upload Playbook
 
-**Last updated:** 2026-09-19 — Langly **1.2 (1)** pushed to TestFlight successfully
+**Last updated:** 2026-09-24 — Langly **1.2 (3)** pushed to TestFlight (incl. internal-group attachment fix, §8)
 **For:** anyone (or any LLM) who needs to ship a Langly build to TestFlight or App Store Connect without re-discovering the traps below.
 
 ---
@@ -15,7 +15,7 @@ bundle exec fastlane beta
 
 The `beta` lane (in `fastlane/Fastfile`) does:
 1. `build_app` — Release archive + App Store export, signing with the **Distribution identity**
-2. `upload_to_testflight` — upload via **ASC API key**, set changelog, distribute to internal testers
+2. `upload_to_testflight` — upload via **ASC API key**, set changelog, distribute to internal testers (via `groups: ["Langly Internal"]` — see §8 for why this param is mandatory)
 
 **Before the first run on any machine** you need the four pieces in §3. After that, `bundle exec fastlane beta` is the whole job.
 
@@ -84,9 +84,84 @@ If that ever 403s, create/submit via App Store Connect web UI: **App Store → L
 
 ## 6. After upload: getting it to testers
 
-- **Internal testers** (your Apple account — e.g. Ryan's own iPhone): happens automatically via `upload_to_testflight` (this run: "Successfully distributed build to Internal testers").
+- **Internal testers** (your Apple account — e.g. Ryan's own iPhone): builds are only visible if they're **attached to the beta group**. Since "Langly Internal" has `hasAccessToAllBuilds: false`, an uploaded build that is not explicitly linked to the group is **invisible to every tester** even though TestFlight says "Successfully distributed". The `beta` lane MUST pass `groups: ["Langly Internal"]` (see §8).
 - **External testers** (e.g. the Portuguese teacher): add them in App Store Connect **Beta → External testing** or via the ASC API key:
   1. Create (or reuse) an external beta group, e.g. "Langly Beta Testers".
-  2. Add the tester's **Apple ID email** to the group and attach build 1.2 (1).
+  2. Add the tester's **Apple ID email** to the group and attach build 1.2 (3) (any build — see §8 for why attachment must be explicit).
   3. Apple sends the TestFlight invite email. The tester installs the **TestFlight app from the App Store**, accepts the invite, and can then install Langly.
 - Note: the first external-group submission goes through **Beta App Review** (Apple reviews ~1–2 days). Internal distribution does not.
+
+---
+
+## 7. Store assets — verify BEFORE pushing a build (the 2026-09-20 lesson)
+
+On 2026-09-20, "The Key to Me" pushed **build 4** to TestFlight and later discovered the App Store **icon and screenshots weren't in place** — the icon hunt consumed a whole session, and the screenshot sets had to be created and uploaded *after* the build had already been pushed. **Do not relearn this. For ANY app, confirm the store assets exist in App Store Connect BEFORE (or at the same moment as) the first build push.**
+
+### 7.1 App icon — iOS has NO web upload slot anymore
+
+- **iOS App Store icons are taken from the binary** (the 1024×1024 marketing icon in the app's asset catalog). There is **no "App Icon" drag box in App Store Connect** for iOS apps — Apple removed it. If you don't see a slot, you're not missing it; the icon comes from the build itself.
+- **Pre-push check:** make sure your asset catalog contains the full AppIcon set INCLUDING the 1024 marketing slot (`Assets.xcassets/AppIcon.appiconset` with `icon-1024.png` or equivalent, no alpha, RGB). Verify after building, before uploading:
+  ```bash
+  unzip -p App.ipa "Payload/App.app/Assets.car" > /tmp/Assets.car
+  assetutil --info /tmp/Assets.car | grep -i marketing   # must show a 1024x1024 rendition
+  ```
+- **Changing the icon post-push requires a new build** — Apple's docs: "If you want to change your app icon after publishing, you must create and upload a new version of your app." That is exactly the trap to avoid.
+
+### 7.2 Screenshots — upload with the build, not after
+
+- Screenshot sets are created in ASC under **App Store → <App> → iOS App → <version> → 1.0**, and are **display-size-typed**. Matching the wrong type = permanent FAILED states that need delete + recreate.
+- **Valid sets (2026 API):** iPhone 6.7" class = `APP_IPHONE_67` (1320×2868); iPad Pro 12.9" class = `APP_IPAD_PRO_129` (2048×2732). **There is no 13"-native slot** — resize 13" iPad captures (2064×2752) down to 2048×2732 or Apple rejects with `IMAGE_INCORRECT_DIMENSIONS`.
+- **API upload must send the `uploaded: true` flag** on the final checksum PATCH, or you get "Uploaded flag is not set!" and the asset stays `AWAITING_UPLOAD`.
+- **Pre-push check:** after `fastlane beta`, poll each screenshot's `assetDeliveryState` — every slot must read **COMPLETE**, not `AWAITING_UPLOAD` / `FAILED`, before you tell anyone the build is ready.
+
+### 7.3 The fixed checklist (add to any "ship a build" SOP)
+
+- [ ] 1024 marketing icon present in asset catalog, no alpha, RGB
+- [ ] Icon set is included in **this** build (verify from the .ipa, not the source dir)
+- [ ] Screenshot sets created for the display sizes you ship (iPhone AND iPad if Universal — iPad is **mandatory**)
+- [ ] Screenshots uploaded AND every slot shows `COMPLETE`
+- [ ] (If store submission is the goal, not just beta) version page has: build attached, description, keywords, promo, release notes, copyright, review notes, App Privacy, age rating, categories — done BEFORE pushing, so no re-push is needed later
+
+---
+
+## 8. Internal-test group attachment — the "Successfully distributed" lie (the 2026-09-24 lesson)
+
+**Symptom:** the build uploads, ASC shows it VALID, fastlane prints "Successfully distributed build to Internal testers" — but the tester's TestFlight app never shows the new build (only an old one, or nothing).
+
+**Root cause:** `upload_to_testflight` without a `groups:` parameter uploads the build to App Store Connect but does **not** attach it to any beta group. On this account, the internal group **"Langly Internal" has `hasAccessToAllBuilds: false`** (`GET /v1/betaGroups/{id}` → `attributes.hasAccessToAllBuilds`). With that flag off, a build that isn't explicitly linked to a group is **invisible to every tester in every group**, no matter the processing state. The fastlane "Successfully distributed" message refers to the *upload*, not to group distribution — it lies.
+
+This silently bit Langly twice: 1.2 (2) and 1.2 (3) were both uploaded + VALID, but neither was attached to the group, so Ryan's phone only ever showed 1.2 (1) (which had been manually attached earlier).
+
+**The one-command fix inside the lane** (already applied in `fastlane/Fastfile`):
+
+```ruby
+upload_to_testflight(
+  api_key: api_key,
+  changelog: EN_NEWS + "\n" + PT_NEWS,
+  skip_waiting_for_build_processing: false,
+  groups: ["Langly Internal"],   # <-- REQUIRED on this account
+)
+```
+
+**Manual rescue (if a build was already pushed without the param):**
+
+```python
+# POST /v1/betaGroups/{GROUP_ID}/relationships/builds
+# {"data": [{"type": "builds", "id": "{BUILD_ID}"}]}  → 204
+```
+
+**Post-push verification (never trust the fastlane message):**
+
+```bash
+# builds actually inside the group?
+GET /v1/betaGroups/{GROUP_ID}/builds       # v3 must be listed
+GET /v1/builds/{BUILD_ID}?include=betaGroups
+# tester is installed (not INVITED)?
+GET /v1/betaTesters/{TESTER_ID}            # attributes.state == "INSTALLED"
+```
+
+**Checklist addition for ANY app's build SOP (not just Langly):**
+
+- [ ] `upload_to_testflight` passes `groups:` matching the app's internal group name
+- [ ] After push, confirm the new build is listed under the group (`GET /v1/betaGroups/{id}/builds`)
+- [ ] Confirm the tester's `betaTesterState` is `INSTALLED`, not `INVITED` (an unaccepted invite = still nothing on the phone)
