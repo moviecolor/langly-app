@@ -8,27 +8,21 @@
 
 ## What's New in This Version (EN — App Store Connect "What's New" field)
 
-Subscription update — Langly Premium now available.
+Direction fixes for Portuguese learners:
 
-Langly Premium gives you everything, in one simple subscription:
-
-- **All four modules unlocked** — Vocabulary, Common Sentences, Pronunciation, and Q&A, with no limits
-- **Up to 150 words** in 10 custom blocks, all yours to organize
-- **Every voice and language**, unlimited
-- **Your progress saved forever** — every word and sentence, remembered across launches
+- **PT→EN audio mode and word lists now show Portuguese first** — learn the language you're practicing, the way it's actually used
+- **Match Madness now puts your home language on the left column** and the target language on the right — matches how your brain translates
+- **Audio playback continues while the screen sleeps** — lock your phone and keep listening without interruption
 
 ---
 
 ## O que há de novo nesta versão (PT-BR — campo "O que há de novo" no App Store Connect)
 
-Atualização por assinatura — Langly Premium agora disponível.
+Correções de direção para quem aprende português:
 
-O Langly Premium te dá tudo, em uma única assinatura simples:
-
-- **Os quatro módulos liberados** — Vocabulário, Frases Comuns, Pronúncia e Perguntas e Respostas, sem limites
-- **Até 150 palavras** em 10 blocos personalizados, todos organizados do seu jeito
-- **Todas as vozes e idiomas**, sem limite
-- **Seu progresso salvo para sempre** — cada palavra e frase, lembrada entre as sessões
+- **O modo de áudio e as listas de palavras agora mostram português primeiro em PT→EN** — aprenda o idioma que você pratica, do jeito que ele é realmente usado
+- **O Jogo da Memória agora coloca a língua principal na coluna esquerda** e o idioma-alvo na direita — combina com a forma como seu cérebro traduz
+- **O áudio continua tocando enquanto a tela dorme** — bloqueie o celular e continue ouvindo sem interrupções
 
 ---
 
@@ -42,4 +36,4 @@ O Langly Premium te dá tudo, em uma única assinatura simples:
 | CFBundleVersion | 1 |
 | Localizations in binary | en, pt-BR |
 | Live anchor (NEVER moves) | master `aac2b6b` = EN 1.1 (2) LIVE |
-| Release reason | Subscription update — Langly Premium (user-facing feature) → exceeds LIVE 1.1 ✓ |
+| Release reason | Direction fixes for Portuguese learners (PT→EN ordering, Match Madness columns) + audio keeps playing on screen lock → user-facing fixes beyond LIVE 1.1 ✓ |

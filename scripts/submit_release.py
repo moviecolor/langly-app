@@ -16,19 +16,15 @@ VERSION = "1.2"
 DRY = "--yes" not in sys.argv
 cfg = json.load(open("/Users/mo-ry/.appstoreconnect/keys/fastlane_api_key.json"))
 
-WHATSNEW_EN = ("Subscription update — Langly Premium now available.\n\n"
-    "Langly Premium gives you everything, in one simple subscription:\n\n"
-    "• All four modules unlocked — Vocabulary, Common Sentences, Pronunciation, and Q&A, with no limits\n"
-    "• Up to 150 words in 10 custom blocks, all yours to organize\n"
-    "• Every voice and language, unlimited\n"
-    "• Your progress saved forever — every word and sentence, remembered across launches")
+WHATSNEW_EN = ("Direction fixes for Portuguese learners:\n\n"
+    "• PT→EN audio mode and word lists now show Portuguese first — learn the language you're practicing, the way it's actually used\n"
+    "• Match Madness now puts your home language on the left column and the target language on the right — matches how your brain translates\n"
+    "• Audio playback continues while the screen sleeps — lock your phone and keep listening without interruption\n")
 
-WHATSNEW_PT = ("Atualização por assinatura — Langly Premium agora disponível.\n\n"
-    "O Langly Premium te dá tudo, em uma única assinatura simples:\n\n"
-    "• Os quatro módulos liberados — Vocabulário, Frases Comuns, Pronúncia e Perguntas e Respostas, sem limites\n"
-    "• Até 150 palavras em 10 blocos personalizados, todos organizados do seu jeito\n"
-    "• Todas as vozes e idiomas, sem limite\n"
-    "• Seu progresso salvo para sempre — cada palavra e frase, lembrada entre as sessões")
+WHATSNEW_PT = ("Correções de direção para quem aprende português:\n\n"
+    "• O modo de áudio e as listas de palavras agora mostram português primeiro em PT→EN — aprenda o idioma que você pratica, do jeito que ele é realmente usado\n"
+    "• O Jogo da Memória agora coloca a língua principal na coluna esquerda e o idioma-alvo na direita — combina com a forma como seu cérebro traduz\n"
+    "• O áudio continua tocando enquanto a tela dorme — bloqueie o celular e continue ouvindo sem interrupções\n")
 
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import hashes
