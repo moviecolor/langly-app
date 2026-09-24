@@ -45,7 +45,6 @@ struct MainMenuView: View {
     @State private var showSettings = false
     @State private var showAchievements = false
     @State private var showStats = false
-    @State private var showPaywall = false
 
     /// Localized chrome string for the user's home language — "Portuguese"
     /// renders Brazilian Portuguese, everything else renders English.
@@ -119,10 +118,6 @@ struct MainMenuView: View {
                     StatsView()
                 }
             }
-            .fullScreenCover(isPresented: $showPaywall) {
-                PaywallView()
-                    .environmentObject(iapManager)
-            }
         }
     }
 
@@ -134,9 +129,7 @@ struct MainMenuView: View {
         let isUnlocked: Bool
         switch tab {
         case .vocabulary: isUnlocked = true
-        case .commonSentences: isUnlocked = iapManager.isCommonSentencesUnlocked
-        case .pronunciation: isUnlocked = iapManager.isPronunciationUnlocked
-        case .qa: isUnlocked = iapManager.isQAUnlocked
+        case .commonSentences, .pronunciation, .qa: isUnlocked = false // Coming soon
         }
 
         return NavigationLink {
@@ -173,10 +166,11 @@ struct MainMenuView: View {
                             .foregroundColor(.secondary)
                     } else {
                         HStack(spacing: 4) {
-                            Image(systemName: "lock.fill")
+                            Image(systemName: "hourglass")
                                 .font(.system(size: 10))
-                            Text(L("menu.premiumLocked"))
-                                .font(.system(size: 12))
+                            Text(L("module.comingSoon"))
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(tab.accentColor)
                         }
                         .foregroundColor(.secondary)
                     }
@@ -189,9 +183,9 @@ struct MainMenuView: View {
                         .font(.system(size: 22))
                         .foregroundColor(tab.accentColor)
                 } else {
-                    Image(systemName: "lock.circle.fill")
+                    Image(systemName: "clock.fill")
                         .font(.system(size: 22))
-                        .foregroundColor(.gray.opacity(0.4))
+                        .foregroundColor(tab.accentColor.opacity(0.6))
                 }
             }
             .padding(16)
@@ -235,50 +229,44 @@ struct MainMenuView: View {
         switch tab {
         case .vocabulary:
             VocabularyView()
-        case .commonSentences:
-            if iapManager.isCommonSentencesUnlocked {
-                CommonSentencesView()
-            } else {
-                lockedModuleView(tab)
-            }
-        case .pronunciation:
-            if iapManager.isPronunciationUnlocked {
-                PronunciationView()
-            } else {
-                lockedModuleView(tab)
-            }
-        case .qa:
-            if iapManager.isQAUnlocked {
-                QAView()
-            } else {
-                lockedModuleView(tab)
-            }
+        case .commonSentences, .pronunciation, .qa:
+            comingSoonView(tab)
         }
     }
 
-    // MARK: - Locked Module View
+    // MARK: - Coming Soon Module View
 
-    private func lockedModuleView(_ tab: AppTab) -> some View {
+    /// Detail view for an in-development module. Explains what the module will
+    /// do and lets the user email support to express demand for its release.
+    private func comingSoonView(_ tab: AppTab) -> some View {
         VStack(spacing: 16) {
-            Image(systemName: "lock.fill")
+            Image(systemName: "hourglass")
                 .font(.system(size: 40))
-                .foregroundColor(.secondary.opacity(0.5))
+                .foregroundColor(tab.accentColor.opacity(0.7))
 
             Text(L(tab.titleKey))
                 .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.primary)
 
-            Text(L("menu.lockedMessage"))
+            Text(L("module.comingSoon"))
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(tab.accentColor)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(tab.accentColor.opacity(0.15))
+                )
+
+            Text(L("menu.comingSoonMessage"))
                 .font(.system(size: 14))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
-            Button {
-                showPaywall = true
-            } label: {
+            Link(destination: moduleRequestMailURL(tab)) {
                 HStack(spacing: 8) {
-                    Image(systemName: "sparkles")
-                    Text(L("menu.unlockPremium"))
+                    Image(systemName: "envelope.fill")
+                    Text(L("menu.requestModule"))
                         .fontWeight(.semibold)
                 }
                 .foregroundColor(.white)
@@ -286,7 +274,7 @@ struct MainMenuView: View {
                 .padding(.vertical, 14)
                 .background(
                     LinearGradient(
-                        colors: [Color(hex: 0x00A34A), Color(hex: 0x008C3F)],
+                        colors: [tab.accentColor, tab.accentColor.opacity(0.75)],
                         startPoint: .leading,
                         endPoint: .trailing
                     )
@@ -298,6 +286,17 @@ struct MainMenuView: View {
         .padding(.horizontal, 24)
         .navigationTitle(L(tab.titleKey))
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// Prefilled demand-mailto for a coming-soon module:
+    /// `mailto:support@langly.app?subject=…&body="Yes I want this module to be released"` |
+    private func moduleRequestMailURL(_ tab: AppTab) -> URL {
+        var components = URLComponents(string: "mailto:support@langly.app")!
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "Langly: \(L(tab.titleKey)) — Module Request"),
+            URLQueryItem(name: "body", value: L("menu.requestModuleMailBody"))
+        ]
+        return components.url!
     }
 }
 

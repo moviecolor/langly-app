@@ -72,15 +72,21 @@ enum Localization {
         "menu.tapToOpen": ("Tap to open", "Toque para abrir"),
         "menu.premiumLocked": ("Available with Langly Premium", "Disponível com o Langly Premium"),
         "menu.lockedMessage": (
-            "This module is part of Langly Premium.\nSubscribe to unlock all modules.",
-            "Este módulo faz parte do Langly Premium.\nAssine para desbloquear todos os módulos."
+            "Audio Mode is part of Langly Premium.\nSubscribe to unlock hands-free listening.",
+            "O Modo Áudio faz parte do Langly Premium.\nAssine para desbloquear a escuta mãos livres."
         ),
         "menu.unlockPremium": ("Unlock with Langly Premium", "Desbloquear com o Langly Premium"),
+        "menu.comingSoonMessage": (
+            "This module is in development.\nLet us know you want it — we build what you ask for.",
+            "Este módulo está em desenvolvimento.\nDiga que você o quer — nós criamos o que você pede."
+        ),
+        "menu.requestModule": ("Yes, I want this module released", "Sim, quero que este módulo seja lançado"),
+        "menu.requestModuleMailBody": ("Yes I want this module to be released", "Sim, quero que este módulo seja lançado"),
 
         // MARK: - Paywall / subscription.
 
         "paywall.subtitle": ("Your commute is your classroom.", "Seu trajeto é a sua sala de aula."),
-        "paywall.benefit.unlimited": ("Unlimited gameplay — no lives, no limits", "Jogo ilimitado — sem vidas, sem limites"),
+        "paywall.benefit.unlimited": ("Unlimited Audio Mode — loop until memorized", "Modo Áudio ilimitado — repita até memorizar"),
         "paywall.benefit.wordLists": ("Custom word lists with looping audio", "Listas de palavras personalizadas com áudio em loop"),
         "paywall.benefit.offline": ("Works 100% offline", "Funciona 100% offline"),
         "paywall.benefit.noAds": ("No ads", "Sem anúncios"),
