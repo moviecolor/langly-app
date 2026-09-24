@@ -49,12 +49,12 @@ targets:
         CURRENT_PROJECT_VERSION: 2
         MARKETING_VERSION: 1.2
         GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: Support/Info.plist
         INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
         INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         INFOPLIST_KEY_CFBundleShortVersionString: $(MARKETING_VERSION)
         INFOPLIST_KEY_CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         INFOPLIST_KEY_LSRequiresIPhoneOS: true
-        INFOPLIST_KEY_UIBackgroundModes: audio
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: DEBUG
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: true
