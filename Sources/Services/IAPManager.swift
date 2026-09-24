@@ -5,8 +5,15 @@ import SwiftUI
 /// Manages StoreKit 2 in-app purchases for Langly.
 ///
 /// Product IDs:
-/// - `com.langly.app.premium.monthly` — Langly Premium monthly auto-renewable
+/// - `com.langly.app.premium.monthly.2` — Langly Premium monthly auto-renewable
 ///   subscription (USA $8.99 / BRA R$ 26,90). Unlocks Modules 2–4.
+///
+/// NOTE: the product ID carries a `.2` suffix because the ORIGINAL
+/// `com.langly.app.premium.monthly` was created via Apple's deprecated V1
+/// inAppPurchases API and could never be priced/offered through the modern API
+/// (stuck in MISSING_METADATA, plan-type conflicts). It was deleted 2026-09-24
+/// and recreated through the current API — Apple tombstones deleted product IDs,
+/// so the new subscription had to take a fresh ID. ASC subscription id 6815736929.
 ///
 /// Entitlements are derived from `Transaction.currentEntitlements`, so the
 /// subscription restores automatically on any device signed in with the same
@@ -30,7 +37,7 @@ final class IAPManager: ObservableObject {
     // MARK: - Product Identifiers
 
     /// Langly Premium — monthly auto-renewable subscription.
-    nonisolated static let premiumMonthlyID = "com.langly.app.premium.monthly"
+    nonisolated static let premiumMonthlyID = "com.langly.app.premium.monthly.2"
 
     nonisolated static let allProductIDs: Set<String> = [
         premiumMonthlyID

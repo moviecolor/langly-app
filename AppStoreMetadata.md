@@ -11,10 +11,11 @@ Learn Languages Faster
 - **Secondary:** Reference
 
 ## Price
-Free to download — **7-day free trial**, then **Langly Premium** subscription
-- USA: **$8.99 / month**
-- Brazil: **R$ 26,90 / month**
-- All features included — no partial access, no locked modules
+Free to download — **7-day full-access trial**, then **Langly Premium** subscription
+- First month: **$2.99** (introductory offer)
+- Then: **$8.99 / month** (USA) / **R$ 26,90 / month** (Brazil)
+- Free forever: Match Madness game + Audio Mode + 2 word blocks
+- Premium: unlimited word blocks, all future modules, no ads
 
 ---
 
@@ -110,7 +111,7 @@ The developer does not collect any data from this app.
 
 | Product ID | Type | Price | Description |
 |-----------|------|-------|-------------|
-| com.langly.app.premium.monthly | Auto-Renewable Subscription | USA $8.99 / BRA R$ 26,90 | Langly Premium — unlocks all modules |
+| com.langly.app.premium.monthly.2 | Auto-Renewable Subscription | USA $8.99 / BRA R$ 26,90 · intro $2.99 first month | Langly Premium — unlimited word blocks, all future modules |
 
 ### Build
 - Upload latest build via Xcode or `xcodebuild archive`
