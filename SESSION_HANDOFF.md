@@ -21,11 +21,12 @@
 - `backup` = THUNDER mirror: **current** (all pushed)
 - `github` = moviecolor/langly-app.git: **still failing** `Invalid username or token`. User must `gh auth login` / refresh PAT. Blocked but non-urgent.
 
-## Simulator Resolver (FIXED 2026-09-24 — do not regress)
-- `scripts/resolve_sim_destination.sh` now: emits `platform=iOS Simulator,name=<name>,OS=<os>` (NEVER `id=`), sources full OS version from `xcrun simctl list runtimes -j` (18.3.1, not truncated 18.3), ranks by LOWEST runtime (18.3.1) since 26.3 sims are phantom/unbuildable on this Xcode.
-- Verified: BUILD SUCCEEDED + 12/12 tests green (AudioOrderingTests 6, LanglyTests 1, LocalizationTests 5).
+## Simulator builds — TRUE root cause found & fixed (2026-09-24, do not regress)
+- **The real bug was never the resolver:** `scripts/xcbuild.sh` exported `CFFIXED_USER_HOME` (and before that `HOME`) into a sandbox dir → xcodebuild lost ALL simulator destinations (only physical placeholders remained) → "Unable to find a destination ... iOS 26.2 is not installed" even with a correct destination. Bisected: `CFFIXED_USER_HOME` alone = FAIL; all other sandbox vars alone = SUCCEED.
+- **Fixed:** `scripts/xcbuild.sh` no longer exports `CFFIXED_USER_HOME`/`HOME` (keeps module caches, TMPDIR). `scripts/resolve_sim_destination.sh` also fixed (name+OS, full version from runtimes -j, lowest buildable runtime 18.3.1). Both carry dated NOTE blocks.
+- **Verified end-to-end:** `make build` ✅, `make test` ✅ (12/12: AudioOrderingTests 6, LanglyTests 1, LocalizationTests 5).
 - Known-good destination verbatim: `platform=iOS Simulator,name=iPhone 16 Pro,OS=18.3.1`. Full root cause + fix: **TESTFLIGHT_PLAYBOOK.md §9**.
-- **Do NOT** fix destination errors ad hoc (pin UDID, use 26.3, temporarily edit the resolver) — that's exactly how this bit twice.
+- **Do NOT** re-add CFFIXED_USER_HOME/HOME to xcbuild.sh, pin a UDID, use OS=26.3, or "temporarily" edit the resolver — that's how this bit twice (2026-09-18, 2026-09-24).
 
 ## Immediate Next Actions (after this compaction)
 1. **Audit the uncommitted diff** (Localization.swift + MainMenuView.swift, coming-soon work) — already builds + tests green above; review the change, then commit e.g. `feat(ios): modules 2-4 COMING SOON + mailto request` (hook scope).

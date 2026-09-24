@@ -90,14 +90,24 @@ mkdir -p \
   "$TMPDIR"
 
 export \
-  HOME="$HOME_PATH" \
-  CFFIXED_USER_HOME \
   CLANG_MODULE_CACHE_PATH \
   SWIFT_MODULE_CACHE_PATH \
   SWIFT_PACKAGE_CACHE_PATH \
   SWIFT_PACKAGE_CLONED_SOURCE_PACKAGES_DIR \
   XDG_CACHE_HOME \
   TMPDIR
+
+# NOTE (2026-09-24 — the TRUE root cause of the recurring "phantom simulator"
+# saga that was twice misdiagnosed as a resolver problem): do NOT export
+# CFFIXED_USER_HOME or replace HOME here. CoreSimulator discovers runtimes and
+# devices via the REAL user home. Setting CFFIXED_USER_HOME (even alone) makes
+# xcodebuild see ZERO simulator destinations — only the physical-device
+# placeholders — and every build fails with:
+#   "Unable to find a destination matching the provided destination specifier"
+#   "{ platform:iOS ... error:iOS 26.2 is not installed ... }"
+# Verdict (bisected 2026-09-24): CFFIXED_USER_HOME alone = FAIL; every other
+# env var below alone = SUCCEEDED. xcodebuild must run with the real user home.
+# (TMPDIR etc. remain sandboxed for hygiene; they do not affect discovery.)
 
 if command -v xcbeautify >/dev/null 2>&1; then
   FILTER_CMD=(xcbeautify --is-ci)

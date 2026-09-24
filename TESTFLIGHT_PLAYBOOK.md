@@ -168,41 +168,37 @@ GET /v1/betaTesters/{TESTER_ID}            # attributes.state == "INSTALLED"
 
 ---
 
-## 9. iOS 26.3 phantom simulator runtimes — the local-build blocker (2026-09-18, re-hit 2026-09-24, FIXED IN `scripts/resolve_sim_destination.sh`)
+## 9. Simulator builds fail "Unable to find a destination" even with a good destination — the TRUE root cause is `CFFIXED_USER_HOME` (2026-09-18, re-hit 2026-09-24, FIXED IN `scripts/xcbuild.sh`)
 
-**Symptom:** any local `xcodebuild`/`make build`/`make test` run for the simulator fails instantly with one of:
-
-```
-xcodebuild: error: Unable to find a device matching the provided destination specifier:
-		{ platform:iOS Simulator, OS:26.3, name:iPhone 16 Pro }
-Available destinations for the "Langly" scheme:
-		{ platform:iOS Simulator, ..., OS:18.3.1, name:iPhone 16 Pro }
-```
-
-or
+**Symptom:** a local simulator build/test fails instantly, even with a verified-correct destination (e.g. `platform=iOS Simulator,name=iPhone 16 Pro,OS=18.3.1` that builds fine when run directly):
 
 ```
 xcodebuild: error: Unable to find a destination matching the provided destination specifier:
-	{ platform:iOS Simulator, id:3B70BB3B-... }
-Ineligible destinations ... iOS 26.2 is not installed. Please download and install the platform from Xcode > Settings > Components.
+		{ platform:iOS, arch:arm64e, id:00008110-000A744C0CEA401E, name:iPhone, error:iOS 26.2 is not installed. Please download and install the platform from Xcode > Settings > Components. }
+		{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device, error:iOS 26.2 is not installed. ... }
 ```
 
-The build never starts — zero compile errors, just this destination error.
+Note the "available" list shows **only physical-device placeholders** — no simulator at all. The build never starts; zero compile errors.
 
-**Root cause:** `xcrun simctl list devices -j` lists **phantom iOS 26.3 simulator runtimes** (26.3.1 — they exist in CoreSimulator as "available") that Xcode 26.3's iPhoneOS platform on this machine **cannot build against**. xcodebuild only ever accepts the **iOS 18.3.1** runtime for Langly's sim builds. The old auto-resolver (`scripts/resolve_sim_destination.sh`) compounded it two ways:
-1. It emitted `platform=iOS Simulator,id=<udid>` — xcodebuild refuses the `id=` form here even when `xcodebuild -showdestinations` lists that exact UDID (duplicate same-name/arch entries across runtimes break matching).
-2. It ranked candidate sims by **highest** runtime version, so it selected the always-unbuildable 26.3 device over the buildable 18.3 one.
-3. (Third subtlety, 2026-09-24) even with `name=`+`OS=18.3`, xcodebuild matches the **full installed version string** (`18.3.1`), not the runtime key's truncated `18.3` — `OS=18.3` fails identically.
+**Root cause (bisected 2026-09-24):** `scripts/xcbuild.sh` sandboxed the build environment by exporting `CFFIXED_USER_HOME` (and in earlier versions `HOME`) to a per-label dir under `build/`. **`CFFIXED_USER_HOME` alone is enough to make xcodebuild see ZERO simulator destinations** — CoreSimulator discovers runtimes/devices through the real user home, and with a sandboxed `CFFIXED_USER_HOME` the only destinations left are physical-device placeholders, which then fail with the misleading "iOS 26.2 is not installed" error. Verdict from bisection: `CFFIXED_USER_HOME` alone = FAIL; `TMPDIR`, `XDG_CACHE_HOME`, `CLANG_MODULE_CACHE_PATH`, `SWIFT_MODULE_CACHE_PATH`, `SWIFT_PACKAGE_CLONED_SOURCE_PACKAGES_DIR` each alone = SUCCEEDED.
 
-**The permanent fix (already in `scripts/resolve_sim_destination.sh`, verified 2026-09-24: BUILD SUCCEEDED + 12/12 tests green):**
-- Always emit `platform=iOS Simulator,name=<name>,OS=<os>` — **never `id=`**.
-- Source the **full** OS version from `xcrun simctl list runtimes -j` (`"version": "18.3.1"`), not the truncated device-runtime key.
-- Rank by **lowest** available iOS runtime first (18.3.1 over 26.3.1), then newest iPhone model within that runtime. Booted-sim preference kept but still lowest-runtime-first.
+Note: this was **misdiagnosed twice** (2026-09-18 and first half of 2026-09-24) as a resolver/destination problem — the resolver fix (below) was real but NOT sufficient. The resolver never caused this failure mode by itself.
 
-**Known-good destination (use verbatim if the resolver is ever bypassed):**
+**The permanent fix (already in `scripts/xcbuild.sh`, verified 2026-09-24: `make build` + `make test` both pass, 12/12 tests green):**
+- Do NOT export `CFFIXED_USER_HOME` and do NOT replace `HOME` in the xcodebuild environment. All other sandbox env vars (module caches, TMPDIR, etc.) are fine and kept.
+- The file carries a dated NOTE block explaining why (read it before "fixing" it back).
+
+**How to build/test simulator targets reliably on this machine (`make` handles this now):**
+
+```bash
+make build    # or xcodebuild directly with the destination below
+make test
+```
 
 ```bash
 -destination "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.3.1"
 ```
 
-**Do NOT:** fix a similar symptom by manually pinning a UDID, by passing `OS=26.3`, or by "temporarily" editing the resolver per-run — that is exactly how this bit twice. Change the resolver once, run `bash -n scripts/resolve_sim_destination.sh`, re-run `make build`, and document any new fact here.
+**Resolver facts (secondary, still true — do not regress either):** `scripts/resolve_sim_destination.sh` must emit `platform=iOS Simulator,name=<name>,OS=<os>` (never `id=`), source the FULL OS version from `xcrun simctl list runtimes -j` (18.3.1, not truncated 18.3), and rank by LOWEST buildable runtime (18.3.1) — the 26.3 sims are phantom/unbuildable on this Xcode.
+
+**Do NOT:** fix a destination failure by manually pinning a UDID, by passing `OS=26.3`, by re-adding `CFFIXED_USER_HOME`/`HOME` to xcbuild.sh, or by "temporarily" editing the resolver — all of those are exactly how this bit twice. Change the script once, run `bash -n scripts/xcbuild.sh scripts/resolve_sim_destination.sh`, re-run `make build` + `make test`, and document any new fact here.
