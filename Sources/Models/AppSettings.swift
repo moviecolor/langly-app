@@ -11,6 +11,9 @@ final class AppSettings {
     var loopEnabled: Bool
     var totalWordsLearned: Int
     var hasCompletedOnboarding: Bool
+    /// First-launch timestamp. Drives the 7-day full-access trial:
+    /// after 7 days, non-subscribers shrink to 3 word blocks.
+    var installDate: Date?
 
     init(
         homeLanguage: String = "English",
@@ -19,7 +22,8 @@ final class AppSettings {
         playbackGap: Double = 1.75,
         loopEnabled: Bool = true,
         totalWordsLearned: Int = 0,
-        hasCompletedOnboarding: Bool = false
+        hasCompletedOnboarding: Bool = false,
+        installDate: Date? = nil
     ) {
         self.homeLanguage = homeLanguage
         self.targetLanguage = targetLanguage
@@ -28,5 +32,6 @@ final class AppSettings {
         self.loopEnabled = loopEnabled
         self.totalWordsLearned = totalWordsLearned
         self.hasCompletedOnboarding = hasCompletedOnboarding
+        self.installDate = installDate
     }
 }

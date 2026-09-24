@@ -2,6 +2,13 @@ import SwiftUI
 import SwiftData
 
 /// Vocabulary module — 3 buttons: Add Word Block, Mix N Match, Audio Mode.
+///
+/// Access model:
+/// - Everyone gets a 7-day full-access trial from first launch (`installDate`).
+/// - After the trial, non-subscribers keep their two OLDEST word blocks active;
+///   every newer block is locked (visible but padlocked) and Add Word Block is
+///   disabled, all redirecting to the Paywall. Mix N Match + Audio Mode stay free.
+/// - Subscribers keep unlimited blocks (the 10-block hard cap still applies).
 struct VocabularyView: View {
     @EnvironmentObject var iapManager: IAPManager
     @Environment(\.modelContext) private var modelContext
@@ -24,6 +31,51 @@ struct VocabularyView: View {
     @State private var blockToDelete: WordBlock?
     @State private var showDeleteBlockConfirmation = false
     @State private var showBlockLimitAlert = false
+    @State private var showPaywall = false
+
+    /// Hard ceiling for total blocks (regardless of premium).
+    private let maxBlocks = 10
+
+    /// True during the 7-day full-access window (or on installs where the
+    /// trial clock hasn't been stamped yet — treat as full access).
+    private var hasFullAccess: Bool {
+        PremiumAccess.hasFullAccess(
+            isPremium: iapManager.isPremiumActive,
+            installDate: settings.first?.installDate
+        )
+    }
+
+    /// Blocks sorted oldest-first so "the two you keep" is stable.
+    private var orderedBlocks: [WordBlock] {
+        wordBlocks.sorted {
+            ($0.createdAt ?? .distantPast) < ($1.createdAt ?? .distantPast)
+        }
+    }
+
+    /// The subset of blocks the free tier keeps after the trial.
+    private var freeBlocks: [WordBlock] {
+        PremiumAccess.freeBlocks(from: wordBlocks)
+    }
+
+    /// Whether a given block is locked for this user right now.
+    private func isBlockLocked(_ block: WordBlock) -> Bool {
+        PremiumAccess.isBlockLocked(
+            block,
+            isPremium: iapManager.isPremiumActive,
+            installDate: settings.first?.installDate,
+            allBlocks: wordBlocks
+        )
+    }
+
+    /// Whether the user can still add new blocks (trial/premium only).
+    private var canAddBlocks: Bool {
+        PremiumAccess.canAddBlocks(
+            isPremium: iapManager.isPremiumActive,
+            installDate: settings.first?.installDate,
+            currentBlockCount: wordBlocks.count,
+            maxBlocks: maxBlocks
+        )
+    }
 
     var body: some View {
         ZStack {
@@ -81,24 +133,37 @@ struct VocabularyView: View {
                     if wordBlocks.isEmpty {
                         emptyState
                     } else {
-                        ForEach(wordBlocks) { block in
-                            NavigationLink {
-                                BlockDetailView(block: block)
-                            } label: {
-                                blockCard(block)
-                            }
-                            .buttonStyle(.plain)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
+                        ForEach(orderedBlocks) { block in
+                            if isBlockLocked(block) {
+                                // Locked block: visible for desire, padlocked,
+                                // tap opens the Paywall.
+                                Button {
                                     HapticPattern.impact.trigger()
-                                    deleteBlock(block)
+                                    showPaywall = true
                                 } label: {
-                                    Label(L("vocab.deleteBlock"), systemImage: "trash")
+                                    lockedBlockCard(block)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                NavigationLink {
+                                    BlockDetailView(block: block)
+                                } label: {
+                                    blockCard(block)
+                                }
+                                .buttonStyle(.plain)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        HapticPattern.impact.trigger()
+                                        deleteBlock(block)
+                                    } label: {
+                                        Label(L("vocab.deleteBlock"), systemImage: "trash")
+                                    }
                                 }
                             }
                         }
 
-                        // Ghost block suggestion.
+                        // Ghost block suggestion — locked state should also
+                        // advertise Premium instead of inviting a new block.
                         ghostBlockCard
                     }
                 }
@@ -131,6 +196,9 @@ struct VocabularyView: View {
         }
         .sheet(isPresented: $showWordInput) {
             WordInputView(preselectedBlockID: selectedBlockForInput)
+        }
+        .fullScreenCover(isPresented: $showPaywall) {
+            PaywallView()
         }
         .alert(L("vocab.newBlockTitle"), isPresented: $showNewBlockAlert) {
             TextField(L("vocab.blockName"), text: $newBlockName)
@@ -177,34 +245,38 @@ struct VocabularyView: View {
 
     private var addBlockButton: some View {
         Button {
-            showNewBlockAlert = true
+            if canAddBlocks {
+                showNewBlockAlert = true
+            } else {
+                showPaywall = true
+            }
         } label: {
             HStack(spacing: 12) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(Color(hex: 0x00D4AA).opacity(0.15))
+                        .fill((canAddBlocks ? Color(hex: 0x00D4AA) : Color.orange).opacity(0.15))
                         .frame(width: 40, height: 40)
 
-                    Image(systemName: "plus.circle.fill")
+                    Image(systemName: canAddBlocks ? "plus.circle.fill" : "lock.fill")
                         .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(Color(hex: 0x00D4AA))
+                        .foregroundColor(canAddBlocks ? Color(hex: 0x00D4AA) : .orange)
                 }
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(L("vocab.addBlock"))
+                    Text(canAddBlocks ? L("vocab.addBlock") : L("vocab.addBlockLocked"))
                         .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.primary)
 
-                    Text(L("vocab.addBlock.subtitle"))
+                    Text(canAddBlocks ? L("vocab.addBlock.subtitle") : L("vocab.addBlockLocked.subtitle"))
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.secondary)
                 }
 
                 Spacer()
 
-                Image(systemName: "plus.circle")
+                Image(systemName: canAddBlocks ? "plus.circle" : "chevron.right")
                     .font(.system(size: 20))
-                    .foregroundColor(Color(hex: 0x00D4AA))
+                    .foregroundColor(canAddBlocks ? Color(hex: 0x00D4AA) : .orange)
             }
             .padding(12)
             .background(
@@ -212,7 +284,7 @@ struct VocabularyView: View {
                     .fill(Color.appSurface)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color(hex: 0x00D4AA).opacity(0.3), lineWidth: 1.5)
+                            .stroke((canAddBlocks ? Color(hex: 0x00D4AA) : Color.orange).opacity(0.3), lineWidth: 1.5)
                     )
             )
         }
@@ -223,7 +295,13 @@ struct VocabularyView: View {
 
     private var blockSummary: some View {
         HStack(spacing: 12) {
-            summaryCard(icon: "square.stack.3d.down.right.fill", label: L("vocab.blocks"), value: "\(wordBlocks.count)/10")
+            summaryCard(
+                icon: "square.stack.3d.down.right.fill",
+                label: L("vocab.blocks"),
+                value: hasFullAccess
+                    ? "\(wordBlocks.count)/\(maxBlocks)"
+                    : "\(freeBlocks.count)/\(PremiumAccess.freeBlockLimit)"
+            )
             summaryCard(icon: "character.book.closed.fill", label: L("vocab.words"), value: "\(vocabularyWords.count)")
             summaryCard(icon: "checkmark.circle.fill", label: L("vocab.mastered"), value: "\(vocabularyWords.filter { $0.masteryLevel == .mastered }.count)")
         }
@@ -370,6 +448,70 @@ struct VocabularyView: View {
         }
     }
 
+    // MARK: - Locked Block Card
+
+    /// Dimmed, padlocked card for blocks beyond the free limit. Kept visible
+    /// so users see what they're missing — the desire hook for Premium.
+    private func lockedBlockCard(_ block: WordBlock) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: "lock.fill")
+                        .foregroundStyle(.orange)
+                        .font(.system(size: 13))
+                    Text(block.blockName)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(String(format: L("vocab.wordsCount"), block.vocabularyWords.count, 15))
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    Text(L("vocab.lockedToUnlock"))
+                        .font(.system(size: 10))
+                        .foregroundColor(.orange)
+                }
+            }
+
+            // Words list blurred behind the padlock for that "so close" feeling.
+            if !block.vocabularyWords.isEmpty {
+                let columns = Array(repeating: GridItem(.flexible(), spacing: 6), count: 3)
+                LazyVGrid(columns: columns, spacing: 6) {
+                    ForEach(block.vocabularyWords.prefix(6)) { word in
+                        Text("••••")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.secondary.opacity(0.4))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 5)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.gray.opacity(0.08))
+                            )
+                    }
+                }
+            } else {
+                Text(L("vocab.lockedEmpty"))
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary.opacity(0.6))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+            }
+        }
+        .padding(14)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.appSurface.opacity(0.6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.orange.opacity(0.35), lineWidth: 1)
+                )
+        )
+    }
+
     // MARK: - Delete Block
 
     private func deleteBlock(_ block: WordBlock) {
@@ -384,21 +526,26 @@ struct VocabularyView: View {
 
     // MARK: - Ghost Block Card
 
-    /// Empty block card suggesting the user add new words.
+    /// Empty block card suggesting the user add new words (or go Premium when
+    /// the free limit is reached).
     private var ghostBlockCard: some View {
         Button {
-            showNewBlockAlert = true
+            if canAddBlocks {
+                showNewBlockAlert = true
+            } else {
+                showPaywall = true
+            }
         } label: {
             VStack(alignment: .center, spacing: 8) {
-                Image(systemName: "plus.circle.dashed")
+                Image(systemName: canAddBlocks ? "plus.circle.dashed" : "lock.open")
                     .font(.system(size: 28))
-                    .foregroundStyle(Color(hex: 0x00D4AA).opacity(0.5))
+                    .foregroundStyle((canAddBlocks ? Color(hex: 0x00D4AA) : Color.orange).opacity(0.6))
 
-                Text(L("vocab.ghostBlock"))
+                Text(canAddBlocks ? L("vocab.ghostBlock") : L("vocab.ghostBlockLocked"))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.secondary)
 
-                Text(L("vocab.ghostBlock.subtitle"))
+                Text(canAddBlocks ? L("vocab.ghostBlock.subtitle") : L("vocab.ghostBlockLocked.subtitle"))
                     .font(.system(size: 11))
                     .foregroundColor(.secondary.opacity(0.6))
                     .multilineTextAlignment(.center)
@@ -407,7 +554,7 @@ struct VocabularyView: View {
             .padding(.vertical, 24)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color(hex: 0x00D4AA).opacity(0.25), style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
+                    .stroke((canAddBlocks ? Color(hex: 0x00D4AA) : Color.orange).opacity(0.25), style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
                     .background(
                         RoundedRectangle(cornerRadius: 14)
                             .fill(Color.appSurface.opacity(0.5))

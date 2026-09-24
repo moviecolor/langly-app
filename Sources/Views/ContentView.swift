@@ -60,6 +60,14 @@ struct ContentView: View {
             // home language is Portuguese this flips the direction to PT→EN.
             if let settings = appSettings.first {
                 translatorManager.updateDirection(from: settings)
+
+                // Trial clock: stamp installDate once. Every install gets a
+                // full 7-day full-access trial from first launch; after that
+                // non-subscribers shrink to two free word blocks.
+                if settings.installDate == nil {
+                    settings.installDate = .now
+                    try? modelContext.save()
+                }
             }
         }
     }

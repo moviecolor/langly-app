@@ -208,6 +208,18 @@ enum Localization {
         ),
         "vocab.addBlock": ("Add Word Block", "Adicionar Bloco de Palavras"),
         "vocab.addBlock.subtitle": ("Create a new block to organize your vocabulary", "Crie um novo bloco para organizar seu vocabulário"),
+        "vocab.addBlockLocked": ("Unlock Unlimited Blocks", "Desbloqueie Blocos Ilimitados"),
+        "vocab.addBlockLocked.subtitle": (
+            "Go Premium to remove the 2-block free limit",
+            "Assine o Premium para remover o limite de 2 blocos grátis"
+        ),
+        "vocab.lockedToUnlock": ("Tap to unlock", "Toque para desbloquear"),
+        "vocab.lockedEmpty": ("Locked — no words saved here yet", "Bloqueado — nenhuma palavra salva aqui ainda"),
+        "vocab.ghostBlockLocked": ("Unlock With Premium", "Desbloqueie com o Premium"),
+        "vocab.ghostBlockLocked.subtitle": (
+            "Unlimited blocks, audio mode,\nand future modules",
+            "Blocos ilimitados, modo áudio\ne módulos futuros"
+        ),
         "vocab.blocks": ("Blocks", "Blocos"),
         "vocab.words": ("Words", "Palavras"),
         "vocab.mastered": ("Mastered", "Dominadas"),

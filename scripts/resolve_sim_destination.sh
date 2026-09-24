@@ -148,25 +148,30 @@ if not candidates:
     print("")
     sys.exit(1)
 
-# If a specific sim name was requested, try to honor it.
+# If a specific sim name was requested, try to honor it — skipping phantom
+# runtimes (>= 26) the same as everywhere else.
 if name and name_lower != "auto":
-    matches = [c for c in candidates if c["name"] == name]
+    matches = [c for c in candidates if c["name"] == name and c["runtime_version"] < (26, 0)]
     if matches:
         booted = [c for c in matches if c["state"] == "Booted"]
         chosen = min(booted or matches, key=lambda c: c["runtime_version"])
         print(f"platform=iOS Simulator,name={chosen['name']},OS={chosen['os_version']}")
         sys.exit(0)
 
-# Prefer a booted iPhone if one exists.
-booted = [c for c in candidates if c["state"] == "Booted"]
+# Prefer a booted iPhone if one exists — but NEVER a phantom runtime.
+# Highest runtimes like iOS 26.3 are phantom/unbuildable on this Xcode (see
+# the 2026-09-18 session log and TESTFLIGHT_PLAYBOOK.md §9); a booted device
+# on one of them is just as unbuildable as a shutdown one.
+booted = [c for c in candidates if c["state"] == "Booted" and c["runtime_version"] < (26, 0)]
 if booted:
     chosen = min(booted, key=lambda c: (c["runtime_version"], model_rank_neg(c["name"])))
     print(f"platform=iOS Simulator,name={chosen['name']},OS={chosen['os_version']}")
     sys.exit(0)
 
-# Otherwise choose the LOWEST runtime (highest runtimes like iOS 26.3 are
+# Otherwise choose the LOWEST buildable runtime (runtimes >= 26 are
 # phantom/unbuildable on this Xcode — see the 2026-09-18 session log) with
 # the best iPhone model.
-chosen = min(candidates, key=lambda c: (c["runtime_version"], model_rank_neg(c["name"])))
+buildable = [c for c in candidates if c["runtime_version"] < (26, 0)]
+chosen = min(buildable or candidates, key=lambda c: (c["runtime_version"], model_rank_neg(c["name"])))
 print(f"platform=iOS Simulator,name={chosen['name']},OS={chosen['os_version']}")
 PY
