@@ -27,5 +27,6 @@ lane :beta do
     api_key: api_key,
     changelog: EN_NEWS + "\n" + PT_NEWS,
     skip_waiting_for_build_processing: false,
+    groups: ["Langly Internal"],
   )
 end
