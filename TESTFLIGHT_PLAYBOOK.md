@@ -202,3 +202,19 @@ make test
 **Resolver facts (secondary, still true — do not regress either):** `scripts/resolve_sim_destination.sh` must emit `platform=iOS Simulator,name=<name>,OS=<os>` (never `id=`), source the FULL OS version from `xcrun simctl list runtimes -j` (18.3.1, not truncated 18.3), and rank by LOWEST buildable runtime (18.3.1) — the 26.3 sims are phantom/unbuildable on this Xcode.
 
 **Do NOT:** fix a destination failure by manually pinning a UDID, by passing `OS=26.3`, by re-adding `CFFIXED_USER_HOME`/`HOME` to xcbuild.sh, or by "temporarily" editing the resolver — all of those are exactly how this bit twice. Change the script once, run `bash -n scripts/xcbuild.sh scripts/resolve_sim_destination.sh`, re-run `make build` + `make test`, and document any new fact here.
+## 10. GitHub push auth — the "Invalid username or token" wall (fixed 2026-09-24)
+
+**Symptom:** `git push github` fails with `fatal: could not read Username for 'https://github.com': Device not configured` (or "Invalid username or token"). The `backup` THUNDER mirror works fine; only `github` remote fails.
+
+**Root cause:** the Mac was never authenticated to github.com. `gh auth status` → "not logged into any GitHub hosts". No `~/.git-credentials`, no keychain entry, no GitHub Desktop sign-in. A repo existing on GitHub is irrelevant — the local git client needs its own proof of identity.
+
+**The fix that works on THIS machine (Waterfox critical):**
+1. `gh auth login --hostname github.com --git-protocol https --web` (device flow prints a one-time code)
+2. **Open the device URL in Waterfox, NOT Chrome** — the user's moviecolor session lives in Waterfox. Chrome (even when it looks logged in) silently fails the device flow because it's not the authenticated browser on this machine.
+3. `gh auth setup-git` — wires `gh`'s token into git's credential helper
+4. `git push github <branch>` — now works; returns "To https://github.com/moviecolor/langly-app.git"
+
+**Lessons:**
+- The failed device-flow attempts in Chrome cost ~15 minutes; Waterfox took 10 seconds. Always check which browser holds the real GitHub session.
+- `gh` token scopes observed after login: `gist`, `read:org`, `repo` — enough for push.
+- Do NOT create a PAT manually unless the device flow fails in ALL browsers; the `gh` keychain login is cleaner and revocable in one place.
