@@ -1,7 +1,7 @@
 default_platform(:ios)
 
-EN_NEWS = "Direction fixes for Portuguese learners: PT→EN audio mode and word lists now show Portuguese-first, Match Madness puts the home language on the left column, and audio playback continues while the screen sleeps."
-PT_NEWS = "Correções de direção para quem aprende português: o modo de áudio e as listas de palavras agora mostram português primeiro em PT→EN, o Jogo da Memória coloca a língua principal na coluna esquerda, e o áudio continua tocando enquanto a tela dorme."
+EN_NEWS = "Langly Premium is now available: unlimited word blocks plus all future modules via a $8.99/mo subscription (first month $2.99 intro). After the 7-day full-access trial your 2 free word blocks stay yours — the rest unlock with Premium."
+PT_NEWS = "Langly Premium já está disponível: blocos de palavras ilimitados e todos os módulos futuros por R$26,90/mês (nos EUA, o primeiro mês sai por US$2,99 na oferta introdutória). Após o teste gratuito de 7 dias os seus 2 blocos de palavras gratuitos continuam seus — o restante é liberado com o Premium."
 
 lane :beta do
   api_key = app_store_connect_api_key(
