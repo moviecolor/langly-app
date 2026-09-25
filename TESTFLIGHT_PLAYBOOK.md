@@ -236,3 +236,19 @@ make test
 - Internal group "Langly Internal" `5faeb740-7617-4db2-ac81-75c7327057ad` → Ryan only, builds 4/3/1.
 
 **Key facts baked in:** tester emails live in ASC; invites ALWAYS arrive by email from Apple (TestFlight app required on device). A WhatsApp/other-text heads-up is a nice touch but the actual activation link is email-only.
+
+### 10c. "Add for Review" — the Draft Submissions list IS the submit mechanism (verified 2026-09-25)
+
+**Lesson:** On the App Store Connect **App Store → Distribution → iOS App Version 1.2** page, the "Add for Review" dropdown lists **"Draft Submissions (N)"**. These are NOT junk to ignore — the *current in-progress draft for the version you're looking at is in that list*, and **choosing that draft is the action that actually sends the new draft/build for review.** There is no separate "Create New Submission" step that matters here; the draft entry in the pulldown is the real submission.
+
+**Verified flow that worked (Langly 1.2, build 4, 2026-09-25):**
+1. Open `https://appstoreconnect.apple.com/apps/{APP_ID}/distribution/ios/version/inflight`
+2. Click **Add for Review** → the pulldown shows **Draft Submissions (4)** (the count = number of in-progress/incomplete submissions, incl. the legacy July IAP-ghost entries)
+3. **Select the draft for this version** (the one created when the build was attached / version page was set up) — that is what actually submits the draft + attached build for review.
+4. Apple shows the summary screen ("The assets and metadata below appear on your app's product page...") — verify build number, version, copyright, and the IAP subscription (Ready to Submit), then **Submit for Review**.
+5. Export compliance → No. State flips out of `PREPARE_FOR_SUBMISSION` → `WAITING_FOR_REVIEW`.
+
+**Warnings:**
+- Do NOT pick an unrelated stale draft (e.g. one tied to the deleted legacy IAPs `d41783fc` / `e891e00c`) — it would submit the wrong metadata. Pick the draft matching the current version/build.
+- The API route `POST /v1/appStoreVersionSubmissions` returns **403** ("allowed operation is: DELETE") on this key — final submission is web-UI only.
+- Subscription-only submit attempt returns **409**: subscriptions submit together with the app version. Don't try to submit IAPs separately.

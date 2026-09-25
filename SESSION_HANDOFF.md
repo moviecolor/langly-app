@@ -15,7 +15,7 @@
 - **GitHub push auth FIXED (2026-09-25)** — was blocked since 2026-09-18. `gh auth login --web` MUST use **Waterfox** (moviecolor session lives there; Chrome silently fails). Then `gh auth setup-git`. Both remotes now current. See **TESTFLIGHT_PLAYBOOK.md §10**.
 - **Juliana outreach SENT (2026-09-25):** WhatsApp letter built as pretty Palatino PDF (`docs/Langly_WhatsApp_Juliana.pdf` + HTML source `docs/langly_letter_juliana.html`, committed). Sent via WhatsApp + TestFlight invite email already delivered. Teacher free-access mechanism NOT yet built — next task when she responds.
 - **Monetization model (app-side):** 7-day full access; then 2 oldest blocks free (newer visible+padlocked); Add Block → paywall; Match Madness + Audio free; ceiling maxBlocks=10. Modules 2–4 COMING SOON + mailto.
-- **1.2 version object** on ASC exists (PREPARE_FOR_SUBMISSION) — build 4 not yet attached.
+- **1.2 SUBMITTED FOR REVIEW (2026-09-25):** version `fd9845d6-...` state = **WAITING_FOR_REVIEW**, releaseType AFTER_APPROVAL, build 4 attached, Copyright 2026 10168024 MB LTD. Submitted via web UI: **Add for Review → pick the draft from the "Draft Submissions" list** (that IS the mechanism that sends the new draft/build for review — see TESTFLIGHT_PLAYBOOK.md §10c).
 
 ## Last Commits (both remotes pushed — backup AND github, both current)
 - `fb7abb4` docs(marketing): WhatsApp letter Juliana (Palatino PDF + HTML)
@@ -26,8 +26,8 @@
 - Earlier: `6a86dd0` sim resolver fix, `b8d0070` COMING SOON modules
 
 ## Immediate Next Actions
-1. **Wait for Juliana + Rafa to accept/install** (`state` → INSTALLED). Then they can test the REAL paywall ($2.99 intro → $8.99) on build 4.
-2. **When testers wrap up v4** → submit for review: attach build 4 to 1.2 version page, verify screenshots COMPLETE on version page, then `asc subscriptions submit --subscription-id 6815736929` + submit app version together.
+1. **Wait for Apple review** of 1.2 (state → IN_REVIEW → APPROVED). On approval: user flips manual release (releaseType AFTER_APPROVAL). No API action possible — submission was web-UI only (`POST /v1/appStoreVersionSubmissions` → 403).
+2. **Wait for Juliana + Rafa to accept/install** (`state` → INSTALLED). Then they can test the REAL paywall ($2.99 intro → $8.99) on build 4.
 3. **Build teacher free-access mechanism** (promised in the Juliana letter: "I'll set up a way for all of your students to get free access"). Not started — design decision: promo-code/one-time-unlock redeemable in-app vs teacher-beta flag. Small feature in IAPManager/PremiumAccess.
 4. Keep both remotes in sync (auth now works — dual-push from here on).
 
