@@ -218,3 +218,21 @@ make test
 - The failed device-flow attempts in Chrome cost ~15 minutes; Waterfox took 10 seconds. Always check which browser holds the real GitHub session.
 - `gh` token scopes observed after login: `gist`, `read:org`, `repo` — enough for push.
 - Do NOT create a PAT manually unless the device flow fails in ALL browsers; the `gh` keychain login is cleaner and revocable in one place.
+
+### 10b. External tester invites — the "no builds available" trap (fixed 2026-09-25)
+
+**Symptom:** individual external testers added via App Store Connect → TestFlight → (build detail page) show **"No builds available"** — even though the build exists + is VALID.
+
+**Root cause:** adding a person as an *individual beta tester* does NOT put them in any beta group. On this account every group has `hasAccessToAllBuilds: false`, so a tester outside a group sees zero builds — the exact §8 mechanic, seen from the tester side.
+
+**The correct flow for a new external tester (all via ASC API, or point-and-click in ASC):**
+1. `POST /betaGroups` with `name: "Langly Beta Testers"` + `app` relationship (the app relationship is REQUIRED — 409 otherwise)
+2. Add the tester(s) to the group: `POST /betaGroups/{gid}/relationships/betaTesters` with the betaTesters ids
+3. Attach the build: `POST /betaGroups/{gid}/relationships/builds` with the build id
+4. If the build's `betaAppReviewSubmissions` is already **APPROVED** (check `GET /betaAppReviewSubmissions?filter[build]=...`), Apple emails invites automatically — tester state flips `NOT_INVITED → INVITED` within a minute or two.
+
+**Known-good API sequences are in SESSION_HANDOFF history; external state TODAY (2026-09-25):**
+- Group "Langly Beta Testers" `bf38ec36-28db-45b8-b486-b3e89ff212b6` → Juliana `jlongosilva@gmail.com`, Rafa `cabral2017rafa@gmail.com`, both INVITED, build 4 attached.
+- Internal group "Langly Internal" `5faeb740-7617-4db2-ac81-75c7327057ad` → Ryan only, builds 4/3/1.
+
+**Key facts baked in:** tester emails live in ASC; invites ALWAYS arrive by email from Apple (TestFlight app required on device). A WhatsApp/other-text heads-up is a nice touch but the actual activation link is email-only.
